@@ -190,14 +190,6 @@
       }, [vault]);
 
       useEffect(() => {
-        return () => {
-          if (beatAudioSrc) URL.revokeObjectURL(beatAudioSrc);
-          if (fetchAbortControllerRef.current) fetchAbortControllerRef.current.abort();
-          releaseWakeLock();
-        };
-      }, [beatAudioSrc]);
-
-      useEffect(() => {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         if (AudioContext) audioCtxRef.current = new AudioContext();
         return () => { if (audioCtxRef.current) audioCtxRef.current.close(); };
@@ -240,24 +232,6 @@
       const removeBeat = () => {
         setBeatFileName(''); if (beatAudioSrc) URL.revokeObjectURL(beatAudioSrc); 
         setBeatAudioSrc(null); if (fileInputRef.current) fileInputRef.current.value = '';
-      };
-
-      const requestWakeLock = async () => {
-        try {
-          if ('wakeLock' in navigator) {
-            wakeLockRef.current = await navigator.wakeLock.request('screen');
-          }
-        } catch (err) {
-          console.log('Wake Lock permission denied or unsupported:', err);
-        }
-      };
-
-      const releaseWakeLock = () => {
-        if (wakeLockRef.current !== null) {
-          wakeLockRef.current.release().then(() => {
-            wakeLockRef.current = null;
-          });
-        }
       };
 
       const getTierDistribution = (baseTier, count) => {
@@ -303,13 +277,11 @@
       const startSession = () => {
         if (audioCtxRef.current?.state === 'suspended') audioCtxRef.current.resume();
         if (beatAudioSrc && audioPlayerRef.current) { audioPlayerRef.current.currentTime = 0; audioPlayerRef.current.play().catch(console.error); }
-        requestWakeLock();
         setSessionStartTime(Date.now()); setTotalWordsSeen(wordCount); setFrozenWords(new Set()); setCurrentWords(getNextRandomWords(wordCount)); setAppState('active'); setIsPausedForDict(false);
       };
 
       const stopSession = () => {
         if (audioPlayerRef.current) audioPlayerRef.current.pause();
-        releaseWakeLock();
         setSessionDuration(Math.floor((Date.now() - sessionStartTime) / 1000)); setAppState('summary'); setIsPausedForDict(false);
       };
 
