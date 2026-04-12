@@ -63,7 +63,9 @@
 
     // --- DATA ENGINE ---
     const globalWordBanks = {
-      1: Array.from(new Set(["add", "aim", "ape", "arm", "art", "ash", "axe", "back", "bad", "bag", "ball", "bank", "bar", "bash", "bat", "beach", "beam", "bear", "beast", "beat", "bell", "bench", "bend", "best", "bike", "bin", "bind", "bird", "bit", "black", "blade", "blame", "blast", "bliss", "block", "blood", "bloom", "blow", "blown", "blue", "board", "bolt", "bomb", "bone", "book", "boot", "booth", "born", "boss", "bound", "bow", "brag", "brain", "brake", "branch", "brass", "brave", "break", "breathe", "breeze", "brick", "bright", "brink", "brook", "brown", "brow", "buck", "bug", "bull", "bump", "burn", "bush", "buy", "camp", "cap", "car", "card", "cart", "case", "cash", "cast", "cat", "catch", "cave", "cell", "chain", "chalk", "chart", "chase", "chat", "cheat", "check", "chest", "chill", "chime", "chin", "chip", "chore", "churn", "clad", "claim", "clack", "clap", "clash", "clay", "clean", "clear", "climb", "clock", "clone", "close", "cloud", "club", "cluck", "coal", "coast", "cold", "cone", "cook", "cool", "core", "corn", "cost", "cow", "crack", "crash", "crave", "cream", "creep", "crest", "crime", "crook", "cross", "crow", "crown", "crowned", "cry", "cup", "curb", "dad", "dark", "dart", "dash", "day", "dead", "deal", "dear", "deep", "deer", "desk", "dice", "die", "dig", "dime", "dip", "dirt", "ditch", "dive", "dog", "doom", "door", "dot", "doubt", "dough", "dove", "drag", "drain", "dream", "drill", "drink", "drive", "drop", "drone", "drum", "dust", "dwell", "ear", "earn", "earth", "east", "eat", "edge", "eight", "end", "eye", "face", "fact", "fad", "fade", "fake", "fall", "fame", "far", "fast", "fat", "fear", "feast", "feel", "feet", "fell", "fern", "flame", "flight", "float", "flock", "floor", "floss", "flown", "foe", "fog", "fold", "food", "fool", "foot", "force", "four", "fox", "frame", "free", "freeze", "freight", "fright", "frog", "frost", "full", "fund", "gain", "gale", "game", "gap", "gash", "gate", "gave", "gear", "ghost", "glad", "glass", "gleam", "gloss", "glow", "grown", "glue", "goat", "god", "gods", "gold", "good", "got", "grace", "grad", "grain", "ground", "grow", "guard", "guest", "guilt", "gun", "gut", "hail", "hair", "hand", "hat", "hatch", "hate", "hawk", "head", "heal", "hear", "heart", "heat", "heel", "height", "hell", "help", "herd", "high", "hike", "hill", "hit", "hold", "hole", "hook", "hope", "horn", "horse", "host", "hot", "hound", "house", "how", "hustle", "ice", "ink", "isle", "jar", "jaw", "jet", "joy", "jump", "junk", "keep", "key", "kind", "king", "kit", "knack", "knee", "kneel", "knife", "knit", "knock", "knot", "known", "mad", "made", "main", "map", "mars", "mash", "mask", "mat", "match", "meal", "meat", "melt", "mend", "mice", "mike", "mime", "mind", "mine", "mist", "misted", "mock", "mood", "moon", "more", "morn", "moss", "moth", "mount", "mouse", "mouth", "muck", "mud", "mute", "myth", "nag", "nail", "name", "near", "neat", "neck", "nerve", "net", "next", "nice", "night", "nine", "nook", "north", "nose", "nuke", "owl", "pack", "pad", "paid", "pain", "palm", "park", "part", "path", "pat", "pave", "peace", "peak", "peel", "pest", "pet", "phone", "pie", "pig", "pin", "pink", "pipe", "pit", "place", "plan", "plant", "play", "plot", "plow", "pluck", "plump", "pole", "pool", "post", "pot", "pound", "pour", "pray", "preach", "prey", "price", "pride", "priest", "prime", "prize", "puck", "pull", "pump", "punch", "pup", "push", "quack", "quell", "quest", "quick", "quiet", "quit", "race", "rack", "rad", "rage", "rag", "raid", "rain", "rat", "rave", "raw", "ray", "reach", "real", "red", "rest", "rib", "rice", "rich", "ridge", "ride", "rims", "ring", "rise", "road", "rock", "rod", "roll", "roof", "root", "rose", "rot", "round", "rule", "run", "rust", "sack", "sad", "safe", "sag", "salt", "same", "sand", "sat", "save", "saw", "scar", "scare", "scheme", "school", "scorn", "scout", "scrap", "scratch", "scream", "sea", "seal", "seam", "seat", "seed", "seek", "seem", "seen", "sell", "send", "sense", "seven", "shack", "shade", "shake", "shallow", "shame", "shark", "sharp", "shave", "shed", "shell", "shift", "shine", "ship", "shirt", "shock", "shoe", "shone", "shook", "shop", "shore", "shot", "shout", "show", "shuck", "shut", "sick", "sigh", "sight", "sign", "silk", "sin", "sing", "sink", "sip", "sit", "six", "skill", "skin", "skip", "sky", "slack", "slap", "slash", "slave", "sleep", "sleek", "slice", "slide", "slight", "slip", "slit", "slot", "slow", "slug", "slump", "slush", "smack", "small", "smart", "smash", "smell", "smile", "smoke", "snag", "snake", "snap", "snare", "snatch", "snark", "snow", "soar", "sock", "soil", "sold", "song", "soul", "sound", "soup", "south", "sow", "space", "spark", "spar", "spat", "speak", "spear", "spell", "spend", "spice", "spike", "spill", "spin", "spine", "spit", "split", "spoke", "spot", "spurn", "stack", "staff", "stag", "stain", "stalk", "star", "start", "stash", "state", "stave", "stay", "steam", "steel", "steep", "stem", "step", "stern", "stick", "stiff", "sting", "stir", "stock", "stone", "stop", "store", "storm", "strain", "stream", "street", "strike", "strip", "stuck", "stud", "stuff", "stump", "stun", "suck", "sun", "sup", "swan", "sweat", "sweep", "sweet", "swell", "swift", "swim", "swing", "sword", "tack", "tag", "tail", "take", "talk", "tame", "tank", "tap", "tar", "tart", "task", "taste", "tea", "teach", "team", "tear", "tell", "ten", "test", "thorn", "thought", "throne", "through", "throw", "thrill", "thud", "thumb", "thump", "tide", "tie", "tight", "tin", "tip", "tire", "toad", "toe", "toll", "tone", "tool", "tooth", "tore", "torn", "toss", "trace", "track", "train", "trap", "trash", "tray", "treat", "tree", "trice", "trick", "trip", "trite", "trot", "truck", "true", "trump", "trust", "truth", "try", "tuck", "turn", "twin", "twice", "vain", "vast", "vat", "vault", "vein", "vent", "vice", "view", "vibe", "vine", "voice", "vow", "wade", "wag", "waist", "wake", "walk", "wall", "war", "warm", "warn", "wash", "wasp", "waste", "watch", "water", "wave", "wealth", "weapon", "wear", "weave", "web", "weed", "weep", "well", "west", "whale", "whack", "wheat", "wheel", "whip", "white", "wild", "will", "win", "wind", "wing", "wipe", "wire", "wise", "wit", "witch", "wolf", "wood", "word", "wore", "work", "world", "worm", "worn", "wound", "wow", "wrap", "wrist", "write", "writ", "wrong", "yard", "yawn", "year", "yearn", "yell", "yellow", "yield", "youth", "zest", "zone", "ace", "ache", "arch", "badge", "bait", "bark", "barn", "bass", "bead", "blaze", "bluff", "boast", "braid", "brand", "brawl", "brim", "bruise", "brute", "cage", "calm", "cape", "carve", "charm", "chord", "cloak", "clutch", "coil", "curse", "dawn", "dusk", "fang", "fault", "flex", "forge", "grit", "grove", "hush", "jewel", "ledge", "lore", "luck", "lure", "march", "maze", "oath", "onyx", "pearl", "plume", "poise", "pulse", "quirk", "rail", "razor", "reef", "relic", "riff", "robe", "roam", "rush", "sage", "scale", "score", "script", "shard", "shrine", "skull", "soot", "sprawl", "stride", "surge", "switch", "talon", "thrash", "torch", "trance", "trait", "troop", "verge", "wrath", "zeal", "aura", "ballad", "bandit", "barrage", "beacon", "bedlam", "beloved", "blossom", "bodyguard", "bombast", "breakout", "broadcast", "caliber", "candor", "caution", "chaos", "cipher", "circuit", "clarion", "closure", "composure", "contour", "crimson", "crowded", "daydream", "deadlock", "deepcut", "defiant", "deluxe", "detonate", "disruptor", "drama", "drifter", "earthborn", "ember", "endgame", "enforcer", "epicenter", "fable", "fervor", "firestorm", "footwork", "fugitive", "fury", "gambit", "genesis", "gilded", "grandeur", "grimace", "grindstone", "guardian", "havoc", "heartbreak", "hellfire", "highway", "hinterland", "horizon", "hymnal", "iceberg", "iconic", "idol", "ignite", "impulse", "jester", "keystone", "lantern", "legend", "levity", "linchpin", "lowlight", "manhunt", "martyr", "mayhem", "miracle", "misfit", "monsoon", "mosaic", "murmur", "nightfall", "octave", "omen", "outlaw", "outshine", "overcast", "overdrive", "pageant", "paradox", "payday", "peacemaker", "pendant", "phoenix", "picture", "pilgrim", "pinball", "playbook", "portrait", "predator", "premiere", "prestige", "prophet", "protege", "pyre", "quiver", "radiance", "ramble", "ransom", "reckless", "redline", "refrain", "renegade", "resonance", "ripple", "romance", "runway", "sacrifice", "saffron", "sapphire", "scarlet", "serpent", "shrapnel", "silhouette", "sleepless", "solace", "sonic", "souvenir", "specter", "spotlight", "staccato", "starlet", "stimulus", "sublime", "sunrise", "sundown", "tempo", "tenor", "theory", "thicket", "tidal", "topical", "totem", "transit", "tribute", "turmoil", "twilight", "uproar", "vantage", "verdict", "vintage", "visionary", "wavelength", "wildfire", "withstand", "wondrous", "aberration", "absolution", "abyssal", "accolade", "acrimony", "aegis", "alchemy", "allegory", "allure", "animosity", "apparition", "apotheosis", "arcana", "ardor", "ascension", "atavistic", "augury", "avaricious", "axiomatic", "baneful", "beatitude", "belligerence", "blackguard", "blasphemous", "cacophony", "cataclysm", "catharsis", "cerebral", "chimera", "circuitry", "clairvoyance", "clandestine", "coalescence", "conflagration", "conjure", "convergence", "cosmology", "covetous", "cryptic", "damnation", "depravity", "desolation", "diabolical", "diatribe", "dichotomy", "discordance", "divination", "ecstasy", "effulgent", "eldritch", "elysian", "emanation", "enigma", "epiphany", "equilibrium", "ethereal", "eulogy", "exodus", "fathomless", "ferocity", "flourish", "forbidden", "fracture", "frenetic", "gallows", "harbinger", "hegemony", "heresy", "iconoclast", "illumination", "immaculate", "immensity", "impetus", "implacable", "incantation", "ineffable", "infernal", "inscrutable", "insidious", "invective", "invincible", "invocation", "jubilant", "labyrinth", "labyrinthine", "leviathan", "lucidity", "maelstrom", "magnanimous", "malevolent", "manifesto", "metaphysical", "monolith", "mysticism", "nemesis", "nebulous", "nocturne", "oblivion", "ominous", "opulence", "ossuary", "pandemonium", "paragon", "penumbra", "perdition", "phantasm", "phenomenology", "platitude", "plenitude", "portent", "preeminence", "providence", "purgatory", "quintessence", "radiant", "rapture", "reckoning", "requiem", "resplendent", "revelation", "sacrilege", "sanctum", "seraphic", "sovereignty", "spectacle", "stalwart", "superlative", "surreal", "synergy", "tempestuous", "tenebrous", "threnody", "transcendent", "turbulence", "ubiquity", "ultimatum", "venerated", "verdant", "vestige", "vicissitude", "vindication", "virtuosity", "vortex", "wanderlust", "warlock", "zealous", "zenith"])),
+      1: Array.from(new Set(["add", "aim", "ape", "arm", "art", "ash", "axe", "back", "bad", "bag", "ball", "bank", "bar", "bash", "bat", "beach", "beam", "bear", "beast", "beat", "bell", "bench", "bend", "best", "bike", "bin", "bind", "bird", "bit", "black", "blade", "blame", "blast", "bliss", "block", "blood", "bloom", "blow", "blown", "blue", "board", "bolt", "bomb", "bone", "book", "boot", "booth", "born", "boss", "bound", "bow", "brag", "brain", "brake", "branch", "brass", "brave", "break", "breathe", "breeze", "brick", "bright", "brink", "brook", "brown", "brow", "buck", "bug", "bull", "bump", "burn", "bush", "buy", "camp", "cap", "car", "card", "cart", "case", "cash", "cast", "cat", "catch", "cave", "cell", "chain", "chalk", "chart", "chase", "chat", "cheat", "check", "chest", "chill", "chime", "chin", "chip", "chore", "churn", "clad", "claim", "clack", "clap", "clash", "clay", "clean", "clear", "climb", "clock", "clone", "close", "cloud", "club", "cluck", "coal", "coast", "cold", "cone", "cook", "cool", "core", "corn", "cost", "cow", "crack", "crash", "crave", "cream", "creep", "crest", "crime", "crook", "cross", "crow", "crown", "crowned", "cry", "cup", "curb", "dad", "dark", "dart", "dash", "day", "dead", "deal", "dear", "deep", "deer", "desk", "dice", "die", "dig", "dime", "dip", "dirt", "ditch", "dive", "dog", "doom", "door", "dot", "doubt", "dough", "dove", "drag", "drain", "dream", "drill", "drink", "drive", "drop", "drone", "drum", "dust", "dwell", "ear", "earn", "earth", "east", "eat", "edge", "eight", "end", "eye", "face", "fact", "fad", "fade", "fake", "fall", "fame", "far", "fast", "fat", "fear", "feast", "feel", "feet", "fell", "fern", "flame", "flight", "float", "flock", "floor", "floss", "flown", "foe", "fog", "fold", "food", "fool", "foot", "force", "four", "fox", "frame", "free", "freeze", "freight", "fright", "frog", "frost", "full", "fund", "gain", "gale", "game", "gap", "gash", "gate", "gave", "gear", "ghost", "glad", "glass", "gleam", "gloss", "glow", "grown", "glue", "goat", "god", "gods", "gold", "good", "got", "grace", "grad", "grain", "ground", "grow", "guard", "guest", "guilt", "gun", "gut", "hail", "hair", "hand", "hat", "hatch", "hate", "hawk", "head", "heal", "hear", "heart", "heat", "heel", "height", "hell", "help", "herd", "high", "hike", "hill", "hit", "hold", "hole", "hook", "hope", "horn", "horse", "host", "hot", "hound", "house", "how", "hustle", "ice", "ink", "isle", "jar", "jaw", "jet", "joy", "jump", "junk", "keep", "key", "kind", "king", "kit", "knack", "knee", "kneel", "knife", "knit", "knock", "knot", "known", "mad", "made", "main", "map", "mars", "mash", "mask", "mat", "match", "meal", "meat", "melt", "mend", "mice", "mike", "mime", "mind", "mine", "mist", "misted", "mock", "mood", "moon", "more", "morn", "moss", "moth", "mount", "mouse", "mouth", "muck", "mud", "mute", "myth", "nag", "nail", "name", "near", "neat", "neck", "nerve", "net", "next", "nice", "night", "nine", "nook", "north", "nose", "nuke", "owl", "pack", "pad", "paid", "pain", "palm", "park", "part", "path", "pat", "pave", "peace", "peak", "peel", "pest", "pet", "phone", "pie", "pig", "pin", "pink", "pipe", "pit", "place", "plan", "plant", "play", "plot", "plow", "pluck", "plump", "pole", "pool", "post", "pot", "pound", "pour", "pray", "preach", "prey", "price", "pride", "priest", "prime", "prize", "puck", "pull", "pump", "punch", "pup", "push", "quack", "quell", "quest", "quick", "quiet", "quit", "race", "rack", "rad", "rage", "rag", "raid", "rain", "rat", "rave", "raw", "ray", "reach", "real", "red", "rest", "rib", "rice", "rich", "ridge", "ride", "rims", "ring", "rise", "road", "rock", "rod", "roll", "roof", "root", "rose", "rot", "round", "rule", "run", "rust", "sack", "sad", "safe", "sag", "salt", "same", "sand", "sat", "save", "saw", "scar", "scare", "scheme", "school", "scorn", "scout", "scrap", "scratch", "scream", "sea", "seal", "seam", "seat", "seed", "seek", "seem", "seen", "sell", "send", "sense", "seven", "shack", "shade", "shake", "shallow", "shame", "shark", "sharp", "shave", "shed", "shell", "shift", "shine", "ship", "shirt", "shock", "shoe", "shone", "shook", "shop", "shore", "shot", "shout", "show", "shuck", "shut", "sick", "sigh", "sight", "sign", "silk", "sin", "sing", "sink", "sip", "sit", "six", "skill", "skin", "skip", "sky", "slack", "slap", "slash", "slave", "sleep", "sleek", "slice", "slide", "slight", "slip", "slit", "slot", "slow", "slug", "slump", "slush", "smack", "small", "smart", "smash", "smell", "smile", "smoke", "snag", "snake", "snap", "snare", "snatch", "snark", "snow", "soar", "sock", "soil", "sold", "song", "soul", "sound", "soup", "south", "sow", "space", "spark", "spar", "spat", "speak", "spear", "spell", "spend", "spice", "spike", "spill", "spin", "spine", "spit", "split", "spoke", "spot", "spurn", "stack", "staff", "stag", "stain", "stalk", "star", "start", "stash", "state", "stave", "stay", "steam", "steel", "steep", "stem", "step", "stern", "stick", "stiff", "sting", "stir", "stock", "stone", "stop", "store", "storm", "strain", "stream", "street", "strike", "strip", "stuck", "stud", "stuff", "stump", "stun", "suck", "sun", "sup", "swan", "sweat", "sweep", "sweet", "swell", "swift", "swim", "swing", "sword", "tack", "tag", "tail", "take", "talk", "tame", "tank", "tap", "tar", "tart", "task", "taste", "tea", "teach", "team", "tear", "tell", "ten", "test", "thorn", "thought", "throne", "through", "throw", "thrill", "thud", "thumb", "thump", "tide", "tie", "tight", "tin", "tip", "tire", "toad", "toe", "toll", "tone", "tool", "tooth", "tore", "torn", "toss", "trace", "track", "train", "trap", "trash", "tray", "treat", "tree", "trice", "trick", "trip", "trite", "trot", "truck", "true", "trump", "trust", "truth", "try", "tuck", "turn", "twin", "twice", "vain", "vast", "vat", "vault", "vein", "vent", "vice", "view", "vibe", "vine", "voice", "vow", "wade", "wag", "waist", "wake", "walk", "wall", "war", "warm", "warn", "wash", "wasp", "waste", "watch", "water", "wave", "wealth", "weapon", "wear", "weave", "web", "weed", "weep", "well", "west", "whale", "whack", "wheat", "wheel", "whip", "white", "wild", "will", "win", "wind", "wing", "wipe", "wire", "wise", "wit", "witch", "wolf", "wood", "word", "wore", "work", "world", "worm", "worn", "wound", "wow", "wrap", "wrist", "write", "writ", "wrong", "yard", "yawn", "year", "yearn", "yell", "yellow", "yield", "youth", "zest", "zone", "ace", "ache", "arch", "badge", "bait", "bark", "barn", "bass", "bead", "blaze", "bluff", "boast", "braid", "brand", "brawl", "brim", "bruise", "brute", "cage", "calm", "cape", "carve", "charm", "chord", "cloak", "clutch", "coil", "curse", "dawn", "dusk", "fang", "flood", "flex", "forge", "grit", "grove", "hush", "jewel", "ledge", "lore", "luck", "lure", "march", "maze", "oath", "onyx", "pearl", "plume", "poise", "pulse", "quirk", "rail", "razor", "reef", "relic", "riff", "robe", "roam", "rush", "sage", "scale", "score", "script", "shard", "shrine", "skull", "soot", "sprawl", "stride", "surge", "switch", "talon", "thrash", "torch", "trance", "trait", "troop", "verge", "wrath", "zeal", "aura", "ballad", "bandit", "barrage", "beacon", "bedlam", "beloved", "blossom", "bodyguard", "bombast", "breakout", "broadcast", "caliber", "candor", "caution", "chaos", "cipher", "circuit", "clarion", "closure", "composure", "contour", "crimson", "crowded", "daydream", "deadlock", "deepcut", "defiant", "deluxe", "detonate", "disruptor", "drama", "drifter", "earthborn", "ember", "endgame", "enforcer", "epicenter", "fable", "fervor", "firestorm", "footwork", "fugitive", "fury", "gambit", "genesis", "gilded", "grandeur", "grimace", "grindstone", "guardian", "havoc", "heartbreak", "hellfire", "highway", "hinterland", "horizon", "hymnal", "iceberg", "iconic", "idol", "ignite", "impulse", "jester", "keystone", "lantern", "legend", "levity", "linchpin", "lowlight", "manhunt", "martyr", "mayhem", "miracle", "misfit", "monsoon", "mosaic", "murmur", "nightfall", "octave", "omen", "outlaw", "outshine", "overcast", "overdrive", "pageant", "paradox", "payday", "peacemaker", "pendant", "phoenix", "picture", "pilgrim", "pinball", "playbook", "portrait", "predator", "premiere", "prestige", "prophet", "protege", "pyre", "quiver", "radiance", "ramble", "ransom", "reckless", "redline", "refrain", "renegade", "resonance", "ripple", "romance", "runway", "sacrifice", "saffron", "sapphire", "scarlet", "serpent", "shrapnel", "silhouette", "sleepless", "solace", "sonic", "souvenir", "specter", "spotlight", "staccato", "starlet", "stimulus", "sublime", "sunrise", "sundown", "tempo", "tenor", "theory", "thicket", "tidal", "topical", "totem", "transit", "tribute", "turmoil", "twilight", "uproar", "vantage", "verdict", "vintage", "visionary", "wavelength", "wildfire", "withstand", "wondrous", "aberration", "absolution", "abyssal", "accolade", "acrimony", "aegis", "alchemy", "allegory", "allure", "animosity", "apparition", "apotheosis", "arcana", "ardor", "ascension", "atavistic", "augury", "avaricious", "axiomatic", "baneful", "beatitude", "belligerence", "blackguard", "blasphemous", "cacophony", "cataclysm", "catharsis", "cerebral", "chimera", "circuitry", "clairvoyance", "clandestine", "coalescence", "conflagration", "conjure", "convergence", "cosmology", "covetous", "cryptic", "damnation", "depravity", "desolation", "diabolical", "diatribe", "dichotomy", "discordance", "divination", "ecstasy", "effulgent", "eldritch", "elysian", "emanation", "enigma", "epiphany", "equilibrium", "ethereal", "eulogy", "exodus", "fathomless", "ferocity", "flourish", "forbidden", "fracture", "frenetic", "gallows", "harbinger", "hegemony", "heresy", "iconoclast", "illumination", "immaculate", "immensity", "impetus", "implacable", "incantation", "ineffable", "infernal", "inscrutable", "insidious", "invective", "invincible", "invocation", "jubilant", "labyrinth", "labyrinthine", "leviathan", "lucidity", "maelstrom", "magnanimous", "malevolent", "manifesto", "metaphysical", "monolith", "mysticism", "nemesis", "nebulous", "nocturne", "oblivion", "ominous", "opulence", "ossuary", "pandemonium", "paragon", "penumbra", "perdition", "phantasm", "phenomenology", "platitude", "plenitude", "portent", "preeminence", "providence", "purgatory", "quintessence", "radiant", "rapture", "reckoning", "requiem", "resplendent", "revelation", "sacrilege", "sanctum", "seraphic", "sovereignty", "spectacle", "stalwart", "superlative", "surreal", "synergy", "tempestuous", "tenebrous", "threnody", "transcendent", "turbulence", "ubiquity", "ultimatum", "venerated", "verdant", "vestige", "vicissitude", "vindication", "virtuosity", "vortex", "wanderlust", "warlock", "zealous", "zenith"])),
+      2: Array.from(new Set(["action", "adjusted", "alive", "altar", "ambition", "amber", "anger", "anthem", "apparatus", "arrive", "athlete", "author", "baggage", "balance", "bless", "blizzard", "blowing", "border", "breaking", "bringer", "brother", "bubble", "bumper", "burner", "busted", "cabbage", "canyon", "caper", "castle", "category", "chamber", "champion", "cherish", "chicory", "client", "collect", "collision", "combat", "comet", "compassion", "concrete", "connect", "corner", "copper", "courage", "cover", "crater", "creature", "crumble", "culture", "cumber", "custom", "cyber", "danger", "daughter", "daunted", "debtor", "decision", "demon", "density", "deprive", "derive", "desert", "designer", "desire", "destiny", "defeat", "derision", "devil", "devotion", "diamond", "digit", "divine", "diminish", "direct", "dollar", "drawing", "dried", "dungeon", "dusted", "dying", "earner", "earthquake", "echo", "eclipse", "elegant", "elephant", "empire", "enchanted", "enemy", "energy", "envy", "error", "evil", "exhausted", "fashion", "feature", "fellow", "fighting", "finding", "finger", "finish", "fisted", "flounder", "flower", "flowing", "follow", "forest", "founder", "fraction", "freedom", "friction", "garbage", "giving", "glacier", "gladness", "glorious", "glory", "glowing", "growing", "hacker", "haunted", "heavy", "heaven", "hickory", "hiding", "hollow", "honey", "honor", "horror", "hour", "hunger", "hunter", "incision", "island", "journey", "jumping", "jumper", "justice", "karma", "killer", "kingdom", "knowing", "language", "learner", "leather", "legacy", "leisure", "letter", "levee", "limit", "lion", "living", "losing", "lotion", "lover", "loyalty", "lumber", "luxury", "madness", "magic", "majesty", "making", "malice", "manage", "mansion", "many", "matrix", "meadow", "measure", "mellow", "melody", "memory", "message", "meteor", "mission", "monster", "mother", "motion", "mountain", "mumble", "muscle", "mystery", "nation", "nature", "nebula", "neglect", "notorious", "notion", "number", "ocean", "orbit", "order", "package", "packet", "palace", "panic", "paper", "passage", "passion", "penny", "perish", "phantom", "philosophy", "physics", "pier", "pity", "pivot", "planet", "planted", "pleasure", "plunder", "pocket", "poison", "popper", "potion", "power", "precision", "pressure", "prison", "prism", "project", "protect", "punish", "purpose", "puzzle", "quantum", "queen", "rabbit", "racket", "random", "rancid", "rapid", "ravage", "ready", "reason", "rebel", "recipe", "record", "reflect", "regret", "relevant", "relish", "remedy", "respect", "revenge", "revive", "rhythm", "riddle", "rigor", "ringer", "rising", "rival", "robot", "rumble", "running", "sacred", "sadness", "savage", "scared", "scraper", "screen", "scuttle", "season", "secret", "seeking", "seizure", "server", "shadow", "shield", "shifter", "shopper", "showing", "shower", "silicon", "silence", "sinister", "sinner", "siren", "skitter", "slaughter", "slumber", "smother", "soldier", "sorrow", "speaking", "spirit", "splash", "splendid", "sprint", "stadium", "static", "steady", "stinger", "stopper", "stranger", "strategy", "structure", "struggle", "stubble", "subtle", "summer", "summit", "survival", "survive", "sweater", "symphony", "system", "tantrum", "taper", "tempest", "terror", "thrive", "thunder", "tiger", "toddle", "tornado", "tragedy", "treasure", "treason", "trophy", "trouble", "trusted", "tsunami", "tumble", "turner", "tyrant", "uproarious", "valor", "vampire", "velvet", "venom", "victim", "victory", "violence", "voyage", "waddle", "wallow", "warrior", "winning", "wisdom", "wonder"])),
+      3: Array.from(new Set(["abominate", "absolute", "academic", "accelerate", "accommodate", "accomplice", "accomplishment", "accumulate", "accurate", "achievement", "activate", "adequate", "adolescent", "advanced", "advantage", "adventure", "advocate", "aesthetic", "aggregate", "aggression", "agriculture", "algorithm", "alienation", "allegation", "allocate", "alternative", "altitude", "aluminum", "ambiguity", "ammunition", "amphibian", "amplify", "analogy", "analyze", "anatomy", "ancestor", "anecdote", "annihilate", "anonymous", "anticipate", "anxiety", "apology", "apocalypse", "apocalyptic", "appreciate", "architecture", "aristocrat", "aromatic", "arrogance", "arrogant", "artifact", "artillery", "assassinate", "assemble", "astonish", "astronomy", "atmosphere", "atrocity", "atrocious", "audacious", "auditorium", "authentic", "authority", "authorize", "autobiography", "automation", "autonomy", "avalanche", "bacteria", "balcony", "banishment", "beautiful", "benevolent", "bicycle", "bilingual", "biochemistry", "biography", "biology", "brutality", "calculate", "calculation", "capacity", "capitalism", "catalogue", "catastrophe", "celebrity", "celestial", "cemetery", "century", "chemical", "chemistry", "chivalry", "choreography", "chorus", "chronology", "circular", "circulate", "circumstance", "citizen", "city", "civil", "clarity", "classic", "classify", "classroom", "clear", "climate", "climb", "clinic", "close", "closet", "cloth", "cloud", "clue", "clumsy", "cluster", "coach", "coalition", "coastal", "cocktail", "code", "coffee", "coffin", "cognitive", "coherent", "coincidence", "cold", "collaborate", "collapse", "colleague", "collect", "collection", "collective", "college", "collision", "colony", "color", "colossal", "column", "combination", "combine", "combustion", "comfort", "comic", "command", "commemorate", "commence", "commend", "comment", "commerce", "commission", "commit", "committee", "common", "communicate", "communism", "community", "compact", "companion", "company", "compare", "comparison", "compass", "compel", "compensate", "compete", "competition", "compile", "complain", "complement", "complete", "complex", "complexity", "compliant", "compliment", "component", "compose", "composition", "compound", "comprehend", "comprehensive", "comprise", "compromise", "compute", "computer", "conceal", "concede", "conceive", "concentrate", "concept", "concern", "concert", "concession", "conclude", "conclusion", "concrete", "condemn", "condense", "condition", "conduct", "conference", "confess", "confidence", "confirm", "conflict", "conform", "confront", "confuse", "confusion", "congratulate", "congregate", "congress", "connect", "connection", "conquer", "conquest", "conscience", "conscious", "consequence", "conservation", "conservative", "consider", "considerable", "consist", "consistent", "consolidate", "conspiracy", "constant", "constellation", "constitute", "constitution", "constraint", "construct", "consult", "consume", "contact", "contain", "contemporary", "contempt", "contend", "content", "contest", "context", "continent", "continue", "contract", "contradict", "contrary", "contrast", "contribute", "control", "controversial", "convenience", "convention", "converge", "conversation", "convert", "convey", "convict", "convince", "cook", "cool", "cooperate", "coordinate", "coordination", "cope", "copper", "copy", "copyright", "core", "corn", "corner", "corporal", "corporate", "corpse", "correct", "correspond", "corridor", "corrupt", "corruption", "cosmic", "cosmos", "costume", "cottage", "cotton", "council", "counsel", "count", "counter", "country", "couple", "courage", "course", "court", "cous cousin", "cover", "coverage", "coward", "crab", "crack", "craft", "crash", "crazy", "create", "creation", "creative", "creator", "creature", "credit", "creed", "creep", "crew", "crime", "criminal", "crisis", "crisp", "criterion", "critical", "criticism", "criticize", "crocodile", "crooked", "crop", "cross", "crowd", "crown", "crucial", "crude", "cruel", "cruise", "crush", "crust", "crystal", "cube", "cultivate", "culture", "cupboard", "cure", "curious", "curl", "currency", "current", "curriculum", "curse", "curtain", "curve", "custody", "custom", "customer", "cycle", "cylinder", "cyanide", "cynical", "cynicism", "aberration", "absolution", "abyssal", "accolade", "acrimony", "aegis", "alchemy", "allegory", "allure", "animosity", "apparition", "apotheosis", "arcana", "ardor", "ascension", "atavistic", "augury", "avaricious", "axiomatic", "baneful", "beatitude", "belligerence", "blackguard", "blasphemous", "cacophony", "cataclysm", "catharsis", "cerebral", "chimera", "circuitry", "clairvoyance", "clandestine", "coalescence", "conflagration", "conjure", "convergence", "cosmology", "covetous", "cryptic", "damnation", "depravity", "desolation", "diabolical", "diatribe", "dichotomy", "discordance", "divination", "ecstasy", "effulgent", "eldritch", "elysian", "emanation", "enigma", "epiphany", "equilibrium", "ethereal", "eulogy", "exodus", "fathomless", "ferocity", "flourish", "forbidden", "fracture", "frenetic", "gallows", "harbinger", "hegemony", "heresy", "iconoclast", "illumination", "immaculate", "immensity", "impetus", "implacable", "incantation", "ineffable", "infernal", "inscrutable", "insidious", "invective", "invincible", "invocation", "jubilant", "labyrinth", "labyrinthine", "leviathan", "lucidity", "maelstrom", "magnanimous", "malevolent", "manifesto", "metaphysical", "monolith", "mysticism", "nemesis", "nebulous", "nocturne", "oblivion", "ominous", "opulence", "ossuary", "pandemonium", "paragon", "penumbra", "perdition", "phantasm", "phenomenology", "platitude", "plenitude", "portent", "preeminence", "providence", "purgatory", "quintessence", "radiant", "rapture", "reckoning", "requiem", "resplendent", "revelation", "sacrilege", "sanctum", "seraphic", "sovereignty", "spectacle", "stalwart", "superlative", "surreal", "synergy", "tempestuous", "tenebrous", "threnody", "transcendent", "turbulence", "ubiquity", "ultimatum", "venerated", "verdant", "vestige", "vicissitude", "vindication", "virtuosity", "vortex", "wanderlust", "warlock", "zealous", "zenith"])),
     };
 
     // --- DICTIONARY MODAL ---
@@ -126,6 +128,7 @@
 
     // --- MAIN APP ---
     function App() {
+      // --- STATE DEFINITIONS ---
       const [showSplash, setShowSplash] = useState(true);
       const [appState, setAppState] = useState('idle');
       const [currentWords, setCurrentWords] = useState(['TAP START']);
@@ -168,70 +171,32 @@
       });
       const [vaultSortMode, setVaultSortMode] = useState('Newest'); 
 
-      // Handle Splash Screen and Onboarding Flow
-      useEffect(() => {
-        const splashTimer = setTimeout(() => {
-          setShowSplash(false);
-          
-          if (typeof window !== 'undefined') {
-            const hasSeen = window.localStorage.getItem('barsmithHasSeenInfo');
-            if (!hasSeen) {
-              setShowInfo(true);
-              window.localStorage.setItem('barsmithHasSeenInfo', 'true');
-            }
-          }
-        }, 2500);
-        
-        return () => clearTimeout(splashTimer);
-      }, []);
-
-      useEffect(() => {
-        if (typeof window !== 'undefined') window.localStorage.setItem('barsmithVault', JSON.stringify(vault));
-      }, [vault]);
-
-      useEffect(() => {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (AudioContext) audioCtxRef.current = new AudioContext();
-        return () => { if (audioCtxRef.current) audioCtxRef.current.close(); };
-      }, []);
-
       const [dictData, setDictData] = useState(null);
       const [isLoadingDict, setIsLoadingDict] = useState(false);
       const [summaryActiveWord, setSummaryActiveWord] = useState(null);
 
+      // --- HELPERS ---
       const getDynamicFontSize = (word, count) => {
         const len = Math.max(word.length || 1, 4); 
         const isLandscape = typeof window !== 'undefined' && window.innerWidth > window.innerHeight;
-        
         if (count === 4) return isLandscape ? `calc(min(6vh, ${50 / len}vw))` : `calc(min(7vw, ${60 / len}vw))`;
         if (count === 3) return isLandscape ? `calc(min(8vh, ${70 / len}vw))` : `calc(min(9vw, ${80 / len}vw))`;
         if (count === 2) return isLandscape ? `calc(min(10vh, ${90 / len}vw))` : `calc(min(12vw, ${100 / len}vw))`;
         return isLandscape ? `calc(min(14vh, ${120 / len}vw))` : `calc(min(18vw, ${135 / len}vw))`;
       };
 
-      const playTick = () => {
-        if (!audioCtxRef.current) return;
-        if (audioCtxRef.current.state === 'suspended') audioCtxRef.current.resume();
-        const osc = audioCtxRef.current.createOscillator();
-        const gainNode = audioCtxRef.current.createGain();
-        osc.connect(gainNode); gainNode.connect(audioCtxRef.current.destination);
-        osc.frequency.setValueAtTime(800, audioCtxRef.current.currentTime);
-        gainNode.gain.setValueAtTime(0.5, audioCtxRef.current.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtxRef.current.currentTime + 0.1);
-        osc.start(); osc.stop(audioCtxRef.current.currentTime + 0.1);
+      const requestWakeLock = async () => {
+        try {
+          if ('wakeLock' in navigator) {
+            wakeLockRef.current = await navigator.wakeLock.request('screen');
+          }
+        } catch (err) { console.log('Wake Lock denied:', err); }
       };
 
-      const handleFileUpload = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          if (beatAudioSrc) URL.revokeObjectURL(beatAudioSrc); 
-          setBeatFileName(file.name); setBeatAudioSrc(URL.createObjectURL(file)); setIsMetronomeOn(false); 
+      const releaseWakeLock = () => {
+        if (wakeLockRef.current !== null) {
+          wakeLockRef.current.release().then(() => { wakeLockRef.current = null; });
         }
-      };
-
-      const removeBeat = () => {
-        setBeatFileName(''); if (beatAudioSrc) URL.revokeObjectURL(beatAudioSrc); 
-        setBeatAudioSrc(null); if (fileInputRef.current) fileInputRef.current.value = '';
       };
 
       const getTierDistribution = (baseTier, count) => {
@@ -260,29 +225,50 @@
         lastWordRef.current = selected; return selected;
       };
 
-      useEffect(() => {
-        if (appState === 'active' && !isPausedForDict) {
-          timerRef.current = setInterval(() => {
-            const nextWords = getNextRandomWords(wordCount); setCurrentWords(nextWords); setTotalWordsSeen(prev => prev + wordCount);
-          }, intervalMs);
-          if (isMetronomeOn) {
-            playTick(); metronomeRef.current = setInterval(playTick, intervalMs / 4);
-          }
-        } else {
-          clearInterval(timerRef.current); clearInterval(metronomeRef.current);
-        }
-        return () => { clearInterval(timerRef.current); clearInterval(metronomeRef.current); }
-      }, [appState, isPausedForDict, selectedTier, intervalMs, isMetronomeOn, wordCount]);
-
+      // --- HANDLERS ---
       const startSession = () => {
         if (audioCtxRef.current?.state === 'suspended') audioCtxRef.current.resume();
         if (beatAudioSrc && audioPlayerRef.current) { audioPlayerRef.current.currentTime = 0; audioPlayerRef.current.play().catch(console.error); }
+        requestWakeLock();
         setSessionStartTime(Date.now()); setTotalWordsSeen(wordCount); setFrozenWords(new Set()); setCurrentWords(getNextRandomWords(wordCount)); setAppState('active'); setIsPausedForDict(false);
       };
 
       const stopSession = () => {
         if (audioPlayerRef.current) audioPlayerRef.current.pause();
+        releaseWakeLock();
         setSessionDuration(Math.floor((Date.now() - sessionStartTime) / 1000)); setAppState('summary'); setIsPausedForDict(false);
+      };
+
+      const resetToIdle = () => { 
+        setAppState('idle'); 
+        setCurrentWords(['READY...']); 
+        setSummaryActiveWord(null); 
+        setDictData(null); 
+      };
+
+      const handleFileUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          if (beatAudioSrc) URL.revokeObjectURL(beatAudioSrc); 
+          setBeatFileName(file.name); setBeatAudioSrc(URL.createObjectURL(file)); setIsMetronomeOn(false); 
+        }
+      };
+
+      const removeBeat = () => {
+        setBeatFileName(''); if (beatAudioSrc) URL.revokeObjectURL(beatAudioSrc); 
+        setBeatAudioSrc(null); if (fileInputRef.current) fileInputRef.current.value = '';
+      };
+
+      const playTick = () => {
+        if (!audioCtxRef.current) return;
+        if (audioCtxRef.current.state === 'suspended') audioCtxRef.current.resume();
+        const osc = audioCtxRef.current.createOscillator();
+        const gainNode = audioCtxRef.current.createGain();
+        osc.connect(gainNode); gainNode.connect(audioCtxRef.current.destination);
+        osc.frequency.setValueAtTime(800, audioCtxRef.current.currentTime);
+        gainNode.gain.setValueAtTime(0.5, audioCtxRef.current.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtxRef.current.currentTime + 0.1);
+        osc.start(); osc.stop(audioCtxRef.current.currentTime + 0.1);
       };
 
       const fetchWithAbort = async (url, signal) => {
@@ -338,16 +324,70 @@
       };
 
       const resumeFromDict = () => { setIsPausedForDict(false); setActiveDictWord(null); setDictData(null); if (beatAudioSrc && audioPlayerRef.current) audioPlayerRef.current.play(); };
-      const resetToIdle = () => { setAppState('idle'); setCurrentWords(['READY...']); setSummaryActiveWord(null); setDictData(null); };
-      const toggleVaultWord = (word) => { setVault(prev => prev.some(w => w.word === word) ? prev.filter(w => w.word !== word) : [...prev, { word, addedAt: Date.now() }]); };
-      const sortedVault = useMemo(() => [...vault].sort((a, b) => vaultSortMode === 'A-Z' ? a.word.localeCompare(b.word) : vaultSortMode === 'Z-A' ? b.word.localeCompare(a.word) : vaultSortMode === 'Newest' ? b.addedAt - a.addedAt : a.addedAt - b.addedAt), [vault, vaultSortMode]);
+      
+      const toggleVaultWord = (word) => { 
+        setVault(prev => prev.some(w => w.word === word) ? prev.filter(w => w.word !== word) : [...prev, { word, addedAt: Date.now() }]); 
+      };
 
+      const isWordInVault = (word) => vault.some(w => w.word === word);
+
+      const sortedVault = useMemo(() => {
+        let result = [...vault];
+        if (vaultSortMode === 'A-Z') result.sort((a, b) => a.word.localeCompare(b.word));
+        else if (vaultSortMode === 'Z-A') result.sort((a, b) => b.word.localeCompare(a.word));
+        else if (vaultSortMode === 'Newest') result.sort((a, b) => b.addedAt - a.addedAt);
+        else if (vaultSortMode === 'Oldest') result.sort((a, b) => a.addedAt - b.addedAt);
+        return result;
+      }, [vault, vaultSortMode]);
+
+      // --- EFFECTS ---
+      useEffect(() => {
+        const splashTimer = setTimeout(() => {
+          setShowSplash(false);
+          if (typeof window !== 'undefined') {
+            const hasSeen = window.localStorage.getItem('barsmithHasSeenInfo');
+            if (!hasSeen) {
+              setShowInfo(true);
+              window.localStorage.setItem('barsmithHasSeenInfo', 'true');
+            }
+          }
+        }, 2500);
+        return () => clearTimeout(splashTimer);
+      }, []);
+
+      useEffect(() => {
+        if (typeof window !== 'undefined') window.localStorage.setItem('barsmithVault', JSON.stringify(vault));
+      }, [vault]);
+
+      useEffect(() => {
+        if (appState === 'active' && !isPausedForDict) {
+          timerRef.current = setInterval(() => {
+            const nextWords = getNextRandomWords(wordCount); 
+            setCurrentWords(nextWords); 
+            setTotalWordsSeen(prev => prev + wordCount);
+          }, intervalMs);
+          if (isMetronomeOn) {
+            playTick(); metronomeRef.current = setInterval(playTick, intervalMs / 4);
+          }
+        } else {
+          clearInterval(timerRef.current); clearInterval(metronomeRef.current);
+        }
+        return () => { clearInterval(timerRef.current); clearInterval(metronomeRef.current); }
+      }, [appState, isPausedForDict, selectedTier, intervalMs, isMetronomeOn, wordCount]);
+
+      useEffect(() => {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) audioCtxRef.current = new AudioContext();
+        return () => { if (audioCtxRef.current) audioCtxRef.current.close(); };
+      }, []);
+
+      // --- RENDER ---
       if (showSplash) {
         return (
           <div className="fixed inset-0 bg-[#050505] flex items-center justify-center z-[100] animate-out fade-out duration-1000 delay-[1.5s]">
             <div className="relative flex flex-col items-center animate-in zoom-in-95 duration-700 ease-out px-10">
               <div className="relative w-full max-w-sm aspect-video mb-4 flex items-center justify-center">
-                 <img src="/icon-512.png" className="w-full h-full object-contain" />
+                 <img src="icon-512.png" className="w-full h-full object-contain" />
               </div>
             </div>
           </div>
@@ -410,11 +450,17 @@
               <div className="absolute top-6 left-6 right-6 flex justify-between items-center opacity-50 pointer-events-none">
                 <span className="text-[10px] font-black uppercase tracking-widest text-white">{wordCount === 1 ? `LEVEL ${selectedTier}` : `LVL ${selectedTier} MIX • ${wordCount} WORDS`}</span>
               </div>
-              <div className={`relative w-full h-full flex flex-wrap justify-center items-center px-4 overflow-visible z-10 transition-all duration-500 ${wordCount >= 3 ? 'landscape:grid landscape:grid-cols-2 landscape:gap-4' : 'flex-col gap-12 landscape:gap-8 md:gap-40'}`}>
+              <div className={`relative w-full h-full flex flex-col justify-center items-stretch px-4 overflow-hidden z-10 transition-all duration-500 landscape:grid landscape:grid-cols-2 landscape:gap-x-8 landscape:gap-y-4 landscape:place-content-center landscape:place-items-center ${wordCount < 3 ? 'landscape:flex landscape:flex-col landscape:gap-8' : ''}`}>
                 {currentWords.map((word, idx) => (
-                  <h2 key={`${totalWordsSeen}-${idx}`} onClick={(e) => { e.stopPropagation(); pauseForDict(word); }} className={`font-black text-center uppercase tracking-tighter transition duration-300 ease-out flex justify-center items-center w-full cursor-pointer hover:scale-105 ${wordCount >= 3 ? 'landscape:w-full' : ''} ${isPausedForDict && activeDictWord !== word ? 'text-white/10 scale-[0.85] blur-md pointer-events-none' : 'text-white scale-100'}`} style={{ fontSize: getDynamicFontSize(word, currentWords.length), lineHeight: '0.8' }}>
-                    <span className="block animate-word-strike drop-shadow-2xl whitespace-nowrap">{word}</span>
-                  </h2>
+                  <div key={`${totalWordsSeen}-${idx}`} className="flex-1 flex justify-center items-center w-full">
+                    <h2 
+                        onClick={(e) => { e.stopPropagation(); pauseForDict(word); }} 
+                        className={`font-black text-center uppercase tracking-tighter transition duration-300 ease-out cursor-pointer hover:scale-105 ${isPausedForDict && activeDictWord !== word ? 'text-white/10 scale-[0.85] blur-md pointer-events-none' : 'text-white scale-100'}`} 
+                        style={{ fontSize: getDynamicFontSize(word, currentWords.length), lineHeight: '1' }}
+                    >
+                      <span className="block animate-word-strike drop-shadow-2xl whitespace-nowrap">{word}</span>
+                    </h2>
+                  </div>
                 ))}
               </div>
               {!isPausedForDict && <p className="absolute bottom-24 text-gray-600 text-[10px] font-black uppercase tracking-widest animate-pulse z-10 pointer-events-none landscape:bottom-16">Tap a word to freeze</p>}
@@ -424,7 +470,7 @@
           {appState === 'summary' && (
             <div className="flex-1 flex flex-col items-center p-6 overflow-y-auto custom-scrollbar pb-32">
               <div className="w-full mt-6 max-w-2xl">
-                <div className="text-center mb-10"><h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter uppercase">Complete</h2></div>
+                <div className="text-center mb-10"><h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter uppercase">Forge Complete</h2></div>
                 <div className="grid grid-cols-3 gap-3 mb-8">
                   <div className="bg-[#0f0f0f] border border-white/5 py-6 rounded-2xl text-center"><p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-1">Time</p><p className="text-2xl md:text-3xl font-black text-white">{Math.floor(sessionDuration / 60)}:{String(sessionDuration % 60).padStart(2, '0')}</p></div>
                   <div className="bg-[#0f0f0f] border border-white/5 py-6 rounded-2xl text-center"><p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mb-1">Words</p><p className="text-2xl md:text-3xl font-black text-white">{totalWordsSeen}</p></div>
@@ -432,7 +478,15 @@
                 </div>
                 <div className="bg-[#0f0f0f] p-6 rounded-3xl border border-white/5">
                   <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4"><h3 className="text-gray-400 text-xs font-black uppercase tracking-widest">Frozen Words</h3><span className="bg-white/10 px-3 py-1 rounded-full text-white text-xs font-bold">{frozenWords.size}</span></div>
-                  {[...frozenWords].map((word) => (<div key={word} className="flex justify-between items-center bg-[#151515] px-5 py-4 rounded-xl mb-2"><button onClick={() => { setSummaryActiveWord(word); fetchDictionaryData(word); }} className="text-base sm:text-lg font-black text-gray-300 flex-1 text-left uppercase">{word}</button><button onClick={() => toggleVaultWord(word)} className={`text-2xl ${vault.some(v => v.word === word) ? 'text-yellow-500' : 'text-gray-700'}`}>{vault.some(v => v.word === word) ? '★' : '☆'}</button></div>))}
+                  {[...frozenWords].map((word) => {
+                    const isSaved = isWordInVault(word);
+                    return (
+                      <div key={word} className="flex justify-between items-center bg-[#151515] px-5 py-4 rounded-xl mb-2 group transition-all hover:bg-white/5">
+                        <button onClick={() => { setSummaryActiveWord(word); fetchDictionaryData(word); }} className="text-base sm:text-lg font-black text-gray-300 flex-1 text-left uppercase tracking-tight group-hover:text-white transition-colors">{word}</button>
+                        <button onClick={() => toggleVaultWord(word)} className={`text-2xl transition-all ${isSaved ? 'text-yellow-500 scale-110' : 'text-gray-700 hover:text-yellow-500'}`}>{isSaved ? '★' : '☆'}</button>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
               {summaryActiveWord && <DictionaryModal word={summaryActiveWord} dictData={dictData} isLoading={isLoadingDict} onClose={() => setSummaryActiveWord(null)} />}
@@ -441,16 +495,37 @@
           {appState === 'vault' && (
             <div className="flex-1 flex flex-col items-center p-6 overflow-y-auto w-full custom-scrollbar pb-32">
                <div className="w-full mt-6 max-w-2xl">
-                 <div className="flex items-center gap-4 mb-10"><button onClick={resetToIdle} className="w-10 h-10 shrink-0 bg-white/5 rounded-full flex items-center justify-center border border-white/5">←</button><h2 className="text-3xl md:text-4xl font-black text-white tracking-tighter uppercase">Your Vault</h2></div>
-                 <div className="flex flex-col gap-2">{sortedVault.map((item) => (<div key={item.word} className="flex justify-between items-center bg-[#0f0f0f] border border-white/5 px-5 py-4 rounded-xl"><button onClick={() => { setSummaryActiveWord(item.word); fetchDictionaryData(item.word); }} className="flex-1 text-left"><span className="text-lg font-black text-gray-200 uppercase">{item.word}</span></button><button onClick={() => toggleVaultWord(item.word)} className="text-2xl text-yellow-500">★</button></div>))}</div>
+                 <div className="flex items-center gap-4 mb-10"><button onClick={resetToIdle} className="w-10 h-10 shrink-0 bg-white/5 rounded-full flex items-center justify-center border border-white/5 transition-all hover:bg-white/10 hover:text-white">←</button><h2 className="text-3xl md:text-4xl font-black text-white tracking-tighter uppercase">Your Vault</h2></div>
+                 
+                 <div className="flex flex-wrap gap-2 mb-6">
+                    {['Newest', 'Oldest', 'A-Z', 'Z-A'].map(mode => (
+                      <button key={mode} onClick={() => setVaultSortMode(mode)} className={`px-5 py-2 rounded-full text-[10px] uppercase tracking-widest font-black transition-all border ${vaultSortMode === mode ? 'bg-white border-white text-black' : 'bg-transparent border-white/10 text-gray-500 hover:text-white'}`}>{mode}</button>
+                    ))}
+                 </div>
+
+                 {vault.length === 0 ? (
+                    <div className="bg-[#0f0f0f] py-20 rounded-3xl border border-white/5 text-center"><p className="text-5xl mb-6 opacity-30">★</p><p className="text-white font-black text-xl uppercase tracking-tighter">Vault is empty</p></div>
+                 ) : (
+                    <div className="flex flex-col gap-2">
+                      {sortedVault.map((item) => (
+                        <div key={item.word} className="flex justify-between items-center bg-[#0f0f0f] border border-white/5 px-5 py-4 rounded-xl group hover:bg-[#151515] transition-all">
+                          <button onClick={() => { setSummaryActiveWord(item.word); fetchDictionaryData(item.word); }} className="flex-1 text-left flex flex-col items-start">
+                            <span className="text-lg font-black text-gray-200 group-hover:text-white uppercase tracking-tight">{item.word}</span>
+                            <span className="text-[9px] text-gray-600 font-bold uppercase mt-1">{new Date(item.addedAt).toLocaleDateString()}</span>
+                          </button>
+                          <button onClick={() => toggleVaultWord(item.word)} className="text-2xl text-yellow-500 transition-all hover:scale-110">★</button>
+                        </div>
+                      ))}
+                    </div>
+                 )}
                </div>
                {summaryActiveWord && <DictionaryModal word={summaryActiveWord} dictData={dictData} isLoading={isLoadingDict} onClose={() => setSummaryActiveWord(null)} isVaultMode={true} />}
             </div>
           )}
           <div className="fixed bottom-6 left-0 w-full flex justify-center px-6 z-40 pointer-events-none landscape:bottom-4">
-            {appState === 'idle' && (<button className="pointer-events-auto w-full max-w-md py-5 rounded-2xl text-sm font-black tracking-widest uppercase bg-white text-black shadow-lg" onClick={startSession}>Start Session</button>)}
-            {appState === 'active' && (<button className="pointer-events-auto py-3 px-8 rounded-full text-[10px] font-black tracking-widest uppercase bg-[#0f0f0f] border border-white/10 text-gray-400" onClick={stopSession}>End Session</button>)}
-            {(appState === 'summary' || appState === 'vault') && (<button className="pointer-events-auto w-full max-w-md py-5 rounded-2xl text-sm font-black tracking-widest uppercase bg-[#151515] border border-white/10" onClick={resetToIdle}>New Session</button>)}
+            {appState === 'idle' && (<button className="pointer-events-auto w-full max-w-md py-5 rounded-2xl text-sm font-black tracking-widest uppercase bg-white text-black shadow-lg transition-all hover:bg-gray-200 active:scale-95" onClick={startSession}>Start Session</button>)}
+            {appState === 'active' && (<button className="pointer-events-auto py-3 px-8 rounded-full text-[10px] font-black tracking-widest uppercase bg-[#0f0f0f] border border-white/10 text-gray-400 active:scale-95 hover:text-white" onClick={stopSession}>End Session</button>)}
+            {(appState === 'summary' || appState === 'vault') && (<button className="pointer-events-auto w-full max-w-md py-5 rounded-2xl text-sm font-black tracking-widest uppercase bg-[#151515] border border-white/10 active:scale-95 transition-all hover:bg-[#202020]" onClick={resetToIdle}>New Session</button>)}
           </div>
           <div className="fixed bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#050505] to-transparent pointer-events-none z-30 landscape:h-20" />
         </div>
