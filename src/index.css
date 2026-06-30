@@ -1,0 +1,58 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body {
+  background-color: #050505;
+  margin: 0; padding: 0; width: 100%; height: 100%;
+  overscroll-behavior: none;
+  font-family: 'Inter', sans-serif;
+  color: white;
+}
+
+@keyframes shrinkBar { 0% { width: 100%; } 100% { width: 0%; } }
+
+@keyframes wordIn {
+  0%   { opacity: 0; transform: translateY(18px) scale(0.92); filter: blur(6px); }
+  100% { opacity: 1; transform: translateY(0)    scale(1);    filter: blur(0); }
+}
+@keyframes flashBg {
+  0%   { background: rgba(255,255,255,0.12); }
+  100% { background: rgba(255,255,255,0); }
+}
+.animate-word-strike { animation: wordIn 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards; }
+.word-flash { animation: flashBg 0.35s ease-out forwards; }
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%;
+  background: #fff; cursor: pointer; margin-top: -8px;
+  box-shadow: 0 0 15px rgba(255,255,255,0.5);
+}
+input[type=range]::-webkit-slider-runnable-track {
+  width: 100%; height: 4px; cursor: pointer;
+  background: rgba(255,255,255,0.2); border-radius: 2px;
+}
+.custom-scrollbar::-webkit-scrollbar { width: 5px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 10px; }
+
+textarea { resize: none; }
+textarea:focus { outline: none; }
+
+@keyframes recPulse {
+  0%,100% { box-shadow: 0 0 0 2px rgba(239,68,68,0.5); }
+  50%      { box-shadow: 0 0 0 4px rgba(239,68,68,0.7), 0 0 24px rgba(239,68,68,0.3); }
+}
+.rec-ring { animation: recPulse 2s ease-in-out infinite; }
+
+/* Rhyme search chip hover */
+.rhyme-chip { transition: background 0.15s, color 0.15s; cursor: pointer; }
+.rhyme-chip:hover { background: rgba(255,255,255,0.15); }
+
+/* Respect reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .animate-word-strike, .word-flash, .rec-ring, .animate-pulse, .animate-spin {
+    animation: none !important;
+  }
+}
