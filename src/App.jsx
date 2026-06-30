@@ -703,8 +703,7 @@ import {
                     ['05','Session Timer','Set a 5–20 minute block. Session ends automatically with a summary. Serious writers work in timed sprints — this is that.'],
                     ['06','Rhyme Search','Type any word and get a full rhyme map bucketed by syllable count. Perfect, near, and phonetic matches. Tap to copy.'],
                     ['07','Your Words',  'Add personal vocabulary in the Vault — names, slang, places. They surface in your sessions. The tool becomes yours.'],
-                    ['08','Vault Drill', 'Your saved words become a custom session. Drill vocabulary you've claimed — words you know are yours.'],
-                    ['09','Record',      'Capture the session on screen. Review what landed, clip the best moments, study your own flow.'],
+                    ['08', 'Vault Drill', "Your saved words become a custom session. Drill vocabulary you've claimed — words you know are yours."],                    ['09','Record',      'Capture the session on screen. Review what landed, clip the best moments, study your own flow.'],
                   ].map(([n,title,desc]) => (
                     <li key={n} className="flex gap-4">
                       <span className="text-[10px] font-black text-gray-700 uppercase tracking-widest pt-0.5 w-4 shrink-0">{n}</span>
