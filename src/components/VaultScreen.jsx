@@ -57,7 +57,7 @@ export default function VaultScreen({
         {vault.length > 0 && (
           <div className="flex gap-2 mb-5">
             {['Newest','Oldest','A-Z','Z-A'].map(m=>(
-              <button key={m} onClick={()=>setVaultSortMode(m)} className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${vaultSortMode===m?'bg-white text-black':'bg-white/5 text-gray-600 border border-white/5'}`}>{m}</button>
+              <button key={m} onClick={()=>setVaultSortMode(m)} aria-pressed={vaultSortMode===m} aria-label={`Sort vault ${m}`} className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${vaultSortMode===m?'bg-white text-black':'bg-white/5 text-gray-600 border border-white/5'}`}>{m}</button>
             ))}
           </div>
         )}

@@ -1,6 +1,7 @@
 export default function HistoryScreen({
   resetToIdle, sessionHistory, setSessionHistory, fmtDate, fmtDur,
   flattenNotes, copyNoteText, copiedNoteKey,
+  historyAtCap, historyCount, handleExportData,
 }) {
   return (
     <div className="flex-1 flex flex-col items-center p-6 overflow-y-auto w-full custom-scrollbar pb-36">
@@ -12,6 +13,15 @@ export default function HistoryScreen({
           </div>
           {sessionHistory.length > 0 && <button onClick={()=>{if(confirm('Clear history?'))setSessionHistory([]);}} className="text-gray-700 text-xs font-bold uppercase tracking-widest hover:text-white transition-colors">Clear</button>}
         </div>
+        {/* History keeps only the most recent 100 sessions — the streak counter is tracked
+            separately and unaffected, but Bar Pad notes on older sessions are only safe
+            if backed up before they roll off. */}
+        {historyAtCap && handleExportData && (
+          <div className="bg-yellow-500/8 border border-yellow-500/25 rounded-2xl p-4 mb-5 flex items-center justify-between gap-4">
+            <p className="text-yellow-400 text-xs leading-relaxed">History stores up to 100 sessions. You have {historyCount} saved — export a backup before older sessions begin rolling off.</p>
+            <button onClick={handleExportData} className="shrink-0 text-[10px] font-black uppercase tracking-widest text-yellow-400 hover:text-yellow-300 transition-colors border border-yellow-500/30 rounded-full px-3 py-2">Export</button>
+          </div>
+        )}
         {sessionHistory.length === 0 && (
           <div className="text-center py-16 text-gray-700">
             <p className="text-4xl mb-4 opacity-30">◷</p>

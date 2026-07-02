@@ -15,7 +15,7 @@ export default function ActiveScreen({
   wordCount, sessionLimit, timeRemaining, fmtCountdown,
   totalWordsSeen, activeWords, activeDictWord, pauseForDict,
   dictData, isLoadingDict, resumeFromDict, sessionNotes, handleSaveNote,
-  cameraPreviewRef, stopRecording, registerActiveNoteFlush,
+  cameraPreviewRef, stopRecording, registerActiveNoteFlush, cameraFacing,
 }) {
   return (
     <div className={`flex-1 flex flex-col justify-center items-center p-6 relative overflow-hidden ${isRecording?'rec-ring':''}`}>
@@ -66,6 +66,10 @@ export default function ActiveScreen({
           <h2
             key={`${totalWordsSeen}-${vaultDrillIndex}-${idx}`}
             onClick={e => { e.stopPropagation(); pauseForDict(word); }}
+            onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); pauseForDict(word); } }}
+            role="button"
+            tabIndex={isPausedForDict && activeDictWord !== word ? -1 : 0}
+            aria-label={`Lock "${word}" to look up rhymes and write a bar`}
             className={`font-black text-center uppercase tracking-tighter flex justify-center items-center w-full cursor-pointer transition-all duration-200 ${activeWords.length>=3?'landscape:w-full':''} ${isPausedForDict && activeDictWord!==word ? 'text-white/8 scale-[0.85] blur-sm pointer-events-none' : 'text-white hover:scale-[1.03]'}`}
             style={{ fontSize: getDynamicFontSize(word, activeWords.length), lineHeight: '0.82' }}
           >
@@ -77,7 +81,7 @@ export default function ActiveScreen({
       {/* Camera preview (front-facing, muted, mirrored) */}
       {isRecording && (
         <div className="absolute right-5 w-20 h-28 rounded-2xl overflow-hidden border-2 border-red-500/50 shadow-[0_0_20px_rgba(0,0,0,0.6)] z-20 bg-black" style={{ bottom: 'calc(7rem + env(safe-area-inset-bottom, 0px))' }}>
-          <video ref={cameraPreviewRef} autoPlay muted playsInline className="w-full h-full object-cover" style={{ transform: 'scaleX(-1)' }} />
+          <video ref={cameraPreviewRef} autoPlay muted playsInline className="w-full h-full object-cover" style={{ transform: cameraFacing === 'user' ? 'scaleX(-1)' : 'none' }} />
         </div>
       )}
 

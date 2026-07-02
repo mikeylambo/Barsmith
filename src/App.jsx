@@ -11,7 +11,7 @@ import {
   exportAllData, importAllData,
   loadDraft, clearDraft,
 } from './services/storage';
-import { useSessionEngine } from './hooks/useSessionEngine';
+import { useSessionEngine, cameraFacingLabel } from './hooks/useSessionEngine';
 
 import Splash from './components/Splash.jsx';
 import InfoModal from './components/InfoModal.jsx';
@@ -63,8 +63,8 @@ function App() {
   const [sessionHistory, setSessionHistory] = useState(() => loadHistory());
 
   // Streak — read from independent practice-day storage, NOT from sessionHistory, which is
-  // capped at 20 entries. A writer doing several sessions a day should never see their
-  // streak collapse because old history rolled off.
+  // capped at 100 entries (warns at 95). Text-only records are tiny; a serious writer
+  // doing multiple sessions a day should have months of archive before needing to export.
   const [practiceDays, setPracticeDays] = useState(() => loadPracticeDays());
   const streak = computeStreak(practiceDays);
 
@@ -101,7 +101,7 @@ function App() {
       notes: recoveredDraft.notes || {},
       source: 'recovered',
     };
-    setSessionHistory(prev => [rec, ...prev].slice(0, 20));
+    setSessionHistory(prev => [rec, ...prev].slice(0, 100));
     clearDraft();
     setRecoveredDraft(null);
     haptic(20);
@@ -143,7 +143,7 @@ function App() {
     bpmMode, bpm, barsPerWord, customWords, sessionLimit,
     beatAudioSrc, audioPlayerRef, vault, recoveredDraft,
     onSessionComplete: (rec) => {
-      setSessionHistory(prev => [rec, ...prev].slice(0, 20));
+      setSessionHistory(prev => [rec, ...prev].slice(0, 100));
       setPracticeDays(loadPracticeDays());
     },
   });
@@ -265,6 +265,7 @@ function App() {
           flattenNotes={flattenNotes} copyNoteText={copyNoteText} copiedNoteKey={copiedNoteKey}
           beatFileName={beatFileName} fileInputRef={fileInputRef} handleFileUpload={handleFileUpload} removeBeat={removeBeat}
           canRecord={engine.canRecord} isRecording={engine.isRecording} startRecording={engine.startRecording} stopRecording={engine.stopRecording} cameraError={engine.cameraError}
+          cameraFacing={engine.cameraFacing} toggleCameraFacing={engine.toggleCameraFacing}
           hapticsOn={hapticsOn} setHapticsOn={setHapticsOn}
           bpmMode={bpmMode} setBpmMode={setBpmMode}
           isMetronomeOn={isMetronomeOn} setIsMetronomeOn={setIsMetronomeOn} beatAudioSrc={beatAudioSrc}
@@ -287,7 +288,7 @@ function App() {
           totalWordsSeen={engine.totalWordsSeen} activeWords={engine.activeWords} activeDictWord={engine.activeDictWord}
           pauseForDict={engine.pauseForDict} dictData={engine.dictData} isLoadingDict={engine.isLoadingDict}
           resumeFromDict={engine.resumeFromDict} sessionNotes={engine.sessionNotes} handleSaveNote={engine.handleSaveNote}
-          cameraPreviewRef={engine.cameraPreviewRef} stopRecording={engine.stopRecording}
+          cameraPreviewRef={engine.cameraPreviewRef} stopRecording={engine.stopRecording} cameraFacing={engine.cameraFacing}
           registerActiveNoteFlush={engine.registerActiveNoteFlush}
         />
       )}
@@ -317,6 +318,7 @@ function App() {
         <HistoryScreen
           resetToIdle={resetToIdle} sessionHistory={sessionHistory} setSessionHistory={setSessionHistory}
           fmtDate={fmtDate} fmtDur={fmtDur} flattenNotes={flattenNotes} copyNoteText={copyNoteText} copiedNoteKey={copiedNoteKey}
+          historyAtCap={sessionHistory.length >= 95} historyCount={sessionHistory.length} handleExportData={handleExportData}
         />
       )}
 
@@ -328,7 +330,7 @@ function App() {
         <div className="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-5 pb-2.5 bg-red-600/95 backdrop-blur-sm" style={{ paddingTop: 'calc(0.625rem + env(safe-area-inset-top, 0px))' }}>
           <div className="flex items-center gap-2.5">
             <span className="w-2 h-2 rounded-full bg-white animate-pulse shrink-0" />
-            <span className="text-white text-[11px] font-black uppercase tracking-widest">Recording — Front Camera &amp; Mic</span>
+            <span className="text-white text-[11px] font-black uppercase tracking-widest">Recording — {cameraFacingLabel(engine.cameraFacing)} Camera &amp; Mic</span>
           </div>
           <button
             onClick={engine.stopRecording}

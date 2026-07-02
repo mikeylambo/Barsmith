@@ -6,7 +6,24 @@
 // lives in exactly one place.
 // ─────────────────────────────────────────────
 
-const dictCache = {};
+// Bounded LRU cache. A Map preserves insertion order; deleting-then-reinserting on a
+// hit moves the entry to the back, so the oldest *least recently used* entry is always
+// at the front. Cap at 300 — plenty for even a very long multi-hour session.
+let DICT_CACHE_MAX = 300;
+const dictCache = new Map();
+function cacheGet(key) {
+  if (!dictCache.has(key)) return undefined;
+  const value = dictCache.get(key);
+  // Refresh recency: remove and re-add so this is the newest entry in insertion order.
+  dictCache.delete(key);
+  dictCache.set(key, value);
+  return value;
+}
+function cacheSet(key, value) {
+  if (dictCache.has(key)) dictCache.delete(key); // refresh position if key exists
+  if (dictCache.size >= DICT_CACHE_MAX) dictCache.delete(dictCache.keys().next().value); // evict LRU
+  dictCache.set(key, value);
+}
 
 async function fetchWithAbort(url, signal) {
   try {
@@ -34,7 +51,8 @@ export async function fetchDictData(rawWord, signal) {
     };
   }
 
-  if (dictCache[w]) return dictCache[w];
+  const hit = cacheGet(w);
+  if (hit) return hit;
 
   const enc = encodeURIComponent(w);
   const [dictPayload, rhymes, nearRhymes, syns, ants, meansLike, sylData] = await Promise.all([
@@ -79,6 +97,16 @@ export async function fetchDictData(rawWord, signal) {
   };
   if (!final.definitions.length) final.definitions.push({ pos: '', text: 'Definition not found.' });
 
-  dictCache[w] = final;
+  cacheSet(w, final);
   return final;
 }
+
+// ── Test-only exports ───────────────────────────────────────────────────────
+// Prefixed with _ to signal non-application use. Expose the internal cache
+// primitives so tests can verify actual LRU behaviour rather than re-implementing
+// the algorithm in a private Map.
+export function _cacheGet(key)      { return cacheGet(key); }
+export function _cacheSet(key, val) { cacheSet(key, val); }
+export function _cacheClear()       { dictCache.clear(); }
+export function _cacheSize()        { return dictCache.size; }
+export function _setCacheMax(n)     { DICT_CACHE_MAX = n; }

@@ -2,8 +2,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { getNextWords } from '../services/wordbank.js';
 import { computeStreak, importAllData } from '../services/storage.js';
-import { fetchDictData } from '../services/dictionary.js';
+import { fetchDictData, _cacheGet, _cacheSet, _cacheClear, _cacheSize, _setCacheMax } from '../services/dictionary.js';
 import { BeatScheduler } from '../services/audio-clock.js';
+import { cameraFacingLabel } from '../hooks/useSessionEngine.js';
 
 describe('release services', () => {
   beforeEach(() => { localStorage.clear(); });
@@ -48,5 +49,36 @@ describe('release services', () => {
     scheduler.stop();
     vi.advanceTimersByTime(500);
     expect(onBeat).not.toHaveBeenCalled();
+  });
+});
+
+describe('v1 real implementation tests', () => {
+  afterEach(() => { vi.restoreAllMocks(); _cacheClear(); _setCacheMax(300); });
+
+  // Exercises the actual dictionary.js LRU cache via exported test primitives.
+  // The key LRU property: a cache hit refreshes recency, so the touched entry
+  // survives the next eviction even if it was the oldest entry by insertion order.
+  it('dictionary cache evicts least-recently-used entry, not oldest-inserted', () => {
+    _setCacheMax(3);
+    _cacheSet('a', 1);
+    _cacheSet('b', 2);
+    _cacheSet('c', 3); // cache is now full: a(oldest) b c(newest)
+
+    _cacheGet('a'); // touch 'a' — it moves to newest; 'b' is now LRU
+
+    _cacheSet('d', 4); // must evict LRU = 'b', not the touched 'a'
+
+    expect(_cacheGet('a')).toBe(1);   // survived — was touched
+    expect(_cacheGet('b')).toBeUndefined(); // evicted — was LRU
+    expect(_cacheGet('c')).toBe(3);   // survived
+    expect(_cacheGet('d')).toBe(4);   // newly inserted
+    expect(_cacheSize()).toBe(3);
+  });
+
+  // Exercises the exported cameraFacingLabel function that App.jsx imports for the
+  // recording banner. If someone breaks the mapping in the source, this fails.
+  it('cameraFacingLabel maps getUserMedia facingMode to human-readable label', () => {
+    expect(cameraFacingLabel('user')).toBe('Front');
+    expect(cameraFacingLabel('environment')).toBe('Rear');
   });
 });

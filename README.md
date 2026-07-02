@@ -4,7 +4,7 @@ A writing gym, rhyme reference, and idea-capture tool for serious hip-hop writer
 
 ## Requirements
 
-- Node.js `^20.19.0` or `>=22.12.0`
+- Node.js `20.x` (as pinned in `package.json`)
 - npm
 
 ## Setup
@@ -45,15 +45,18 @@ The automated suite covers:
 
 ## Final real-device checks
 
-Browser automation cannot substitute for hardware-specific media/audio behavior. Before replacing production, run one preview deployment through:
+Browser automation cannot substitute for hardware-specific media/audio behavior. Before replacing production, run one preview deployment through this on both an iPhone (Safari) and an Android phone (Chrome) where possible — mark each box, note the device/OS version next to any failure, and don't ship until every box is checked on at least one real iOS device and one real Android device.
 
-1. iPhone Safari, including Add to Home Screen.
-2. Android Chrome when available.
-3. Front-camera + microphone permission, recording, stop, and download/playback.
-4. BPM count-in, lock/re-entry, and word changes by ear.
-5. Keyboard-open Bar Pad scrolling and safe-area spacing.
-6. Background the app during a timed session, return, and confirm immediate completion.
-7. Export a backup, restore it, and verify Vault/History/preferences.
+1. **Install.** Open the preview URL in Safari on iPhone → Share → Add to Home Screen. Launch from the home screen icon (not the Safari tab) and confirm it opens full-screen with no browser chrome, correct icon, and correct name ("Barsmith").
+2. **Offline load.** With the app already opened once while online, turn on Airplane Mode, fully close the app, and relaunch from the home screen icon. Confirm the app shell loads and a session can be started and written in. Confirm the dictionary panel shows a network-error state (not a blank/broken one) when a word is locked while offline. Turn Airplane Mode back off.
+3. **Camera + mic permission.** From a fresh app state (or after removing the site's permissions in Settings), tap Record. Confirm the OS permission prompt appears, and that denying it surfaces "Camera permission denied." in the UI rather than a silent failure or a crash.
+4. **Recording round-trip.** On the setup screen, tap Record and grant camera/microphone permission. Then Start Session and write for at least 30 seconds. Tap Stop (visible in the red recording bar or in-session controls), end the session, and download the recording from the Summary screen. Confirm the downloaded file opens and plays with audio in Photos/Files.
+5. **Camera facing toggle.** Before recording, tap the camera-switch button and confirm the preview and resulting recording use the rear camera; switch back and confirm the front camera preview is mirrored (rear should not be).
+6. **BPM by ear.** Turn on BPM mode, set a familiar tempo (e.g. 90), and confirm the count-in and beat clicks sound correct and evenly spaced by ear, with no audible drift over a 2–3 minute session.
+7. **Keyboard-open scrolling.** Lock a word to open the dictionary panel, tap into the Bar Pad textarea to bring up the keyboard, and confirm the panel scrolls/resizes so the textarea and Save/Copy buttons stay visible above the keyboard, with no content cut off at the bottom.
+8. **Safe-area spacing.** On a notched/Dynamic Island device in both portrait and landscape, confirm no controls (Start/End Session button, top info bar, recording preview) sit under the notch, home indicator, or camera cutout.
+9. **Background/return during a timed session.** Start a 5-minute Writing Sprint, switch to another app (or lock the phone) for over a minute, then return. Confirm the countdown reflects real elapsed wall-clock time (not paused/frozen) and that the session ends automatically and correctly once the deadline has actually passed.
+10. **Backup round-trip.** From Vault, tap Export Backup and confirm a `.json` file is actually saved (not silently dropped — this is the specific case Safari can be flaky about). Then clear browser data for the site (or use a second device), tap Restore Backup, select that file, and confirm Vault, History, and custom words all come back correctly.
 
 ## Project structure
 
@@ -93,6 +96,7 @@ public/
   manifest.json
   icon-192.png
   icon-512.png
+  sw.js
 ```
 
 ## Release-hardening changes beyond RC4

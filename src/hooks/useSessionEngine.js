@@ -1,4 +1,11 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+
+/**
+ * Maps a getUserMedia facingMode value to the human label used in the
+ * recording banner and any other UI. Exported so tests can verify against
+ * the same function rather than re-implementing the mapping independently.
+ */
+export const cameraFacingLabel = (facing) => facing === 'user' ? 'Front' : 'Rear';
 import { BeatScheduler } from '../services/audio-clock';
 import { getNextWords as getNextWordsService } from '../services/wordbank';
 import { fetchDictData as fetchDictDataService } from '../services/dictionary';
@@ -52,6 +59,10 @@ export function useSessionEngine({
   const [recordingAvailable, setRecordingAvailable] = useState(false);
   const [recordingBlob, setRecordingBlob] = useState(null);
   const [cameraError, setCameraError] = useState('');
+  // 'user' = front (selfie) camera, 'environment' = rear. Front by default since the
+  // whole point is capturing the writer's own delivery/flow, but some writers want to
+  // film a whiteboard, a beat-machine, or their hands instead.
+  const [cameraFacing, setCameraFacing] = useState('user');
 
   const timerRef = useRef(null);
   const metronomeRef = useRef(null);
@@ -62,11 +73,11 @@ export function useSessionEngine({
   const mediaRecorderRef = useRef(null);
   const recordedChunksRef = useRef([]);
   const recordedMimeRef = useRef('video/webm');
-  const beatCountRef = useRef(0);
   const beatSchedulerRef = useRef(null);
   const isEndingRef = useRef(false);
   const cameraStreamRef = useRef(null);
-  const cameraPreviewRef = useRef(null);
+  const _cameraPreviewRef = useRef(null);
+  const isRecordingRef = useRef(false);
   const sessionStartTimeRef = useRef(null);
   const sessionEndTimeRef = useRef(null);
   const activeNoteFlushRef = useRef(null);
@@ -75,6 +86,8 @@ export function useSessionEngine({
   // RC4: track whether the next BPM session restart is a resume (after dict unlock) so
   // we can preserve the running bar count and show "Re-entering…" instead of resetting.
   const isResumingFromDictRef = useRef(false);
+
+  useEffect(() => { isRecordingRef.current = isRecording; }, [isRecording]);
 
   // RC4: mirror recoveredDraft into a ref so stopSession (a stale closure) always reads
   // the current value rather than the one captured when the function was created.
@@ -213,7 +226,6 @@ export function useSessionEngine({
       const resuming = isResumingFromDictRef.current;
       isResumingFromDictRef.current = false;
 
-      beatCountRef.current = 0;
       setCurrentBeat(0);
       if (!resuming) setBarCount(0);   // fresh session only
       setIsCountingIn(true);
@@ -226,7 +238,7 @@ export function useSessionEngine({
           haptic(beatIndexInBar === 0 ? 25 : 10);
         },
         onCountInEnd: () => { setIsCountingIn(false); setIsResumeCountIn(false); },
-        onWord: () => { beatCountRef.current += 1; nextWord(); setBarCount(p => p + barsPerWord); },
+        onWord: () => { nextWord(); setBarCount(p => p + barsPerWord); },
       };
       beatSchedulerRef.current.start(bpm, beatsPerWord);
       return () => beatSchedulerRef.current?.stop();
@@ -279,11 +291,18 @@ export function useSessionEngine({
   // ── Recording (front camera) ──
   const canRecord = typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== 'undefined';
 
-  useEffect(() => {
-    if (isRecording && cameraPreviewRef.current && cameraStreamRef.current) {
-      cameraPreviewRef.current.srcObject = cameraStreamRef.current;
+  // RC4.1→v1 Fix 2: A callback ref that fires whenever the video element mounts or
+  // unmounts. When recording starts on the Idle screen, ActiveScreen hasn't mounted yet
+  // so cameraPreviewRef.current is null and the [isRecording] effect was a no-op. The
+  // callback ref fires the moment the <video> element appears in the DOM — regardless of
+  // whether isRecording changed — which reliably attaches the stream to the preview.
+  const cameraPreviewRef = useCallback((node) => {
+    _cameraPreviewRef.current = node;
+    if (node && isRecordingRef.current && cameraStreamRef.current) {
+      node.srcObject = cameraStreamRef.current;
     }
-  }, [isRecording]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const startRecording = async () => {
     if (!canRecord) return;
@@ -291,22 +310,30 @@ export function useSessionEngine({
     let stream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+        video: { facingMode: cameraFacing, width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: true,
       });
       cameraStreamRef.current = stream;
       const mimeType = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm', 'video/mp4']
         .find(t => MediaRecorder.isTypeSupported(t)) || '';
-      recordedMimeRef.current = mimeType.startsWith('video/mp4') ? 'video/mp4' : 'video/webm';
-      const rec = new MediaRecorder(stream, mimeType ? { mimeType } : {});
+      // Fix: read the browser's resolved type from rec.mimeType after construction,
+      // and update again on each data chunk, so the Blob extension matches the actual
+      // format the browser chose — not our best-guess preference order.
+      const rec = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      recordedMimeRef.current = rec.mimeType || (mimeType.startsWith('video/mp4') ? 'video/mp4' : 'video/webm');
       recordedChunksRef.current = [];
-      rec.ondataavailable = e => { if (e.data.size > 0) recordedChunksRef.current.push(e.data); };
+      rec.ondataavailable = e => {
+        if (e.data.size > 0) {
+          if (e.data.type) recordedMimeRef.current = e.data.type; // track actual emitted format
+          recordedChunksRef.current.push(e.data);
+        }
+      };
       rec.onstop = () => {
         const blob = new Blob(recordedChunksRef.current, { type: recordedMimeRef.current });
         setRecordingBlob(blob); setRecordingAvailable(true);
         stream.getTracks().forEach(t => t.stop());
         cameraStreamRef.current = null;
-        if (cameraPreviewRef.current) cameraPreviewRef.current.srcObject = null;
+        if (_cameraPreviewRef.current) _cameraPreviewRef.current.srcObject = null;
       };
       rec.start(1000); mediaRecorderRef.current = rec; setIsRecording(true);
     } catch (e) {
@@ -315,11 +342,19 @@ export function useSessionEngine({
       setCameraError(e.name === 'NotAllowedError' ? 'Camera permission denied.' : 'Camera unavailable.');
     }
   };
+  // Switching cameras mid-recording would require tearing down and restarting the
+  // MediaRecorder/stream, which risks losing whatever was already captured — simplest
+  // and safest is to only allow the swap between recordings.
+  const toggleCameraFacing = () => {
+    if (isRecording) return;
+    setCameraFacing(f => (f === 'user' ? 'environment' : 'user'));
+  };
+
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) { mediaRecorderRef.current.stop(); setIsRecording(false); }
     cameraStreamRef.current?.getTracks().forEach(t => t.stop());
     cameraStreamRef.current = null;
-    if (cameraPreviewRef.current) cameraPreviewRef.current.srcObject = null;
+    if (_cameraPreviewRef.current) _cameraPreviewRef.current.srcObject = null;
   };
   const downloadRecording = () => {
     if (!recordingBlob) return;
@@ -336,7 +371,7 @@ export function useSessionEngine({
     if (audioCtxRef.current?.state === 'suspended') audioCtxRef.current.resume();
     if (beatAudioSrc && audioPlayerRef.current) { audioPlayerRef.current.currentTime = 0; audioPlayerRef.current.play().catch(() => {}); }
     requestWakeLock();
-    beatCountRef.current = 0; setCurrentBeat(0); setBarCount(0); setFlashKey(0);
+    setCurrentBeat(0); setBarCount(0); setFlashKey(0);
     const startedAt = Date.now();
     sessionStartTimeRef.current = startedAt;
     sessionEndTimeRef.current = sessionLimit > 0 ? startedAt + sessionLimit * 60_000 : null;
@@ -496,6 +531,7 @@ export function useSessionEngine({
     sessionNotes, handleSaveNote, registerActiveNoteFlush,
     dictData, isLoadingDict, fetchDictData,
     isRecording, canRecord, recordingAvailable, recordingBlob, cameraError, cameraPreviewRef,
+    cameraFacing, toggleCameraFacing,
     startRecording, stopRecording, downloadRecording,
     startSession, stopSession, startVaultDrill, stopVaultDrill,
     pauseForDict, resumeFromDict, resetToIdle,

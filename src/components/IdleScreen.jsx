@@ -3,6 +3,7 @@ export default function IdleScreen({
   recoveredDraft, setRecoveredDraft, clearDraft, handleRestoreDraft, flattenNotes, copyNoteText, copiedNoteKey,
   beatFileName, fileInputRef, handleFileUpload, removeBeat,
   canRecord, isRecording, startRecording, stopRecording, cameraError,
+  cameraFacing, toggleCameraFacing,
   hapticsOn, setHapticsOn,
   bpmMode, setBpmMode,
   isMetronomeOn, setIsMetronomeOn, beatAudioSrc,
@@ -87,7 +88,7 @@ export default function IdleScreen({
               <div className="w-full py-4 px-5 rounded-xl bg-white/5 border border-white/8 text-sm font-bold flex flex-col gap-1">
                 <div className="flex justify-between items-center">
                   <span className="truncate pr-2 text-green-400">▶ {beatFileName}</span>
-                  <button onClick={removeBeat} className="text-gray-600 hover:text-white transition-colors ml-2 shrink-0">✕</button>
+                  <button onClick={removeBeat} aria-label="Remove loaded beat" className="text-gray-600 hover:text-white transition-colors ml-2 shrink-0">✕</button>
                 </div>
                 <p className="text-[10px] text-gray-600 font-normal normal-case">Free-play mode — plays alongside your timer, not locked to its grid.</p>
               </div>
@@ -95,10 +96,20 @@ export default function IdleScreen({
             <input type="file" accept="audio/*" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
             {canRecord ? (
               <div className="w-full">
-                <button onClick={isRecording ? stopRecording : startRecording} className={`w-full py-3.5 px-4 rounded-xl border text-sm font-bold flex items-center justify-center gap-2 transition-all ${isRecording ? 'border-red-500/40 bg-red-500/8 text-red-400' : 'border-white/8 bg-white/4 text-gray-500 hover:text-gray-200 hover:bg-white/8'}`}>
-                  <span className={`w-2 h-2 rounded-full ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-gray-700'}`} />
-                  {isRecording ? 'Recording…' : 'Record (Front Camera)'}
-                </button>
+                <div className="flex gap-2">
+                  <button onClick={isRecording ? stopRecording : startRecording} className={`flex-1 py-3.5 px-4 rounded-xl border text-sm font-bold flex items-center justify-center gap-2 transition-all ${isRecording ? 'border-red-500/40 bg-red-500/8 text-red-400' : 'border-white/8 bg-white/4 text-gray-500 hover:text-gray-200 hover:bg-white/8'}`}>
+                    <span className={`w-2 h-2 rounded-full ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-gray-700'}`} />
+                    {isRecording ? 'Recording…' : `Record (${cameraFacing === 'user' ? 'Front' : 'Rear'} Camera)`}
+                  </button>
+                  {!isRecording && toggleCameraFacing && (
+                    <button
+                      onClick={toggleCameraFacing}
+                      aria-label={`Switch to ${cameraFacing === 'user' ? 'rear' : 'front'} camera`}
+                      title={`Switch to ${cameraFacing === 'user' ? 'rear' : 'front'} camera`}
+                      className="shrink-0 w-12 py-3.5 rounded-xl border border-white/8 bg-white/4 text-gray-500 hover:text-gray-200 hover:bg-white/8 transition-all flex items-center justify-center text-base"
+                    >⟲</button>
+                  )}
+                </div>
                 {cameraError && <p className="text-[10px] text-red-400/80 mt-2 px-1">{cameraError}</p>}
               </div>
             ) : (
@@ -107,7 +118,7 @@ export default function IdleScreen({
                 Camera not supported
               </div>
             )}
-            <button onClick={() => setHapticsOn(!hapticsOn)} className="w-full py-3 px-4 rounded-xl border border-white/8 bg-white/4 text-xs font-bold uppercase tracking-widest flex items-center justify-between text-gray-400 hover:text-gray-200 hover:bg-white/8 transition-all">
+            <button onClick={() => setHapticsOn(!hapticsOn)} aria-pressed={hapticsOn} className="w-full py-3 px-4 rounded-xl border border-white/8 bg-white/4 text-xs font-bold uppercase tracking-widest flex items-center justify-between text-gray-400 hover:text-gray-200 hover:bg-white/8 transition-all">
               <span>Haptics</span>
               <span className={hapticsOn ? 'text-white' : 'text-gray-700'}>{hapticsOn ? 'On' : 'Off'}</span>
             </button>
@@ -119,28 +130,28 @@ export default function IdleScreen({
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-[10px] text-gray-600 font-black uppercase tracking-widest">2. Timing</h2>
             <div className="flex items-center bg-[#0a0a0a] rounded-full p-0.5 border border-white/5">
-              <button onClick={() => setBpmMode(false)} className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all ${!bpmMode ? 'bg-white text-black' : 'text-gray-600'}`}>Timer</button>
-              <button onClick={() => setBpmMode(true)}  className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all ${bpmMode  ? 'bg-white text-black' : 'text-gray-600'}`}>BPM</button>
+              <button onClick={() => setBpmMode(false)} aria-pressed={!bpmMode} className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all ${!bpmMode ? 'bg-white text-black' : 'text-gray-600'}`}>Timer</button>
+              <button onClick={() => setBpmMode(true)} aria-pressed={bpmMode} className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all ${bpmMode  ? 'bg-white text-black' : 'text-gray-600'}`}>BPM</button>
             </div>
           </div>
           {!bpmMode ? (
             <div className="flex items-center gap-3 bg-[#0a0a0a] border border-white/5 rounded-xl p-3 px-4">
-              <button onClick={() => { if(!beatAudioSrc) setIsMetronomeOn(p=>!p); }} className={`px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider transition-all ${isMetronomeOn?'bg-white text-black':'text-gray-600 hover:text-white'} ${beatAudioSrc?'opacity-20 cursor-not-allowed':''}`} disabled={!!beatAudioSrc}>Metro</button>
-              <div className="flex-1"><input type="range" min="1" max="10" step="0.5" value={intervalMs/1000} onChange={e=>setIntervalMs(parseFloat(e.target.value)*1000)} className="w-full appearance-none bg-transparent focus:outline-none" /></div>
+              <button onClick={() => { if(!beatAudioSrc) setIsMetronomeOn(p=>!p); }} aria-pressed={isMetronomeOn} className={`px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider transition-all ${isMetronomeOn?'bg-white text-black':'text-gray-600 hover:text-white'} ${beatAudioSrc?'opacity-20 cursor-not-allowed':''}`} disabled={!!beatAudioSrc}>Metro</button>
+              <div className="flex-1"><input type="range" min="1" max="10" step="0.5" value={intervalMs/1000} onChange={e=>setIntervalMs(parseFloat(e.target.value)*1000)} aria-label="Word change interval in seconds" className="w-full appearance-none bg-transparent focus:outline-none" /></div>
               <span className="text-xs font-bold text-white w-8 text-right">{(intervalMs/1000).toFixed(1)}s</span>
             </div>
           ) : (
             <div className="space-y-3">
               <div className="flex items-center gap-3 bg-[#0a0a0a] border border-white/5 rounded-xl p-3 px-4">
                 <span className="text-gray-600 text-xs font-black uppercase tracking-widest w-8">BPM</span>
-                <div className="flex-1"><input type="range" min="60" max="200" step="1" value={bpm} onChange={e=>setBpm(parseInt(e.target.value))} className="w-full appearance-none bg-transparent focus:outline-none" /></div>
+                <div className="flex-1"><input type="range" min="60" max="200" step="1" value={bpm} onChange={e=>setBpm(parseInt(e.target.value))} aria-label="Beats per minute" className="w-full appearance-none bg-transparent focus:outline-none" /></div>
                 <span className="text-xs font-bold text-white w-8 text-right">{bpm}</span>
               </div>
               <div className="flex items-center gap-3 bg-[#0a0a0a] border border-white/5 rounded-xl p-3 px-4">
                 <span className="text-gray-600 text-xs font-black uppercase tracking-widest shrink-0">Every</span>
                 <div className="flex gap-2 flex-1 justify-end">
                   {[1,2,4,8].map(n=>(
-                    <button key={n} onClick={()=>setBarsPerWord(n)} className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all ${barsPerWord===n?'bg-white text-black':'bg-white/8 text-gray-500 hover:text-white'}`}>{n}{n===1?' bar':' bars'}</button>
+                    <button key={n} onClick={()=>setBarsPerWord(n)} aria-pressed={barsPerWord===n} aria-label={`${n} bar${n===1?'':'s'} per word`} className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all ${barsPerWord===n?'bg-white text-black':'bg-white/8 text-gray-500 hover:text-white'}`}>{n}{n===1?' bar':' bars'}</button>
                   ))}
                 </div>
               </div>
@@ -155,7 +166,7 @@ export default function IdleScreen({
             <h2 className="text-[10px] text-gray-600 font-black uppercase tracking-widest mb-4">3. Level</h2>
             <div className="flex gap-2">
               {[1,2,3].map(t=>(
-                <button key={t} onClick={()=>setSelectedTier(t)} className={`flex-1 py-4 rounded-2xl font-black text-sm transition-all border ${selectedTier===t?'bg-white border-white text-black shadow-[0_0_18px_rgba(255,255,255,0.18)]':'bg-[#0a0a0a] border-white/5 text-gray-600 hover:text-gray-300 hover:bg-[#151515]'}`}>{t}</button>
+                <button key={t} onClick={()=>setSelectedTier(t)} aria-pressed={selectedTier===t} aria-label={`Difficulty level ${t}`} className={`flex-1 py-4 rounded-2xl font-black text-sm transition-all border ${selectedTier===t?'bg-white border-white text-black shadow-[0_0_18px_rgba(255,255,255,0.18)]':'bg-[#0a0a0a] border-white/5 text-gray-600 hover:text-gray-300 hover:bg-[#151515]'}`}>{t}</button>
               ))}
             </div>
           </div>
@@ -163,7 +174,7 @@ export default function IdleScreen({
             <h2 className="text-[10px] text-gray-600 font-black uppercase tracking-widest mb-4">4. Scheme</h2>
             <div className="flex gap-2">
               {[1,2,3,4].map(n=>(
-                <button key={n} onClick={()=>setWordCount(n)} className={`flex-1 py-4 rounded-2xl font-black text-sm transition-all border ${wordCount===n?'bg-white border-white text-black shadow-[0_0_18px_rgba(255,255,255,0.18)]':'bg-[#0a0a0a] border-white/5 text-gray-600 hover:text-gray-300 hover:bg-[#151515]'}`}>{n}</button>
+                <button key={n} onClick={()=>setWordCount(n)} aria-pressed={wordCount===n} aria-label={`${n} word${n===1?'':'s'} at once`} className={`flex-1 py-4 rounded-2xl font-black text-sm transition-all border ${wordCount===n?'bg-white border-white text-black shadow-[0_0_18px_rgba(255,255,255,0.18)]':'bg-[#0a0a0a] border-white/5 text-gray-600 hover:text-gray-300 hover:bg-[#151515]'}`}>{n}</button>
               ))}
             </div>
           </div>
@@ -177,7 +188,7 @@ export default function IdleScreen({
           </div>
           <div className="flex gap-2">
             {[0,5,10,15,20].map(m=>(
-              <button key={m} onClick={()=>setSessionLimit(m)} className={`flex-1 py-3 rounded-2xl font-black text-xs transition-all border ${sessionLimit===m?'bg-white border-white text-black shadow-[0_0_18px_rgba(255,255,255,0.18)]':'bg-[#0a0a0a] border-white/5 text-gray-600 hover:text-gray-300 hover:bg-[#151515]'}`}>{m===0?'Off':`${m}m`}</button>
+              <button key={m} onClick={()=>setSessionLimit(m)} aria-pressed={sessionLimit===m} aria-label={m===0?'No session timer':`${m} minute session timer`} className={`flex-1 py-3 rounded-2xl font-black text-xs transition-all border ${sessionLimit===m?'bg-white border-white text-black shadow-[0_0_18px_rgba(255,255,255,0.18)]':'bg-[#0a0a0a] border-white/5 text-gray-600 hover:text-gray-300 hover:bg-[#151515]'}`}>{m===0?'Off':`${m}m`}</button>
             ))}
           </div>
         </div>

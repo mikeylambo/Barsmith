@@ -1,8 +1,10 @@
 /* @vitest-environment jsdom */
 import React from 'react';
 import { describe, it, beforeEach, afterEach, expect, vi } from 'vitest';
-import { render, fireEvent, screen, act, cleanup } from '@testing-library/react';
+import { render, fireEvent, screen, act, cleanup, renderHook } from '@testing-library/react';
 import App from '../App.jsx';
+import HistoryScreen from '../components/HistoryScreen.jsx';
+import { useSessionEngine } from '../hooks/useSessionEngine.js';
 
 class FakeAudioContext {
   constructor(){ this.state='running'; this.currentTime=0; this.destination={}; }
@@ -97,7 +99,7 @@ describe('Barsmith release flow', ()=>{
 
   it('flushes the latest Bar Pad text when a timed sprint ends before debounce', async()=>{
     await boot();
-    fireEvent.click(screen.getByRole('button',{name:'5m'}));
+    fireEvent.click(screen.getByRole('button',{name:'5 minute session timer'}));
     fireEvent.click(screen.getByRole('button',{name:'Start Session'}));
     fireEvent.click(activeWord());
     await act(async()=>{ vi.advanceTimersByTime(299500); });
@@ -109,11 +111,91 @@ describe('Barsmith release flow', ()=>{
 
   it('uses an absolute deadline and ends immediately after a background-style clock jump', async()=>{
     await boot();
-    fireEvent.click(screen.getByRole('button',{name:'5m'}));
+    fireEvent.click(screen.getByRole('button',{name:'5 minute session timer'}));
     fireEvent.click(screen.getByRole('button',{name:'Start Session'}));
     const future=Date.now()+5*60_000+1000;
     vi.setSystemTime(future);
     await act(async()=>{ window.dispatchEvent(new Event('focus')); vi.advanceTimersByTime(300); });
     expect(screen.getByText('Complete')).toBeTruthy();
+  });
+});
+
+describe('v1 real implementation tests (React rendering)', () => {
+  // Renders the actual HistoryScreen component with 95 sessions and verifies the
+  // warning banner displays the real count and the real 100-session limit. Will
+  // fail if someone reverts the copy to the old "20-session limit" text.
+  it('History warning banner shows actual count and 100-session limit at 95 entries', () => {
+    const history = Array.from({ length: 95 }, (_, i) => ({
+      id: i, date: new Date(2026, 0, i + 1).toISOString(), duration: 120,
+      tier: 1, wordCount: 1, pace: '2.0s', frozenWords: [], notes: {}, source: 'active',
+    }));
+    render(
+      <HistoryScreen
+        sessionHistory={history}
+        historyAtCap={true}
+        historyCount={95}
+        handleExportData={vi.fn()}
+        resetToIdle={vi.fn()}
+        setSessionHistory={vi.fn()}
+        fmtDate={(d) => d.slice(0, 10)}
+        fmtDur={(s) => `${s}s`}
+        flattenNotes={() => []}
+        copyNoteText={vi.fn()}
+        copiedNoteKey={null}
+      />
+    );
+    // Banner must mention the actual count and the real cap; must not say "20"
+    expect(screen.getByText(/95/)).toBeTruthy();
+    expect(screen.getByText(/100/)).toBeTruthy();
+    expect(screen.queryByText(/20-session/)).toBeNull();
+    expect(screen.getByRole('button', { name: /export/i })).toBeTruthy();
+  });
+
+  // Uses renderHook to drive useSessionEngine directly. Toggles to rear camera, then
+  // calls startRecording, and asserts getUserMedia received facingMode:'environment'.
+  // canRecord requires both getUserMedia AND MediaRecorder to be present — both must
+  // be mocked or startRecording() exits at the guard and tests nothing.
+  it('rear camera toggle passes facingMode environment to getUserMedia', async () => {
+    const capturedConstraints = { video: {} };
+
+    // Minimal MediaRecorder fake — just enough for canRecord to pass and startRecording
+    // to reach the getUserMedia call. The mock getUserMedia then rejects (permission
+    // denied) so we never need a real stream or real recorder behavior.
+    class FakeMediaRecorder {
+      static isTypeSupported() { return true; }
+      constructor() { this.ondataavailable = null; this.onstop = null; }
+      start() {}
+      stop() { this.onstop?.(); }
+    }
+    vi.stubGlobal('MediaRecorder', FakeMediaRecorder);
+
+    Object.defineProperty(navigator, 'mediaDevices', {
+      value: {
+        getUserMedia: vi.fn().mockImplementation((constraints) => {
+          Object.assign(capturedConstraints, constraints);
+          // Reject after capturing args — simulates the permission-denied path so the
+          // test exits cleanly without needing a real stream or recording lifecycle.
+          return Promise.reject(Object.assign(new Error(), { name: 'NotAllowedError' }));
+        }),
+      },
+      configurable: true,
+    });
+
+    const audioPlayerRef = { current: null };
+    const { result } = renderHook(() => useSessionEngine({
+      selectedTier: 1, wordCount: 1, intervalMs: 2000, isMetronomeOn: false,
+      bpmMode: false, bpm: 90, barsPerWord: 2, customWords: [], sessionLimit: 0,
+      beatAudioSrc: null, audioPlayerRef, vault: [], recoveredDraft: null,
+      onSessionComplete: vi.fn(),
+    }));
+
+    // Toggle from default 'user' to 'environment'
+    act(() => { result.current.toggleCameraFacing(); });
+    expect(result.current.cameraFacing).toBe('environment');
+
+    // Trigger recording — canRecord is now true, so startRecording reaches getUserMedia
+    await act(async () => { await result.current.startRecording(); });
+    expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalled();
+    expect(capturedConstraints.video.facingMode).toBe('environment');
   });
 });

@@ -1,32 +1,50 @@
-# Barsmith 5.0.1 — Release Candidate
+# Barsmith 5.1.0 — v1 completion pass
 
-This package is based on RC4 and includes the final stabilization fixes found during an actual install/build plus automated session-flow testing.
+Built on top of 5.0.1 (RC, based on RC4 + stabilization fixes). This pass closes the
+gaps identified in a v1-readiness review: offline support, data-loss prevention at the
+History retention cap, an accessibility sweep, and two smaller hardening items — plus a
+real-device checklist that still needs to be run manually.
 
-## Confirmed RC4 defect repaired
+## Additions
 
-RC4 could lose the newest Bar Pad text when a timed sprint ended while the lock modal was open and the 600 ms autosave debounce had not fired yet. A deterministic automated test reproduced the loss. The session engine now requests a synchronous flush from the live modal before finalizing the History record.
+- **Offline support.** A build-generated service worker now precaches every hashed Vite JS and CSS asset at install time, so Barsmith launches fully offline after one completed online visit. The precache manifest is injected into `dist/sw.js` by `scripts/inject-sw-precache.js`, which runs as part of `npm run build`. A failed `cache.addAll()` now correctly aborts SW installation rather than being swallowed — preventing a partially-cached build from activating and serving a broken offline experience. Dictionary/rhyme API calls are deliberately left untouched by the worker — they already degrade gracefully offline in the app code.
+- **History cap export nudge.** History now retains up to 100 sessions (raised from 20). When the count reaches 95 a banner appears on the History screen showing the actual saved count and explaining that older sessions will begin rolling off at 100, with a one-tap Export Backup action. Previously this could only be discovered after the fact.
+- **Front/rear camera toggle.** Recording defaulted to the front camera only. A writer
+  can now switch to the rear camera between recordings (disabled mid-recording to avoid
+  tearing down an in-progress capture) — useful for filming a whiteboard, a beat machine,
+  or hands instead of a face. The camera preview's mirror effect is now conditional on
+  facing mode, since mirroring a rear-camera feed would look wrong.
+- **Bounded dictionary cache.** The in-memory rhyme/definition cache is now a capped LRU `Map` (300 entries). Cache hits refresh insertion order so the evicted entry is always the genuinely least-recently-used one, not merely the oldest inserted.
 
-## Additional hardening
+## Accessibility pass
 
-- absolute-deadline session countdown for backgrounded/mobile browsers
-- immediate `pagehide`/background draft persistence
-- synchronized live refs for final word/note/frozen-word counts
-- recovered-draft resolution gate before new sessions or Vault Drills
-- dictionary request-race protection
-- in-session recording stop control
-- Rhyme Search encoding, deduplication, cleanup, mobile sizing, and haptic correction
-- focus traps, Escape handling, safe-area spacing, accessible star/close controls
-- calendar-based streak arithmetic across DST
-- full network-outage handling for locked-word research
-- reproducible `package-lock.json`
-- current Vite/Vitest toolchain with a clean dependency audit
+- The word-lock interaction — the single most-used control in the app — was pointer-only.
+  Word tiles are now keyboard-operable (`role="button"`, `tabIndex`, Enter/Space) with a
+  descriptive `aria-label`.
+- Added `aria-pressed` and descriptive `aria-label`s to every numeric-only toggle group
+  (Level, Scheme word count, Session Timer, bars-per-word, Timer/BPM mode, Metronome,
+  Haptics, Vault sort mode) — previously these read as bare numbers or ambiguous state to
+  a screen reader.
+- Added `aria-label`s to the remaining icon-only controls (remove-beat, BPM/interval
+  sliders) that didn't already have one.
+
+## Cleanup
+
+- Removed a dead ref (`beatCountRef`) that was written to in three places in
+  `useSessionEngine` but never read anywhere.
+
+## Still required before replacing production
+
+Everything above is code-complete, tested, and built clean — but the real-device
+checklist in README.md has **not** been run as part of this pass and remains the one
+manual gate before calling this final. See README.md for the checklist and a suggested
+script for running it.
 
 ## Verification
 
 - `npm ci`: passed
-- `npm test`: 11/11 passed
+- `npm run verify`: 16/16 passed (build + full test suite) (2 tests updated to match new, more descriptive accessible
+  names on the Session Timer buttons — behavior unchanged)
 - word-bank validation: 0 errors, 0 warnings
 - `npm run build`: passed
 - `npm audit`: 0 vulnerabilities
-
-Real-device camera, microphone, download, haptic, and musical timing still require the short hardware playtest described in README.md.

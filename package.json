@@ -1,15 +1,16 @@
 {
   "name": "barsmith",
   "private": true,
-  "version": "5.0.1",
+  "version": "5.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "prebuild": "node scripts/validate-wordbank.js",
-    "build": "vite build",
+    "build": "vite build && node scripts/inject-sw-precache.js",
     "preview": "vite preview",
     "validate-wordbank": "node scripts/validate-wordbank.js",
-    "test": "vitest run"
+    "test": "vitest run",
+    "verify": "npm run build && vitest run"
   },
   "dependencies": {
     "react": "^18.3.1",
