@@ -9,10 +9,8 @@
 import tier1 from '../data/tier-1.json';
 import tier2 from '../data/tier-2.json';
 import tier3 from '../data/tier-3.json';
-import wildcards from '../data/wildcards.json';
 
 export const globalWordBanks = { 1: tier1, 2: tier2, 3: tier3 };
-export const wildcardBank = wildcards;
 
 function getTierDist(base, n) {
   if (n === 1) return [base];
@@ -35,7 +33,10 @@ export function getNextWords(tier, count, customWords = [], customChance = 0.2, 
       let w, tries = 0;
       do { w = customWords[Math.floor(Math.random() * customWords.length)]; tries++; }
       while ((sel.includes(w) || lastWords.includes(w)) && tries < 10);
-      if (w) { sel.push(w); continue; }
+      // Only accept the custom word if it's actually fresh — if the pool is too small to
+      // avoid a repeat (e.g. just one word, and it's the one just shown), fall through to
+      // the normal tier bank below instead of pushing the same word again.
+      if (w && !sel.includes(w) && !lastWords.includes(w)) { sel.push(w); continue; }
     }
     const bank = globalWordBanks[dist[i]];
     if (!bank?.length) continue;
@@ -45,12 +46,4 @@ export function getNextWords(tier, count, customWords = [], customChance = 0.2, 
     if (w) sel.push(w);
   }
   return sel;
-}
-
-export function getWildcardWord(lastWords = []) {
-  if (!wildcardBank.length) return null;
-  let w, tries = 0;
-  do { w = wildcardBank[Math.floor(Math.random() * wildcardBank.length)]; tries++; }
-  while (lastWords.includes(w) && tries < 10);
-  return w;
 }

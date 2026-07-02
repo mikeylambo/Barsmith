@@ -5,7 +5,9 @@ export default defineConfig({
   plugins: [react()],
   build: {
     outDir: 'dist',
-    sourcemap: true,
+    // Off by default for a public build — turn back on temporarily when debugging a
+    // specific production issue. (Previously left on with no apparent deliberate choice.)
+    sourcemap: false,
   },
   server: {
     port: 5173,

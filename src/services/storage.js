@@ -14,6 +14,7 @@ export const STORAGE_KEYS = {
   sessionLimit: 'barsmithSessionLimit',
   customWords:  'barsmithCustomWords',
   practiceDays: 'barsmithPracticeDays', // independent of history retention
+  draft:        'barsmithDraft',
 };
 
 function safeGet(key, fallback) {
@@ -63,7 +64,17 @@ export const saveSessionLimit = (limit) => {
 export const loadCustomWords = () => safeGet(STORAGE_KEYS.customWords, []);
 export const saveCustomWords = (words) => safeSet(STORAGE_KEYS.customWords, words);
 
-export const hasSeenInfo = () => !!localStorage.getItem(STORAGE_KEYS.seen);
+// ── Active-session draft (crash/reload recovery) ──
+// Bar Pad notes only become a permanent History record when a session ends
+// normally. If the tab is closed, the browser crashes, or iOS purges the
+// page mid-session, that text would otherwise vanish with nothing written
+// to disk yet. This mirrors the in-progress notes continuously so a writer
+// can never lose a bar to an unexpected close.
+export const loadDraft = () => safeGet(STORAGE_KEYS.draft, null);
+export const saveDraft = (draft) => safeSet(STORAGE_KEYS.draft, draft);
+export const clearDraft = () => { try { localStorage.removeItem(STORAGE_KEYS.draft); } catch {} };
+
+export const hasSeenInfo = () => { try { return !!localStorage.getItem(STORAGE_KEYS.seen); } catch { return false; } };
 export const markSeenInfo = () => { try { localStorage.setItem(STORAGE_KEYS.seen, '1'); } catch {} };
 
 // ── Practice-day streak storage ──
@@ -73,49 +84,82 @@ export const loadPracticeDays = () => safeGet(STORAGE_KEYS.practiceDays, []);
 export const recordPracticeDay = (dateString) => {
   const days = new Set(loadPracticeDays());
   days.add(dateString);
-  // Cap at 400 days of history — generous, but bounded so storage can't grow forever.
-  const sorted = [...days].sort().slice(-400);
+  // Date strings are human-readable (Date#toDateString), so sort by parsed date rather
+  // than lexicographically before applying the bounded retention cap.
+  const sorted = [...days].sort((a, b) => new Date(a) - new Date(b)).slice(-400);
   safeSet(STORAGE_KEYS.practiceDays, sorted);
 };
 
 export function computeStreak(practiceDays) {
   if (!practiceDays.length) return 0;
   const days = new Set(practiceDays);
-  const today = new Date().toDateString();
-  const yesterday = new Date(Date.now() - 86400000).toDateString();
+  const todayDate = new Date();
+  const yesterdayDate = new Date(todayDate);
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+  const today = todayDate.toDateString();
+  const yesterday = yesterdayDate.toDateString();
   if (!days.has(today) && !days.has(yesterday)) return 0;
   let streak = 0;
-  let d = days.has(today) ? new Date() : new Date(Date.now() - 86400000);
+  const d = days.has(today) ? todayDate : yesterdayDate;
   while (days.has(d.toDateString())) {
     streak++;
-    d = new Date(d - 86400000);
+    // Calendar-date arithmetic stays correct across 23/25-hour DST transition days.
+    d.setDate(d.getDate() - 1);
   }
   return streak;
 }
 
 // ── Export / import (data portability) ──
+const BACKUP_VERSION = 1;
+
 export function exportAllData() {
   return JSON.stringify({
-    version: 1,
+    version: BACKUP_VERSION,
     exportedAt: new Date().toISOString(),
     vault: loadVault(),
     history: loadHistory(),
     prefs: loadPrefs(),
     customWords: loadCustomWords(),
     practiceDays: loadPracticeDays(),
+    sessionLimit: loadSessionLimit(),
   }, null, 2);
 }
 
 export function importAllData(jsonString) {
   try {
     const data = JSON.parse(jsonString);
-    if (data.vault) saveVault(data.vault);
-    if (data.history) saveHistory(data.history);
-    if (data.prefs) savePrefs(data.prefs);
-    if (data.customWords) saveCustomWords(data.customWords);
+    if (!data || typeof data !== 'object') return { ok: false, error: 'Not a valid backup file.' };
+
+    if (data.version !== undefined && data.version > BACKUP_VERSION) {
+      return { ok: false, error: `This backup was made by a newer version of Barsmith (v${data.version}) and can't be safely restored here.` };
+    }
+
+    // Shape-check each field before writing anything — a partially-invalid
+    // file should fail entirely rather than silently corrupt one store
+    // while leaving others untouched.
+    const isVaultArray = (v) => Array.isArray(v) && v.every(i => i && typeof i === 'object' && typeof i.word === 'string');
+    const isHistoryArray = (v) => Array.isArray(v) && v.every(i => i && typeof i === 'object' && typeof i.id !== 'undefined');
+    const isStringArray = (v) => Array.isArray(v) && v.every(i => typeof i === 'string');
+    // typeof null === 'object' and typeof [] === 'object', so a plain typeof check alone
+    // would wrongly accept both as valid prefs — guard against those explicitly.
+    const isPlainObject = (v) => typeof v === 'object' && v !== null && !Array.isArray(v);
+    const isValidSessionLimit = (v) => typeof v === 'number' && Number.isFinite(v) && v >= 0;
+
+    if (data.vault        !== undefined && !isVaultArray(data.vault))         return { ok: false, error: 'Vault data is malformed.' };
+    if (data.history      !== undefined && !isHistoryArray(data.history))     return { ok: false, error: 'History data is malformed.' };
+    if (data.customWords  !== undefined && !isStringArray(data.customWords))  return { ok: false, error: 'Custom words are malformed.' };
+    if (data.practiceDays !== undefined && !isStringArray(data.practiceDays)) return { ok: false, error: 'Practice-day data is malformed.' };
+    if (data.prefs        !== undefined && !isPlainObject(data.prefs))        return { ok: false, error: 'Preferences data is malformed.' };
+    if (data.sessionLimit !== undefined && !isValidSessionLimit(data.sessionLimit)) return { ok: false, error: 'Session timer data is malformed.' };
+
+    if (data.vault)        saveVault(data.vault);
+    if (data.history)       saveHistory(data.history);
+    if (data.prefs)         savePrefs(data.prefs);
+    if (data.customWords)  saveCustomWords(data.customWords);
     if (data.practiceDays) safeSet(STORAGE_KEYS.practiceDays, data.practiceDays);
+    if (data.sessionLimit !== undefined) saveSessionLimit(data.sessionLimit);
     return { ok: true };
   } catch (e) {
-    return { ok: false, error: e.message };
+    return { ok: false, error: 'File is not valid JSON.' };
   }
 }

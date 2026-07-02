@@ -47,6 +47,12 @@ export async function fetchDictData(rawWord, signal) {
     fetchWithAbort(`https://api.datamuse.com/words?sp=${enc}&md=s&max=1`, signal),
   ]);
 
+  // A total transport failure should not masquerade as a legitimate word with no data,
+  // and must not be cached. Individual 404s are fine as long as another service responds.
+  if ([dictPayload, rhymes, nearRhymes, syns, ants, meansLike, sylData].every(v => v === null)) {
+    throw new Error('Network error');
+  }
+
   let defs = [], foundSyn = [], foundAnt = [];
   dictPayload?.[0]?.meanings?.forEach(m => {
     m.definitions?.slice(0, 2).forEach(d => defs.push({ pos: m.partOfSpeech, text: d.definition }));

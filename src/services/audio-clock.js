@@ -28,6 +28,16 @@ export class BeatScheduler {
     this.beatNumber = 0;
     this.bpm = 90;
     this.beatsPerWord = 8;
+    // Bumped on every stop() — any setTimeout already queued during the
+    // look-ahead window captures the generation it was scheduled under and
+    // checks it before firing, so stale callbacks can't land after a stop
+    // (e.g. one extra word-change tick right as a session ends or a word
+    // gets locked).
+    this.generation = 0;
+    // Oscillators already scheduled (via osc.start(when)) within the look-ahead window
+    // would otherwise still play out even after stop() — tracked here so stop() can cut
+    // them off immediately instead of leaving one stray click audible after locking/ending.
+    this.pendingOscillators = [];
   }
 
   playTickAt(when, freq, vol, dur = 0.08) {
@@ -41,6 +51,11 @@ export class BeatScheduler {
     gain.gain.exponentialRampToValueAtTime(0.001, when + dur);
     osc.start(when);
     osc.stop(when + dur);
+    this.pendingOscillators.push(osc);
+    osc.onended = () => {
+      const i = this.pendingOscillators.indexOf(osc);
+      if (i !== -1) this.pendingOscillators.splice(i, 1);
+    };
   }
 
   start(bpm, beatsPerWord) {
@@ -60,6 +75,13 @@ export class BeatScheduler {
   stop() {
     if (this.pollId) clearInterval(this.pollId);
     this.pollId = null;
+    this.generation += 1;
+    // Cut off any tick that was already scheduled via osc.start(when) inside the
+    // look-ahead window but hasn't played yet — without this, one stray click can
+    // still sound right after locking a word or ending the session.
+    const now = this.ctx.currentTime;
+    this.pendingOscillators.forEach(osc => { try { osc.stop(now); } catch {} });
+    this.pendingOscillators = [];
   }
 
   _scheduleAhead() {
@@ -74,15 +96,17 @@ export class BeatScheduler {
       this.playTickAt(when, isDownbeat ? 1000 : 680, isCountIn ? 0.32 : (isDownbeat ? 0.65 : 0.28));
 
       const delayMs = Math.max(0, (when - this.ctx.currentTime) * 1000);
-      const isLastCountInBeat = beatNum === -1;
+      const isFirstRealBeat = beatNum === 0; // the actual downbeat the count-in was leading into
+      const gen = this.generation;
 
       setTimeout(() => {
+        if (gen !== this.generation) return; // stop() ran since this was scheduled
         this.callbacks.onBeat?.({ beatIndexInBar: b, isDownbeat, isCountIn });
-        if (isLastCountInBeat) this.callbacks.onCountInEnd?.();
+        if (isFirstRealBeat) this.callbacks.onCountInEnd?.();
       }, delayMs);
 
-      if (!isCountIn && (beatNum + 1) % this.beatsPerWord === 0) {
-        setTimeout(() => this.callbacks.onWord?.(), delayMs);
+      if (!isCountIn && beatNum > 0 && beatNum % this.beatsPerWord === 0) {
+        setTimeout(() => { if (gen === this.generation) this.callbacks.onWord?.(); }, delayMs);
       }
 
       this.beatNumber += 1;

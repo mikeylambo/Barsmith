@@ -24,7 +24,6 @@ const tiers = {
   2: loadJSON('tier-2.json'),
   3: loadJSON('tier-3.json'),
 };
-const wildcards = loadJSON('wildcards.json');
 
 let errors = 0;
 let warnings = 0;
@@ -44,7 +43,7 @@ for (const [tierNum, words] of Object.entries(tiers)) {
     else if (!/^[a-z' -]+$/.test(w)) warn(`Tier ${tierNum}[${i}] has unexpected characters: "${w}"`);
   });
 }
-ok(`Shape check complete (Tier 1: ${tiers[1].length}, Tier 2: ${tiers[2].length}, Tier 3: ${tiers[3].length}, Wildcards: ${wildcards.length})`);
+ok(`Shape check complete (Tier 1: ${tiers[1].length}, Tier 2: ${tiers[2].length}, Tier 3: ${tiers[3].length})`);
 
 // ── Duplicates within a tier ──
 for (const [tierNum, words] of Object.entries(tiers)) {
@@ -69,12 +68,6 @@ if (crossDupes.length) {
 } else {
   ok('No cross-tier duplicates');
 }
-
-// ── Wildcard overlap with main tiers (not necessarily an error, but worth flagging) ──
-const allMain = new Set([...t1, ...t2, ...t3]);
-wildcards.forEach(w => {
-  if (allMain.has(w)) warn(`Wildcard "${w}" also appears in a main tier`);
-});
 
 console.log(`\n${errors} error(s), ${warnings} warning(s).`);
 if (errors > 0) {
