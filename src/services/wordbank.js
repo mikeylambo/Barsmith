@@ -9,14 +9,30 @@
 import tier1 from '../data/tier-1.json';
 import tier2 from '../data/tier-2.json';
 import tier3 from '../data/tier-3.json';
+import wildcards from '../data/wildcards.json';
 
-export const globalWordBanks = { 1: tier1, 2: tier2, 3: tier3 };
+// Tiers 1-3 are a difficulty ramp by syllabic weight. WILD is not a fourth step on that
+// ramp — it is a different axis: words with no clean perfect rhyme, awkward stress, or a
+// shape that resists landing on a beat. Its training value is that autopilot fails and
+// the writer is forced into slant rhyme and multisyllabic construction.
+export const WILDCARD_TIER = 4;
+
+export const globalWordBanks = { 1: tier1, 2: tier2, 3: tier3, [WILDCARD_TIER]: wildcards };
+
+/** Display label for a tier — WILD reads as a mode, not a number. */
+export const tierLabel = (tier) => (Number(tier) === WILDCARD_TIER ? 'Wild' : String(tier));
+
+/** The tiers that form the ordinary difficulty ramp, for mixing in Scheme mode. */
+const RAMP = [1, 2, 3];
 
 function getTierDist(base, n) {
+  // Scheme mode normally blends tiers so a writer bridges registers. Wildcards are
+  // exempt: diluting them with ordinary words removes the only thing the mode is for.
+  if (Number(base) === WILDCARD_TIER) return Array(n).fill(WILDCARD_TIER);
   if (n === 1) return [base];
-  const others = [1, 2, 3].filter(t => t !== base);
+  const others = RAMP.filter(t => t !== base);
   if (n === 2) return [base, others[Math.floor(Math.random() * others.length)]];
-  if (n === 3) return [1, 2, 3];
+  if (n === 3) return [...RAMP];
   return [base, base, others[0], others[1]];
 }
 

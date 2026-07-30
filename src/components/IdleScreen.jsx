@@ -1,5 +1,9 @@
+import { WILDCARD_TIER } from '../services/wordbank';
+import DailyCard from './DailyCard.jsx';
+
 export default function IdleScreen({
   vault, streak, setShowInfo, setShowRhymeSearch, setAppState,
+  dailyPlan, dailyDone, startDaily,
   recoveredDraft, setRecoveredDraft, clearDraft, handleRestoreDraft, flattenNotes, copyNoteText, copiedNoteKey,
   beatFileName, fileInputRef, handleFileUpload, removeBeat,
   canRecord, isRecording, startRecording, stopRecording, cameraError,
@@ -85,6 +89,14 @@ export default function IdleScreen({
               ) : null)}
             </div>
           </div>
+        )}
+
+        {/* Today's prescription, above the manual controls. It does not replace them —
+            a writer who knows what they want to train keeps the full surface — but it
+            answers "what am I doing today" before the five settings below can become a
+            reason to close the app. */}
+        {dailyPlan && (
+          <DailyCard plan={dailyPlan} completed={dailyDone} onStart={startDaily} disabled={!!recoveredDraft} />
         )}
 
         {/* 1. Environment */}
@@ -173,9 +185,18 @@ export default function IdleScreen({
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-[#0f0f0f] border border-white/5 p-5 rounded-3xl">
             <h2 className="text-[10px] text-gray-600 font-black uppercase tracking-widest mb-4">3. Level</h2>
-            <div className="flex gap-2">
-              {[1,2,3].map(t=>(
-                <button key={t} onClick={()=>setSelectedTier(t)} aria-pressed={selectedTier===t} aria-label={`Difficulty level ${t}`} className={`flex-1 py-4 rounded-2xl font-black text-sm transition-all border ${selectedTier===t?'bg-white border-white text-black shadow-[0_0_18px_rgba(255,255,255,0.18)]':'bg-[#0a0a0a] border-white/5 text-gray-600 hover:text-gray-300 hover:bg-[#151515]'}`}>{t}</button>
+            {/* WILD sits alongside 1-3 rather than after them because it is a different
+                axis, not a fourth difficulty step — words with no clean rhyme, which
+                force slant rhyme instead of rewarding speed. */}
+            <div className="flex gap-1.5">
+              {[1,2,3,WILDCARD_TIER].map(t=>(
+                <button
+                  key={t}
+                  onClick={()=>setSelectedTier(t)}
+                  aria-pressed={selectedTier===t}
+                  aria-label={t===WILDCARD_TIER ? 'Wildcard words — hard to rhyme' : `Difficulty level ${t}`}
+                  className={`flex-1 py-4 rounded-2xl font-black transition-all border ${t===WILDCARD_TIER?'text-[10px] tracking-widest':'text-sm'} ${selectedTier===t?(t===WILDCARD_TIER?'bg-orange-400 border-orange-400 text-black shadow-[0_0_18px_rgba(251,146,60,0.25)]':'bg-white border-white text-black shadow-[0_0_18px_rgba(255,255,255,0.18)]'):'bg-[#0a0a0a] border-white/5 text-gray-600 hover:text-gray-300 hover:bg-[#151515]'}`}
+                >{t===WILDCARD_TIER ? 'WILD' : t}</button>
               ))}
             </div>
           </div>

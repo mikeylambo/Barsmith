@@ -15,6 +15,7 @@ export const STORAGE_KEYS = {
   customWords:  'barsmithCustomWords',
   practiceDays: 'barsmithPracticeDays', // independent of history retention
   totals:       'barsmithTotals',       // likewise — see loadTotals
+  daily:        'barsmithDaily',        // today's prescribed session — see services/daily.js
   draft:        'barsmithDraft',
 };
 
@@ -118,6 +119,20 @@ export const loadTotals = () => {
   return { ...EMPTY_TOTALS, ...stored, words: Array.isArray(stored.words) ? stored.words : [] };
 };
 export const saveTotals = (totals) => safeSet(STORAGE_KEYS.totals, totals);
+
+// ── Daily prescribed session ──
+// `{ lastCompleted: 'Thu Jul 30 2026', count: n }`. Tiny by design — the prescription
+// itself is derived from the date, so nothing about it needs storing, only whether
+// today's has been done.
+export const loadDaily = () => {
+  const stored = safeGet(STORAGE_KEYS.daily, null);
+  if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return { lastCompleted: null, count: 0 };
+  return {
+    lastCompleted: typeof stored.lastCompleted === 'string' ? stored.lastCompleted : null,
+    count: Number.isFinite(stored.count) ? stored.count : 0,
+  };
+};
+export const saveDaily = (daily) => safeSet(STORAGE_KEYS.daily, daily);
 
 export function computeStreak(practiceDays) {
   if (!practiceDays.length) return 0;

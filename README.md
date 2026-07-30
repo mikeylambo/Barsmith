@@ -51,11 +51,52 @@ Two things in there are load-bearing and easy to break:
   seam for this; swapping in `@capacitor/share` for a native build touches that file
   and nothing else.
 
+## Today's session
+
+The idle screen opens with a prescribed session for the day — level, scheme, pace, and
+duration already chosen. The problem it solves is decision cost, not motivation: five
+settings between opening the app and seeing a word is a fine control surface for someone
+who knows what they want to train, and a reason to close it for someone who has ten
+minutes.
+
+`services/daily.js` derives it from the local calendar date, so it needs no backend,
+works offline, and is identical for everyone on a given day. It is **structured by
+weekday rather than randomised** — Reset, Foundations, Tempo, Scheme, Heavy, Wildcard,
+Endurance. A random draw each morning is noise a writer cannot anticipate; a week with a
+shape means Friday is Wildcard day and skipping it misses something specific. The
+specifics inside each shape still vary week to week.
+
+Only a session started from the card counts as completing the prescription — freeform
+training is training, but it is not the programme.
+
+Note the wiring in `App.jsx`: applying a prescription writes seven pieces of settings
+state, which React batches, so `engine.startSession()` cannot run in the same handler or
+it would start against the *previous* settings. A pending flag defers the start by one
+render.
+
+## Wildcards
+
+`src/data/wildcards.json` is tier 4, selectable as **WILD** beside levels 1-3. It is not
+a fourth difficulty step — tiers 1-3 are a ramp by syllabic weight, and this is a
+different axis: words with no clean perfect rhyme, awkward stress, or a shape that
+resists landing on a beat. The training value is that autopilot fails and the writer is
+pushed into slant rhyme and multisyllabic construction.
+
+Two rules the validator enforces: a wildcard may not also appear in an ordinary tier
+(then it is not a wildcard), and Scheme mode does not blend wildcards with ordinary
+words the way it blends tiers 1-3 — handing back an easy word to rhyme on removes the
+only thing the mode is for.
+
 ## The training log
 
 `ProgressScreen` is the evidence behind the "writing gym" claim: bars written, time
-trained, a 26-week consistency grid, weekly volume, vocabulary breadth, and personal
+trained, a 52-week consistency grid, weekly volume, vocabulary breadth, and personal
 bests. Everything is computed on-device from data already stored.
+
+The consistency grid covers a full year because practice days are retained for 400 — a
+shorter window would discard record a writer had already earned. Fifty-two columns
+cannot fit a phone at a legible cell size, so it scrolls horizontally and opens at the
+right-hand edge, since recent weeks are what someone opens it to see.
 
 One thing here is load-bearing. **Cumulative figures come from `barsmithTotals`, never
 from `sessionHistory`.** History is capped at 100 sessions, so lifetime bars derived
@@ -89,9 +130,9 @@ python3 scripts/make-brand-assets.py
 
 This package was installed, tested, validated, built, and dependency-audited.
 
-- Word bank: Tier 1 `993`, Tier 2 `1,366`, Tier 3 `1,515`
+- Word bank: Tier 1 `993`, Tier 2 `1,366`, Tier 3 `1,515`, Wild `167`
 - Cross-tier duplicates: `0`
-- Automated tests: `97 passed`
+- Automated tests: `119 passed`
 - Production build: passed
 - `npm audit`: `0 vulnerabilities`
 - `package-lock.json`: included for reproducible Vercel/local builds
@@ -117,6 +158,10 @@ The automated suite covers:
 - Copy All reporting a real outcome when the clipboard rejects or is absent entirely
 - training-log arithmetic: idempotent seeding, distinct-word breadth, personal bests as
   maxima, longest streak across month and DST boundaries, weekly bucketing
+- the daily prescription being stable within a day, varying across days, covering every
+  weekday shape, and only ever emitting settings the session engine accepts
+- wildcards never blending with ordinary tiers in Scheme mode, and sharing no words
+  with them
 - bar-card layout: line structure preserved, continuation indent only where it
   disambiguates, width never exceeded, over-long tokens broken, overflow truncated
 - share outcomes distinguishing a completed share, a dismissed sheet, a genuine
@@ -140,7 +185,8 @@ Browser automation cannot substitute for hardware-specific media/audio behavior.
 10. **Backup round-trip.** From Vault, tap Export Backup and confirm a `.json` file is actually saved (not silently dropped — this is the specific case Safari can be flaky about). Then clear browser data for the site (or use a second device), tap Restore Backup, select that file, and confirm Vault, History, and custom words all come back correctly.
 11. **Text export round-trip.** After a session with at least two bars, tap *Copy All Bars* on Summary and paste into Notes — confirm every bar arrives, blank-line separated, in order. Then tap *Export .txt* and confirm the file actually saves and opens as readable text (same Safari flakiness as the backup download applies). Repeat *Export All Bars* from History with more than one session archived.
 12. **Home-screen icon.** On Android/Chrome, install to the home screen and confirm the launcher icon shows the anvil on a dark field with nothing clipped by the system's circular mask. On iPhone, confirm the home-screen icon is not a white tile.
-13. **Bar card share sheet.** This is the one check browser automation genuinely cannot stand in for, because the iOS gesture rule only bites on a real device. Tap *Share* on a bar and confirm the native share sheet opens with the image attached, that picking Instagram/Messages actually carries the picture through, and that dismissing the sheet leaves no stray file in Photos. Repeat with a multi-line bar and confirm each written line renders as its own line on the card.
+13. **Today's session across midnight.** Open the app late at night, note the prescription, then check again after local midnight and confirm it has rolled to the next day's shape. Start a session before midnight and finish it after, and confirm it still completes the prescription it began under rather than being marked against the new day.
+14. **Bar card share sheet.** This is the one check browser automation genuinely cannot stand in for, because the iOS gesture rule only bites on a real device. Tap *Share* on a bar and confirm the native share sheet opens with the image attached, that picking Instagram/Messages actually carries the picture through, and that dismissing the sheet leaves no stray file in Photos. Repeat with a multi-line bar and confirm each written line renders as its own line on the card.
 
 ## Project structure
 
@@ -151,6 +197,7 @@ src/
     ActionBar.jsx
     ActiveScreen.jsx
     BarCardModal.jsx
+    DailyCard.jsx
     DictionaryModal.jsx
     ErrorBoundary.jsx
     HistoryScreen.jsx
@@ -167,6 +214,7 @@ src/
   services/
     audio-clock.js
     bar-card.js
+    daily.js               # today's prescribed session; date-derived, no backend
     dictionary.js
     download.js
     export-text.js
@@ -183,9 +231,11 @@ src/
     tier-1.json
     tier-2.json
     tier-3.json
+    wildcards.json         # tier 4 — words with no clean rhyme
   __tests__/
     bar-card.test.js
     build.test.js
+    daily.test.js
     export-text.test.js
     progress.test.js
     release.smoke.test.jsx

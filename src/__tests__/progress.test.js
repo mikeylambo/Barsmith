@@ -141,8 +141,8 @@ describe('consistencyGrid', () => {
   const today = new Date(2026, 6, 30); // Thu 30 Jul 2026
 
   it('returns whole weeks so the grid ends on a complete column', () => {
-    const grid = consistencyGrid([], { today, weeks: 26 });
-    expect(grid).toHaveLength(26 * 7);
+    const grid = consistencyGrid([], { today, weeks: 52 });
+    expect(grid).toHaveLength(52 * 7);
     expect(grid.length % 7).toBe(0);
   });
 
@@ -231,6 +231,6 @@ describe('computeProgress', () => {
     const p = computeProgress({ totals: null, history: null, practiceDays: null, vault: null, today });
     expect(p.bars).toBe(0);
     expect(p.longestStreak).toBe(0);
-    expect(p.grid.length).toBe(26 * 7);
+    expect(p.grid.length).toBe(52 * 7);
   });
 });

@@ -9,10 +9,12 @@ import {
   hasSeenInfo, markSeenInfo,
   loadPracticeDays, computeStreak,
   loadTotals, saveTotals,
+  loadDaily, saveDaily,
   exportAllData, importAllData,
   loadDraft, clearDraft,
 } from './services/storage';
 import { seedTotals, addSessionToTotals } from './services/progress';
+import { dailySession, isCompletedToday, markCompleted } from './services/daily';
 import { downloadText, dateStamp } from './services/download';
 // flattenNotes lives with the exporters so the on-screen Bar Pad and the text
 // export can never disagree about note shape.
@@ -90,6 +92,17 @@ function App() {
     saveTotals(next);
     return next;
   });
+
+  // ── Today's prescribed session ──
+  // Derived from the date, so it needs no backend and is identical for everyone on a
+  // given day. Computed once per mount; a session that spans local midnight keeps the
+  // prescription it started under rather than swapping out mid-write.
+  const [daily, setDaily] = useState(() => loadDaily());
+  const todaysPlan = useMemo(() => dailySession(), []);
+  const dailyDone = isCompletedToday(daily);
+  // Only a session actually started from the card counts as completing the
+  // prescription — a freeform session is training, but it is not the programme.
+  const fromDailyRef = useRef(false);
 
   // Recovered draft from an interrupted session (crash/close/reload) — shown as a
   // dismissible banner on the idle screen so nothing written mid-session is silently lost.
@@ -178,6 +191,10 @@ function App() {
       setSessionHistory(prev => [rec, ...prev].slice(0, 100));
       setPracticeDays(loadPracticeDays());
       recordTotals(rec);
+      if (fromDailyRef.current) {
+        fromDailyRef.current = false;
+        setDaily(prev => { const next = markCompleted(prev); saveDaily(next); return next; });
+      }
     },
   });
 
@@ -270,6 +287,33 @@ function App() {
   const startSession = () => { if (!recoveredDraft) engine.startSession(); };
   const startVaultDrill = () => { if (!recoveredDraft) engine.startVaultDrill(); };
 
+  // Starting the prescription writes seven pieces of settings state. React batches
+  // those, so calling engine.startSession() in the same handler would start the session
+  // against the PREVIOUS settings — the engine reads them from props. The flag defers
+  // the start by one render, at which point the engine closure holds the new values.
+  const [pendingDailyStart, setPendingDailyStart] = useState(false);
+  const startDaily = () => {
+    if (recoveredDraft) return;
+    const p = todaysPlan;
+    setSelectedTier(p.tier);
+    setWordCount(p.wordCount);
+    setIntervalMs(p.intervalMs);
+    // A writer who loaded their own beat gets to keep it; BPM mode would fight it, and
+    // handleFileUpload already treats the two as mutually exclusive.
+    setBpmMode(p.bpmMode && !beatAudioSrc);
+    setBpm(p.bpm);
+    setBarsPerWord(p.barsPerWord);
+    setSessionLimit(p.limitMinutes);
+    setIsMetronomeOn(false);
+    setPendingDailyStart(true);
+  };
+  useEffect(() => {
+    if (!pendingDailyStart) return;
+    setPendingDailyStart(false);
+    fromDailyRef.current = true;
+    engine.startSession();
+  }, [pendingDailyStart]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const latestSession = sessionHistory[0];
 
   if (showSplash) return <Splash onDismiss={dismissSplash} />;
@@ -284,6 +328,7 @@ function App() {
       {navState === 'idle' && (
         <IdleScreen
           vault={vault} streak={streak} setShowInfo={setShowInfo} setShowRhymeSearch={setShowRhymeSearch} setAppState={goTo}
+          dailyPlan={todaysPlan} dailyDone={dailyDone} startDaily={startDaily}
           recoveredDraft={recoveredDraft} setRecoveredDraft={setRecoveredDraft} clearDraft={clearDraft} handleRestoreDraft={handleRestoreDraft}
           flattenNotes={flattenNotes} copyNoteText={copyNoteText} copiedNoteKey={copiedNoteKey}
           beatFileName={beatFileName} fileInputRef={fileInputRef} handleFileUpload={handleFileUpload} removeBeat={removeBeat}

@@ -119,7 +119,7 @@ export function longestStreak(practiceDays) {
  * from the end of the current week so the grid ends on a whole column rather than
  * mid-week.
  */
-export function consistencyGrid(practiceDays, { today = new Date(), weeks = 26 } = {}) {
+export function consistencyGrid(practiceDays, { today = new Date(), weeks = 52 } = {}) {
   const practiced = new Set(practiceDays || []);
   // Pad forward to Saturday so the final column is a complete week.
   const end = shiftDays(today, 6 - today.getDay());

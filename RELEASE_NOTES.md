@@ -1,3 +1,93 @@
+# Barsmith 5.5.0 — today’s session
+
+5.4.0 gave a writer evidence they were getting stronger. This gives them something to do
+about it today.
+
+## The daily prescription
+
+The idle screen now opens with a session already chosen: level, scheme, pace, duration.
+Tap once and it starts.
+
+The problem this solves is decision cost, not motivation. Barsmith put five settings
+between opening the app and seeing a single word. That is a good control surface for
+someone who knows what they want to train, and a reason to close the app for someone who
+just has ten minutes — and the second person is the one retention is lost on.
+
+**Structured by weekday, not randomised.** A random draw each morning is noise a writer
+cannot anticipate and cannot build a habit around. The week has a shape:
+
+| Day | Session | Trains |
+| --- | --- | --- |
+| Sunday | Reset | Loose and short. Keep the streak, stay warm. |
+| Monday | Foundations | Short concrete words at a steady pace. |
+| Tuesday | Tempo | Locked to a real bar grid. Write to the count. |
+| Wednesday | Scheme | Multiple words at once, bridged into one punchline. |
+| Thursday | Heavy | Long multisyllabic words, without breaking flow. |
+| Friday | Wildcard | Words with no clean rhyme. Slant it or restructure. |
+| Saturday | Endurance | The long one. Hold quality past where it gets hard. |
+
+Friday means something, and skipping it misses something specific. The specifics inside
+each shape still vary week to week, so the same day never goes stale.
+
+Derived from the local calendar date, so it needs no backend, works offline, turns over
+at the writer’s midnight rather than UTC’s, and is the same for everyone on a given day.
+
+Only a session started from the card completes the prescription. Freeform training is
+still training — it just is not the programme, and a writer can have a long streak
+without having followed it once.
+
+## Wildcards are a real category
+
+`wildcards.json` held fifteen words and was imported by nothing. It is now 167 and wired
+in as tier 4, selectable as **WILD** beside levels 1-3.
+
+It is deliberately *not* a fourth difficulty step. Tiers 1-3 are a ramp by syllabic
+weight; this is a different axis — words with no clean perfect rhyme, awkward stress, or
+a shape that resists landing on a beat. The training value is that autopilot fails and
+the writer is pushed into slant rhyme and multisyllabic construction.
+
+Two rules follow from that and are enforced rather than assumed:
+
+- A wildcard may not also live in an ordinary tier — then it is not a wildcard. Twenty-
+  seven candidates were dropped for this on the way in, and the build validator now
+  checks all four banks against each other.
+- Scheme mode blends tiers 1-3 so a writer bridges registers. It does **not** blend
+  wildcards, because handing back an easy word to rhyme on removes the only thing the
+  mode exists for.
+
+## A full year of consistency
+
+The practice grid was 26 weeks while practice days are retained for 400 — it was
+discarding half a record writers had already earned. It is now 52 weeks. That many
+columns cannot fit a phone at a legible cell size, so the grid scrolls horizontally and
+opens at its right-hand edge, since the recent weeks are what anyone opens it to see.
+
+## Verification
+
+- `npm run verify`: 119/119 passed (build + full suite; was 97/97)
+- 22 new tests: the prescription being stable within a day and varying across days,
+  covering every weekday shape, and — the one that matters — only ever emitting settings
+  the session engine will accept, asserted across all 365 days of a year rather than
+  spot-checked; plus wildcard isolation in Scheme mode
+- Word bank: Tier 1 `993`, Tier 2 `1,366`, Tier 3 `1,515`, Wild `167`, 0 cross-tier
+  duplicates
+- `npm audit`: 0 vulnerabilities
+- Driven end-to-end in headless Chromium at iPhone viewport: the card applied its
+  prescription to live settings and started against them (Thursday → Heavy → Level 3,
+  5.0s, 15 min, first prompt `devastate`), completion flipped the card and recorded it,
+  a freeform session correctly did **not** mark the prescription complete, WILD drew only
+  from the wildcard bank, and the year grid rendered 364 cells scrolled to today.
+
+### One wiring note worth keeping
+
+Applying a prescription writes seven pieces of settings state. React batches those, so
+calling `engine.startSession()` in the same handler starts the session against the
+*previous* settings — the engine reads them from props. A pending flag defers the start
+by one render. The end-to-end check above exists specifically to catch a regression here,
+because the failure is silent: the session runs, just with yesterday’s configuration.
+
+---
+
 # Barsmith 5.4.0 — the training log
 
 Barsmith has called itself a writing gym since the beginning while only ever showing

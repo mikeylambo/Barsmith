@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef, useEffect } from 'react';
 import { computeProgress } from '../services/progress';
 
 // ─────────────────────────────────────────────
@@ -48,6 +48,13 @@ export default function ProgressScreen({
     [totals, sessionHistory, practiceDays, vault],
   );
 
+  // Open the year grid on the most recent weeks rather than a year ago.
+  const gridScrollRef = useRef(null);
+  useEffect(() => {
+    const el = gridScrollRef.current;
+    if (el) el.scrollLeft = el.scrollWidth;
+  }, [p.grid.length]);
+
   const peakWeek = Math.max(1, ...p.weeks.map(w => w.bars));
   const monthLabel = (d) => d.toLocaleDateString('en-US', { month: 'short' });
 
@@ -95,9 +102,14 @@ export default function ProgressScreen({
                 </span>
               }
             >
-              <div className="overflow-x-auto custom-scrollbar -mx-1 px-1">
-                <div className="min-w-[280px]">
-                  <div className="relative h-4 mb-1" aria-hidden="true">
+              {/* A full year rather than half of one: practice days are retained for 400
+                  days, so a 26-week window was discarding half the record a writer had
+                  already earned. Fifty-two columns cannot fit a phone at a legible cell
+                  size, so the grid scrolls and starts at the right-hand edge — the
+                  recent weeks are what someone opens this to see. */}
+              <div ref={gridScrollRef} className="overflow-x-auto custom-scrollbar -mx-1 px-1">
+                <div className="min-w-[640px]">
+                  <div className="relative h-4 mb-1.5" aria-hidden="true">
                     {monthMarks.map(m => (
                       <span
                         key={`${m.column}-${m.label}`}
@@ -106,12 +118,11 @@ export default function ProgressScreen({
                       >{m.label}</span>
                     ))}
                   </div>
-                  {/* 26 weeks, one column per week, most recent on the right. */}
                   <div
                     className="grid grid-rows-7 grid-flow-col gap-[3px]"
-                    style={{ gridAutoColumns: '1fr' }}
+                    style={{ gridAutoColumns: 'minmax(0, 1fr)' }}
                     role="img"
-                    aria-label={`Practice consistency over the last 26 weeks. ${p.daysTrained} days trained in total.`}
+                    aria-label={`Practice consistency over the last 52 weeks. ${p.daysTrained} ${p.daysTrained === 1 ? 'day' : 'days'} trained in total.`}
                   >
                     {p.grid.map(day => (
                       <div

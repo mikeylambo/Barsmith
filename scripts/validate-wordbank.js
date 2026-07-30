@@ -19,10 +19,14 @@ function loadJSON(name) {
   return JSON.parse(readFileSync(join(dataDir, name), 'utf-8'));
 }
 
+// Wildcards are tier 4 in the app (see services/wordbank.js), so they get the same
+// shape and duplicate checks. A "wildcard" that also lives in an ordinary tier is not a
+// wildcard, and the cross-tier check below is what enforces that.
 const tiers = {
   1: loadJSON('tier-1.json'),
   2: loadJSON('tier-2.json'),
   3: loadJSON('tier-3.json'),
+  4: loadJSON('wildcards.json'),
 };
 
 let errors = 0;
@@ -43,7 +47,7 @@ for (const [tierNum, words] of Object.entries(tiers)) {
     else if (!/^[a-z' -]+$/.test(w)) warn(`Tier ${tierNum}[${i}] has unexpected characters: "${w}"`);
   });
 }
-ok(`Shape check complete (Tier 1: ${tiers[1].length}, Tier 2: ${tiers[2].length}, Tier 3: ${tiers[3].length})`);
+ok(`Shape check complete (Tier 1: ${tiers[1].length}, Tier 2: ${tiers[2].length}, Tier 3: ${tiers[3].length}, Wild: ${tiers[4].length})`);
 
 // ── Duplicates within a tier ──
 for (const [tierNum, words] of Object.entries(tiers)) {
@@ -55,14 +59,17 @@ for (const [tierNum, words] of Object.entries(tiers)) {
 }
 
 // ── Duplicates across tiers ──
-const t1 = new Set(tiers[1]);
-const t2 = new Set(tiers[2]);
-const t3 = new Set(tiers[3]);
-const crossDupes = [
-  ...[...t1].filter(w => t2.has(w)).map(w => `${w} (T1+T2)`),
-  ...[...t1].filter(w => t3.has(w)).map(w => `${w} (T1+T3)`),
-  ...[...t2].filter(w => t3.has(w)).map(w => `${w} (T2+T3)`),
-];
+const NAMES = { 1: 'T1', 2: 'T2', 3: 'T3', 4: 'WILD' };
+const sets = Object.fromEntries(Object.entries(tiers).map(([n, w]) => [n, new Set(w)]));
+const keys = Object.keys(tiers);
+const crossDupes = [];
+for (let i = 0; i < keys.length; i++) {
+  for (let j = i + 1; j < keys.length; j++) {
+    const [a, b] = [keys[i], keys[j]];
+    [...sets[a]].filter(w => sets[b].has(w))
+      .forEach(w => crossDupes.push(`${w} (${NAMES[a]}+${NAMES[b]})`));
+  }
+}
 if (crossDupes.length) {
   crossDupes.forEach(d => fail(`Cross-tier duplicate: ${d}`));
 } else {
