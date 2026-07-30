@@ -24,11 +24,13 @@ async function main() {
   let assetFiles = [];
   try {
     const entries = await readdir(join(DIST, 'assets'));
-    // .woff2 belongs here too: Inter is self-hosted (see index.css), so the font is a
-    // hashed same-origin asset. Without it in the install set, an offline first-load
-    // would boot the app but render it in the fallback system face.
+    // Every hashed asset the bundle imports, not just code. The font matters because
+    // Inter is self-hosted (see index.css), so without it an offline first-load boots
+    // the app in the fallback system face. Images matter because the bar-card renderer
+    // draws the brand lockup, and a card missing its mark is a worse card to share.
+    // Anything Vite emits into assets/ is by definition something the build references.
     assetFiles = entries
-      .filter(f => ['.js', '.css', '.woff2'].includes(extname(f)))
+      .filter(f => ['.js', '.css', '.woff2', '.woff', '.png', '.svg', '.webp'].includes(extname(f)))
       .map(f => `/assets/${f}`);
   } catch {
     console.warn('[inject-sw-precache] dist/assets not found — skipping asset injection');

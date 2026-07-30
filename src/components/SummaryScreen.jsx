@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import DictionaryModal from './DictionaryModal.jsx';
+import BarCardModal from './BarCardModal.jsx';
 import { sessionToText, sessionBarsOnly, hasBars } from '../services/export-text';
 import { downloadText, dateStamp } from '../services/download';
 
@@ -9,6 +10,8 @@ export default function SummaryScreen({
   fetchDictData, dictData, isLoadingDict, fmtDur, flattenNotes, copyNoteText, copiedNoteKey,
 }) {
   const [activeWord, setActiveWord] = useState(null);
+  // { bar, word } for the card being previewed, or null.
+  const [cardBar, setCardBar] = useState(null);
   const hasNotes = latestSession?.notes && Object.keys(latestSession.notes).length > 0;
 
   // Bars are only worth exporting if some were actually written. `hasNotes` can be true
@@ -78,11 +81,17 @@ export default function SummaryScreen({
             <h3 className="text-gray-500 text-xs font-black uppercase tracking-widest mb-5 border-b border-white/5 pb-4">Bar Pad</h3>
             {flattenNotes(latestSession.notes).map(([word, entryId, text]) => text?.trim() ? (
               <div key={word + entryId} className="mb-4 last:mb-0">
-                <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center justify-between mb-1 gap-2">
                   <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest">{word}</p>
-                  <button onClick={() => copyNoteText(`s-${word}-${entryId}`, text)} className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full transition-all ${copiedNoteKey===`s-${word}-${entryId}` ? 'bg-green-500/20 text-green-400' : 'bg-white/8 text-gray-500 hover:text-white'}`}>
-                    {copiedNoteKey===`s-${word}-${entryId}` ? '✓ Copied' : 'Copy'}
-                  </button>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {/* A bar card is the one thing here anyone would actually post. */}
+                    <button onClick={() => setCardBar({ bar: text, word })} aria-label={`Share the bar written on ${word} as an image`} className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-white/8 text-gray-500 hover:text-white transition-all">
+                      Share
+                    </button>
+                    <button onClick={() => copyNoteText(`s-${word}-${entryId}`, text)} className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full transition-all ${copiedNoteKey===`s-${word}-${entryId}` ? 'bg-green-500/20 text-green-400' : 'bg-white/8 text-gray-500 hover:text-white'}`}>
+                      {copiedNoteKey===`s-${word}-${entryId}` ? '✓ Copied' : 'Copy'}
+                    </button>
+                  </div>
                 </div>
                 <p className="text-gray-200 text-sm leading-relaxed font-medium whitespace-pre-wrap select-text">{text}</p>
               </div>
@@ -106,6 +115,7 @@ export default function SummaryScreen({
         </div>
       </div>
       {activeWord && <DictionaryModal word={activeWord} dictData={dictData} isLoading={isLoadingDict} onClose={()=>setActiveWord(null)} isVaultMode={true} />}
+      {cardBar && <BarCardModal bar={cardBar.bar} word={cardBar.word} onClose={()=>setCardBar(null)} />}
     </div>
   );
 }

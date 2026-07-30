@@ -20,14 +20,36 @@ npm run preview   # preview the production build
 ## Getting your bars out
 
 Barsmith stores everything locally and sends nothing anywhere, which makes export
-the only way work leaves the app. There are two distinct exports, and they are not
-interchangeable:
+the only way work leaves the app. There are three, and they are not interchangeable:
 
+- **A bar as an image** — the *Share* action on any individual bar, in Summary or
+  History, renders a 1080×1080 bar card and hands it to the OS share sheet (or saves it,
+  where file sharing is unavailable). This is the one meant to be posted.
 - **Bars as text** (`.txt`) — Summary offers *Copy All Bars* and *Export .txt* for the
   session you just finished; History offers *Export All Bars* for the whole archive and
   *Copy All* per session. This is the one you open in a notes app, a lyric doc, or a DAW.
 - **Backup** (`.json`) — from the Vault screen. Restores Barsmith itself (history, vault,
   personal words, preferences) on this or another device. Nothing else reads it.
+
+### Bar cards
+
+`services/bar-card.js` draws the card on a canvas using the self-hosted Inter and the
+anvil from `src/assets/brand-lockup.png`, so a card is generated on-device and works
+offline like everything else.
+
+Two things in there are load-bearing and easy to break:
+
+- **The writer's line breaks are structure, not whitespace.** A bar written as four
+  lines must render as four lines. `layoutBarText` therefore hunts for the largest type
+  size at which nothing wraps before it settles for merely fitting the frame — a bar
+  whose lines each wrap in two reads as prose and loses the rhythm that made it worth
+  sharing. Where wrapping is unavoidable, continuation lines are indented.
+- **iOS only honours `navigator.share()` inside a live user gesture.** Any `await`
+  before the call — encoding the canvas, loading the font — drops the activation and the
+  sheet silently never opens. So the card is rendered when the modal opens, and the
+  Share handler does no async work before sharing. `services/share.js` is the single
+  seam for this; swapping in `@capacitor/share` for a native build touches that file
+  and nothing else.
 
 ## Brand assets
 
@@ -47,7 +69,7 @@ This package was installed, tested, validated, built, and dependency-audited.
 
 - Word bank: Tier 1 `993`, Tier 2 `1,366`, Tier 3 `1,515`
 - Cross-tier duplicates: `0`
-- Automated tests: `47 passed`
+- Automated tests: `68 passed`
 - Production build: passed
 - `npm audit`: `0 vulnerabilities`
 - `package-lock.json`: included for reproducible Vercel/local builds
@@ -71,7 +93,12 @@ The automated suite covers:
   that clears only Barsmith's own storage keys
 - History search matching bar text and frozen words, and clearing back to the full archive
 - Copy All reporting a real outcome when the clipboard rejects or is absent entirely
-- every hashed JS, CSS, and font asset appearing in the generated service-worker precache
+- bar-card layout: line structure preserved, continuation indent only where it
+  disambiguates, width never exceeded, over-long tokens broken, overflow truncated
+- share outcomes distinguishing a completed share, a dismissed sheet, a genuine
+  failure that falls back to download, and a browser with no file-share support
+- every hashed asset, and every manifest icon, appearing in the generated
+  service-worker precache
 
 ## Final real-device checks
 
@@ -89,6 +116,7 @@ Browser automation cannot substitute for hardware-specific media/audio behavior.
 10. **Backup round-trip.** From Vault, tap Export Backup and confirm a `.json` file is actually saved (not silently dropped — this is the specific case Safari can be flaky about). Then clear browser data for the site (or use a second device), tap Restore Backup, select that file, and confirm Vault, History, and custom words all come back correctly.
 11. **Text export round-trip.** After a session with at least two bars, tap *Copy All Bars* on Summary and paste into Notes — confirm every bar arrives, blank-line separated, in order. Then tap *Export .txt* and confirm the file actually saves and opens as readable text (same Safari flakiness as the backup download applies). Repeat *Export All Bars* from History with more than one session archived.
 12. **Home-screen icon.** On Android/Chrome, install to the home screen and confirm the launcher icon shows the anvil on a dark field with nothing clipped by the system's circular mask. On iPhone, confirm the home-screen icon is not a white tile.
+13. **Bar card share sheet.** This is the one check browser automation genuinely cannot stand in for, because the iOS gesture rule only bites on a real device. Tap *Share* on a bar and confirm the native share sheet opens with the image attached, that picking Instagram/Messages actually carries the picture through, and that dismissing the sheet leaves no stray file in Photos. Repeat with a multi-line bar and confirm each written line renders as its own line on the card.
 
 ## Project structure
 
@@ -98,6 +126,7 @@ src/
   components/
     ActionBar.jsx
     ActiveScreen.jsx
+    BarCardModal.jsx
     DictionaryModal.jsx
     ErrorBoundary.jsx
     HistoryScreen.jsx
@@ -112,10 +141,12 @@ src/
     useSessionEngine.js
   services/
     audio-clock.js
+    bar-card.js
     dictionary.js
     download.js
     export-text.js
     haptic.js
+    share.js               # the one seam to swap for @capacitor/share
     storage.js
     wordbank.js
   assets/
@@ -127,6 +158,7 @@ src/
     tier-2.json
     tier-3.json
   __tests__/
+    bar-card.test.js
     build.test.js
     export-text.test.js
     release.smoke.test.jsx

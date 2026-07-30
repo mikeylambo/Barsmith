@@ -15,7 +15,7 @@ import { existsSync } from 'node:fs';
 import { describe, it, expect } from 'vitest';
 
 describe('build output', () => {
-  it('dist/sw.js precaches every hashed JS and CSS asset emitted by vite build', async () => {
+  it('dist/sw.js precaches every hashed asset emitted by vite build', async () => {
     const distPath = join(process.cwd(), 'dist');
 
     // dist/ must exist — this test is only meaningful post-build.
@@ -24,8 +24,14 @@ describe('build output', () => {
     expect(existsSync(distPath), 'dist/ not found — run `npm run verify` instead of `npm test`').toBe(true);
 
     const assetsPath = join(distPath, 'assets');
-    const assetFiles = (await readdir(assetsPath))
-      .filter(f => f.endsWith('.js') || f.endsWith('.css'));
+    // Deliberately unfiltered: anything Vite emits into assets/ is something the
+    // bundle references, so it all belongs in the install set. Checking every file
+    // rather than an allowlist of extensions is what catches the next asset type
+    // someone imports — self-hosting the font and drawing the brand lockup in the
+    // bar-card renderer each silently escaped an extension-filtered version of
+    // this test, leaving the app to boot offline without its typeface, then
+    // without its logo.
+    const assetFiles = await readdir(assetsPath);
 
     expect(assetFiles.length).toBeGreaterThan(0);
 
@@ -34,5 +40,17 @@ describe('build output', () => {
     const missing = assetFiles.filter(f => !swContent.includes(`/assets/${f}`));
 
     expect(missing, `sw.js is missing precache entries for: ${missing.join(', ')}`).toHaveLength(0);
+  });
+
+  it('dist/sw.js precaches every icon the manifest declares', async () => {
+    const distPath = join(process.cwd(), 'dist');
+    expect(existsSync(distPath), 'dist/ not found — run `npm run verify` instead of `npm test`').toBe(true);
+
+    const manifest = JSON.parse(await readFile(join(distPath, 'manifest.json'), 'utf8'));
+    const swContent = await readFile(join(distPath, 'sw.js'), 'utf8');
+
+    const missing = manifest.icons.map(i => i.src).filter(src => !swContent.includes(src));
+
+    expect(missing, `sw.js is missing manifest icons: ${missing.join(', ')}`).toHaveLength(0);
   });
 });

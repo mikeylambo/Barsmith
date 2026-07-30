@@ -1,3 +1,88 @@
+# Barsmith 5.3.0 — the bar card
+
+5.2.0 got a writer's work out of the app as text. This release is about the other
+direction: giving Barsmith a reason anyone hears about it at all.
+
+Until now nothing Barsmith produced could travel. Bars left as `.txt`, and nobody
+posts a `.txt` — so a writer could do their best work here and it would never point
+anyone back. Writers share bars constantly; the app just had no part in it.
+
+## Bar cards
+
+Every individual bar in Summary and History now has a **Share** action that renders it
+as a 1080×1080 image and hands it to the OS share sheet.
+
+- Drawn on-device with the self-hosted Inter and the anvil mark, so it works offline
+  like the rest of the app and looks like Barsmith without needing a watermark.
+- Square deliberately: it is the one ratio that survives an Instagram feed post, a
+  story, and an X timeline without being centre-cropped into nonsense.
+- The prompt word sits above the bar, grouped with it rather than pinned to the top of
+  the frame, so the label reads as belonging to the bar at any line count.
+- Where the OS cannot share files, the button becomes *Save Image* instead of offering
+  a share that would quietly turn into a download.
+
+### Two details that took real care
+
+**A writer's line breaks are structure, not whitespace.** The first working version
+picked the largest type that fit the frame, which wrapped each of a four-line bar's
+lines in two — eight visual lines with nothing distinguishing a new bar from a
+continuation. It read as a paragraph and destroyed the rhythm that made the bar worth
+sharing. `layoutBarText` now hunts for the largest size at which *nothing* wraps before
+settling for merely fitting, accepting smaller type as the price of intact structure.
+Where wrapping is unavoidable, continuation lines are indented — but only on
+multi-line bars, since on a single bar a hanging indent reads as deliberate poetic
+indentation the writer never asked for.
+
+**iOS only honours `navigator.share()` inside a live user gesture.** Any `await` before
+the call — encoding the canvas, loading the font — drops the activation and the sheet
+silently never opens. The card is therefore rendered when the modal opens, so the Share
+handler does no async work before sharing. A dismissed sheet is also distinguished from
+a real failure: reacting to a cancellation with a fallback download would drop an
+unwanted file in someone's camera roll.
+
+## Built for the native path
+
+`services/share.js` is the single seam between Barsmith and the OS share sheet, and
+every caller goes through it for a plain outcome string. Wrapping in Capacitor means
+swapping the Web Share call in that one file for `@capacitor/share`; no UI moves.
+
+## Fixes found along the way
+
+- **The service worker was under-precaching.** The extension allowlist covered JS and
+  CSS only, so self-hosting the font in 5.2.0 and drawing the brand lockup in the card
+  renderer each slipped through, leaving an offline install to boot without its typeface
+  and then without its logo. The precache now takes everything Vite emits into
+  `assets/` — anything there is by definition something the build references — and the
+  build test asserts against the unfiltered directory listing rather than an allowlist,
+  so the next new asset type cannot repeat this. A second test covers manifest icons.
+- `downloadText` and the share fallback had separate copies of the object-URL dance;
+  `downloadBlob` is now the single implementation and `downloadText` wraps it.
+- `dateStamp` threw on an Invalid Date, which would have turned one malformed history
+  record into a dead export button. It falls back to today.
+- *Copy All Bars* and the per-session *Copy All* claimed success even when the clipboard
+  write rejected or the API was absent entirely — a checkmark over a failed copy of a
+  whole session is how someone loses a verse. Both now report the real outcome.
+
+## Verification
+
+- `npm run verify`: 68/68 passed (build + full suite; was 47/47)
+- 20 new tests: bar-card layout rules, share-outcome handling, manifest-icon precaching
+- `npm audit`: 0 vulnerabilities
+- Bundle: 270 KB JS (86 KB gzip), 29 KB CSS (6 KB gzip), 48 KB font, 44 KB lockup
+- Cards rendered end-to-end in headless Chromium at iPhone viewport across three shapes
+  — a one-line punchline, a four-line block with the writer's own breaks, and a bar far
+  too long for the frame — and inspected at full 1080×1080. Confirmed the *Share* button
+  correctly gives way to *Save Image* where file sharing is unsupported.
+
+## Still required before replacing production
+
+The real-device checklist in README.md remains the manual gate, and it now has a check
+that automation genuinely cannot substitute for: the iOS gesture rule only bites on a
+real device, so the share sheet has to be opened on hardware and an actual image
+carried through to Instagram or Messages.
+
+---
+
 # Barsmith 5.2.0 — public-release pass
 
 5.1.0 was already a solid, careful build: the session engine, timers, audio clock, draft

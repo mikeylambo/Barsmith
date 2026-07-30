@@ -1,20 +1,21 @@
 // ─────────────────────────────────────────────
 // DOWNLOAD SERVICE
-// One place for "turn this string into a file the user actually receives".
+// One place for "turn this data into a file the user actually receives".
 // Previously this logic was inlined in App.jsx's backup handler; the text
-// exporters and the crash-recovery screen need the same behaviour, and the
-// mobile-Safari timing quirk below is easy to get wrong twice.
+// exporters, the bar-card share fallback, and the crash-recovery screen all need
+// the same behaviour, and the mobile-Safari timing quirk below is easy to get
+// wrong more than once.
 // ─────────────────────────────────────────────
 
 /**
- * Trigger a browser download for in-memory text.
+ * Trigger a browser download for a blob. The single implementation — everything
+ * else here funnels through it.
  *
  * @param {string} filename  Suggested name, extension included.
- * @param {string} text      File body.
- * @param {string} mime      Content type; defaults to plain text.
+ * @param {Blob}   blob      File body.
  */
-export function downloadText(filename, text, mime = 'text/plain;charset=utf-8') {
-  const url = URL.createObjectURL(new Blob([text], { type: mime }));
+export function downloadBlob(filename, blob) {
+  const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
   a.download = filename;
@@ -28,6 +29,17 @@ export function downloadText(filename, text, mime = 'text/plain;charset=utf-8') 
   // object URL is revoked — revoking synchronously right after click() risks
   // the download silently failing there.
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/**
+ * Trigger a browser download for in-memory text.
+ *
+ * @param {string} filename  Suggested name, extension included.
+ * @param {string} text      File body.
+ * @param {string} mime      Content type; defaults to plain text.
+ */
+export function downloadText(filename, text, mime = 'text/plain;charset=utf-8') {
+  downloadBlob(filename, new Blob([text], { type: mime }));
 }
 
 /**

@@ -1,6 +1,6 @@
 /* @vitest-environment jsdom */
 //
-// Two things a public release must not get wrong:
+// Things a public release must not get wrong:
 //
 //  1. A render crash must still leave the writer a way to retrieve their bars.
 //     The boundary's whole reason for existing is that localStorage survives the
@@ -8,12 +8,16 @@
 //     that has genuinely thrown.
 //  2. History search must actually narrow a multi-session archive — it is the
 //     only way to find a remembered bar once the list grows.
+//  3. Anything that moves work out of the app must report what really happened.
+//     Sharing and copying both have silent-failure modes, and a checkmark over a
+//     failed operation is how someone loses a verse.
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import ErrorBoundary from '../components/ErrorBoundary.jsx';
 import HistoryScreen from '../components/HistoryScreen.jsx';
 import { flattenNotes } from '../services/export-text.js';
+import { shareImage, canShareImages } from '../services/share.js';
 
 function Boom() {
   throw new Error('synthetic render failure');
@@ -207,5 +211,60 @@ describe('Copy All reports real clipboard outcomes', () => {
     renderOne();
     fireEvent.click(screen.getByRole('button', { name: 'Copy All' }));
     expect(await screen.findByRole('button', { name: 'Failed' })).toBeTruthy();
+  });
+});
+
+// The share sheet has three outcomes that must not be confused. A dismissal is the
+// user changing their mind — reacting to it with a surprise download would drop an
+// unwanted file in their camera roll. A real failure must fall back so the image is
+// still recoverable. And a browser with no file-share support must go straight to
+// the download rather than appearing to share and doing nothing.
+describe('shareImage outcomes', () => {
+  const blob = () => new Blob([new Uint8Array(4)], { type: 'image/png' });
+  let clicked;
+
+  const stubShare = ({ canShare = true, share }) => {
+    Object.defineProperty(navigator, 'canShare', { value: canShare ? () => true : undefined, configurable: true });
+    Object.defineProperty(navigator, 'share', { value: share, configurable: true });
+  };
+
+  beforeEach(() => {
+    clicked = 0;
+    window.URL.createObjectURL = vi.fn(() => 'blob:test');
+    window.URL.revokeObjectURL = vi.fn();
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => { clicked += 1; });
+  });
+  afterEach(() => { vi.restoreAllMocks(); });
+
+  it('reports a completed share and does not also download', async () => {
+    stubShare({ share: vi.fn().mockResolvedValue(undefined) });
+    expect(await shareImage(blob(), 'card.png')).toBe('shared');
+    expect(clicked).toBe(0);
+  });
+
+  it('treats a dismissed sheet as cancelled, with no surprise download', async () => {
+    const abort = Object.assign(new Error('dismissed'), { name: 'AbortError' });
+    stubShare({ share: vi.fn().mockRejectedValue(abort) });
+    expect(await shareImage(blob(), 'card.png')).toBe('cancelled');
+    expect(clicked).toBe(0);
+  });
+
+  it('falls back to a download when the share genuinely fails', async () => {
+    const denied = Object.assign(new Error('gesture lost'), { name: 'NotAllowedError' });
+    stubShare({ share: vi.fn().mockRejectedValue(denied) });
+    expect(await shareImage(blob(), 'card.png')).toBe('downloaded');
+    expect(clicked).toBe(1);
+  });
+
+  it('downloads directly when the browser cannot share files', async () => {
+    stubShare({ canShare: false, share: undefined });
+    expect(await shareImage(blob(), 'card.png')).toBe('downloaded');
+    expect(clicked).toBe(1);
+  });
+
+  it('canShareImages reports false when the API is missing entirely', () => {
+    Object.defineProperty(navigator, 'canShare', { value: undefined, configurable: true });
+    Object.defineProperty(navigator, 'share', { value: undefined, configurable: true });
+    expect(canShareImages()).toBe(false);
   });
 });

@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import BarCardModal from './BarCardModal.jsx';
 import { sessionBarsOnly, hasBars } from '../services/export-text';
 
 export default function HistoryScreen({
@@ -34,6 +35,8 @@ export default function HistoryScreen({
   };
 
   const anyBars = sessionHistory.some(hasBars);
+  // { bar, word } for the card being previewed, or null.
+  const [cardBar, setCardBar] = useState(null);
 
   return (
     <div className="flex-1 flex flex-col items-center p-6 overflow-y-auto w-full custom-scrollbar pb-36">
@@ -130,9 +133,14 @@ export default function HistoryScreen({
                   {flattenNotes(s.notes).map(([w,entryId,t])=>t?.trim()?(
                     <div key={w+entryId} className="mb-2 flex items-start justify-between gap-2">
                       <p className="flex-1"><span className="text-[10px] text-gray-600 uppercase tracking-widest font-black">{w}: </span><span className="text-gray-400 text-xs select-text whitespace-pre-wrap break-words">{t}</span></p>
-                      <button onClick={() => copyNoteText(`h-${s.id}-${w}-${entryId}`, t)} className={`shrink-0 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full transition-all ${copiedNoteKey===`h-${s.id}-${w}-${entryId}` ? 'bg-green-500/20 text-green-400' : 'bg-white/8 text-gray-500 hover:text-white'}`}>
-                        {copiedNoteKey===`h-${s.id}-${w}-${entryId}` ? '✓' : 'Copy'}
-                      </button>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button onClick={() => setCardBar({ bar: t, word: w })} aria-label={`Share the bar written on ${w} as an image`} className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-white/8 text-gray-500 hover:text-white transition-all">
+                          Share
+                        </button>
+                        <button onClick={() => copyNoteText(`h-${s.id}-${w}-${entryId}`, t)} className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full transition-all ${copiedNoteKey===`h-${s.id}-${w}-${entryId}` ? 'bg-green-500/20 text-green-400' : 'bg-white/8 text-gray-500 hover:text-white'}`}>
+                          {copiedNoteKey===`h-${s.id}-${w}-${entryId}` ? '✓' : 'Copy'}
+                        </button>
+                      </div>
                     </div>
                   ):null)}
                 </div>
@@ -151,6 +159,7 @@ export default function HistoryScreen({
           ))}
         </div>
       </div>
+      {cardBar && <BarCardModal bar={cardBar.bar} word={cardBar.word} onClose={()=>setCardBar(null)} />}
     </div>
   );
 }
