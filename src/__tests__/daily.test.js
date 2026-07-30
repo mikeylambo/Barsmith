@@ -13,9 +13,9 @@
 
 import { describe, it, expect } from 'vitest';
 import {
-  dateSeed, dailySession, describeSession, isCompletedToday, markCompleted, dayKey,
+  dateSeed, dailySession, describeSession, isCompletedToday, markCompleted, dayKey, programmeWeek,
 } from '../services/daily.js';
-import { WILDCARD_TIER, globalWordBanks, getNextWords, tierLabel } from '../services/wordbank.js';
+import { globalWordBanks, getNextWords } from '../services/wordbank.js';
 
 /** Every day across a full year, to assert properties rather than spot-check. */
 const YEAR = Array.from({ length: 365 }, (_, i) => new Date(2026, 0, 1 + i));
@@ -43,12 +43,17 @@ describe('dailySession', () => {
   });
 
   it('follows the weekday programme, so a given day always trains the same thing', () => {
-    // Two Fridays a month apart are both Wildcard day; the specifics may differ.
+    // Two Fridays a month apart are both Sprint day; the specifics may differ.
     const a = dailySession(new Date(2026, 6, 3));   // Friday
     const b = dailySession(new Date(2026, 7, 7));   // Friday
-    expect(a.key).toBe('wild');
-    expect(b.key).toBe('wild');
-    expect(a.tier).toBe(WILDCARD_TIER);
+    expect(a.key).toBe('sprint');
+    expect(b.key).toBe('sprint');
+  });
+
+  it('makes Sprint day actually fast, since speed is the thing it trains', () => {
+    const fridays = Array.from({ length: 20 }, (_, i) => dailySession(new Date(2026, 0, 2 + i * 7)));
+    expect(fridays.every(p => p.key === 'sprint')).toBe(true);
+    expect(fridays.every(p => p.intervalMs <= 2500)).toBe(true);
   });
 
   it('covers every shape in the programme across a week', () => {
@@ -81,10 +86,8 @@ describe('dailySession', () => {
     }
   });
 
-  it('reserves wildcards for Wildcard day, so the category stays a distinct session', () => {
-    const wildDays = YEAR.map(dailySession).filter(p => p.tier === WILDCARD_TIER);
-    expect(wildDays.length).toBeGreaterThan(0);
-    expect(wildDays.every(p => p.key === 'wild')).toBe(true);
+  it('only ever prescribes one of the three real tiers', () => {
+    expect(new Set(YEAR.map(d => dailySession(d).tier))).toEqual(new Set([1, 2, 3]));
   });
 });
 
@@ -99,10 +102,6 @@ describe('describeSession', () => {
     expect(s).toBe('Level 1 · 2 words · 88 BPM · 4 bars/word · 10 min');
   });
 
-  it('names the wildcard tier rather than showing a bare 4', () => {
-    expect(describeSession({ tier: WILDCARD_TIER, wordCount: 1, intervalMs: 5000, limitMinutes: 10 }))
-      .toContain('Wild');
-  });
 });
 
 describe('completion tracking', () => {
@@ -110,7 +109,7 @@ describe('completion tracking', () => {
 
   it('is not complete before anything is recorded', () => {
     expect(isCompletedToday(null, today)).toBe(false);
-    expect(isCompletedToday({ lastCompleted: null, count: 0 }, today)).toBe(false);
+    expect(isCompletedToday({ completed: [], count: 0 }, today)).toBe(false);
   });
 
   it('marks today done and counts it', () => {
@@ -126,51 +125,106 @@ describe('completion tracking', () => {
     expect(twice).toBe(once); // unchanged, so no pointless write
   });
 
-  it('counts again the next day', () => {
+  it('counts again the next day, and keeps the earlier day marked', () => {
+    // Completion is a set of days rather than a single "last" marker, which is what
+    // lets the week strip show Monday as done while standing on Wednesday.
     const tomorrow = new Date(2026, 6, 31);
     const rec = markCompleted(markCompleted(null, today), tomorrow);
     expect(rec.count).toBe(2);
-    expect(isCompletedToday(rec, today)).toBe(false);
+    expect(isCompletedToday(rec, today)).toBe(true);
     expect(isCompletedToday(rec, tomorrow)).toBe(true);
   });
 
   it('keys on the calendar day, matching how practice days are stored', () => {
     expect(dayKey(today)).toBe(today.toDateString());
   });
+
+  it('caps the completed list while leaving the lifetime count intact', () => {
+    let rec = null;
+    for (let i = 0; i < 200; i++) rec = markCompleted(rec, new Date(2026, 0, 1 + i));
+    expect(rec.count).toBe(200);
+    expect(rec.completed.length).toBeLessThanOrEqual(120);
+    // The cap must drop the OLDEST days, not the recent ones the week view needs.
+    expect(rec.completed).toContain(new Date(2026, 0, 200).toDateString());
+  });
 });
 
-describe('wildcard bank', () => {
-  it('is registered as a tier the engine can draw from', () => {
-    expect(Array.isArray(globalWordBanks[WILDCARD_TIER])).toBe(true);
-    expect(globalWordBanks[WILDCARD_TIER].length).toBeGreaterThan(100);
+describe('programmeWeek', () => {
+  const wednesday = new Date(2026, 6, 29); // Wed 29 Jul 2026
+
+  it('returns Sunday through Saturday of the current week', () => {
+    const week = programmeWeek(null, wednesday);
+    expect(week).toHaveLength(7);
+    expect(week[0].date.getDay()).toBe(0);
+    expect(week[6].date.getDay()).toBe(6);
+    expect(week.map(d => d.name)).toEqual([
+      'Reset', 'Foundations', 'Tempo', 'Scheme', 'Heavy', 'Sprint', 'Endurance',
+    ]);
   });
 
-  it('shares no words with the ordinary tiers — a word in tier 2 is not a wildcard', () => {
-    const ordinary = new Set([...globalWordBanks[1], ...globalWordBanks[2], ...globalWordBanks[3]]);
-    const overlap = globalWordBanks[WILDCARD_TIER].filter(w => ordinary.has(w));
-    expect(overlap).toEqual([]);
+  it('marks completed days and flags today', () => {
+    const rec = markCompleted(markCompleted(null, new Date(2026, 6, 27)), wednesday);
+    const week = programmeWeek(rec, wednesday);
+    expect(week[1].done).toBe(true);   // Monday
+    expect(week[3].done).toBe(true);   // Wednesday
+    expect(week[2].done).toBe(false);  // Tuesday missed
+    expect(week[3].isToday).toBe(true);
   });
 
-  it('never dilutes a Scheme-mode wildcard round with ordinary words', () => {
-    // Tiers 1-3 deliberately blend in Scheme mode so a writer bridges registers. Doing
-    // that to wildcards would hand back an easy word to rhyme on and remove the point.
-    const wild = new Set(globalWordBanks[WILDCARD_TIER]);
-    for (let count = 1; count <= 4; count++) {
-      for (let trial = 0; trial < 40; trial++) {
-        const words = getNextWords(WILDCARD_TIER, count, [], 0, []);
-        expect(words.every(w => wild.has(w)), `leaked a non-wildcard: ${words}`).toBe(true);
-      }
+  it('marks later days as future so they do not read as missed', () => {
+    const week = programmeWeek(null, wednesday);
+    expect(week.slice(0, 4).every(d => !d.future)).toBe(true);
+    expect(week.slice(4).every(d => d.future)).toBe(true);
+  });
+
+  it('does not treat today as future even before the day is over', () => {
+    const week = programmeWeek(null, new Date(2026, 6, 29, 9, 0));
+    expect(week[3].future).toBe(false);
+  });
+
+  it('handles a week that spans a month boundary', () => {
+    const week = programmeWeek(null, new Date(2026, 6, 30)); // Thu 30 Jul; week ends 1 Aug
+    expect(week).toHaveLength(7);
+    expect(new Set(week.map(d => d.date.getMonth())).size).toBe(2);
+  });
+});
+
+// The former wildcard tier was folded back into 1-3. These guard the properties that
+// had to survive that merge: every prompt is a single token the dictionary can resolve,
+// and the tiers stay a clean syllabic ramp so a redistributed word landed where it
+// belongs rather than wherever was convenient.
+describe('word banks', () => {
+  const SYLLABLES = (word) => {
+    const w = word.toLowerCase().replace(/[^a-z]/g, '');
+    let n = (w.match(/[aeiouy]+/g) || []).length;
+    if (/e$/.test(w) && !/(le|ee|ye)$/.test(w) && n > 1) n -= 1;
+    return Math.max(1, n);
+  };
+
+  it('exposes exactly the three tiers', () => {
+    expect(Object.keys(globalWordBanks)).toEqual(['1', '2', '3']);
+  });
+
+  it('holds only single tokens, because Tap-to-Lock resolves the prompt as one word', () => {
+    for (const [tier, bank] of Object.entries(globalWordBanks)) {
+      const phrases = bank.filter(w => /\s/.test(w));
+      expect(phrases, `tier ${tier} contains phrases: ${phrases}`).toEqual([]);
     }
   });
 
-  it('still blends tiers for an ordinary Scheme round', () => {
+  it('keeps each tier on its syllabic band after the wildcard merge', () => {
+    const share = (tier, predicate) => {
+      const bank = globalWordBanks[tier];
+      return bank.filter(w => predicate(SYLLABLES(w))).length / bank.length;
+    };
+    expect(share(1, n => n === 1)).toBeGreaterThan(0.9);
+    expect(share(2, n => n === 2)).toBeGreaterThan(0.8);
+    expect(share(3, n => n >= 3)).toBeGreaterThan(0.8);
+  });
+
+  it('blends tiers for a Scheme round so a writer bridges registers', () => {
     const t1 = new Set(globalWordBanks[1]);
     const drawn = Array.from({ length: 60 }, () => getNextWords(1, 3, [], 0, [])).flat();
     expect(drawn.some(w => !t1.has(w))).toBe(true);
-  });
-
-  it('labels the wildcard tier by name and the rest by number', () => {
-    expect(tierLabel(WILDCARD_TIER)).toBe('Wild');
-    expect(tierLabel(2)).toBe('2');
   });
 });

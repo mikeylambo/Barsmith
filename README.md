@@ -61,10 +61,15 @@ minutes.
 
 `services/daily.js` derives it from the local calendar date, so it needs no backend,
 works offline, and is identical for everyone on a given day. It is **structured by
-weekday rather than randomised** — Reset, Foundations, Tempo, Scheme, Heavy, Wildcard,
+weekday rather than randomised** — Reset, Foundations, Tempo, Scheme, Heavy, Sprint,
 Endurance. A random draw each morning is noise a writer cannot anticipate; a week with a
-shape means Friday is Wildcard day and skipping it misses something specific. The
-specifics inside each shape still vary week to week.
+shape means Friday is Sprint day and skipping it misses something specific. The specifics
+inside each shape still vary week to week.
+
+The card also carries a **week strip**: seven cells, Sunday to Saturday, showing which
+prescriptions are done. One session is a task; a week with gaps in it is a programme, and
+seeing that Tuesday is still empty with two days left is a better reason to open the app
+tomorrow than a card that only ever describes today.
 
 Only a session started from the card counts as completing the prescription — freeform
 training is training, but it is not the programme.
@@ -74,18 +79,24 @@ state, which React batches, so `engine.startSession()` cannot run in the same ha
 it would start against the *previous* settings. A pending flag defers the start by one
 render.
 
-## Wildcards
+## The word banks
 
-`src/data/wildcards.json` is tier 4, selectable as **WILD** beside levels 1-3. It is not
-a fourth difficulty step — tiers 1-3 are a ramp by syllabic weight, and this is a
-different axis: words with no clean perfect rhyme, awkward stress, or a shape that
-resists landing on a beat. The training value is that autopilot fails and the writer is
-pushed into slant rhyme and multisyllabic construction.
+Three tiers, graded by syllabic weight — tier 1 is ~97% single-syllable, tier 2 ~84%
+two-syllable, tier 3 predominantly three or more. **New words are placed by that rule**,
+and the test suite asserts each tier stays on its band.
 
-Two rules the validator enforces: a wildcard may not also appear in an ordinary tier
-(then it is not a wildcard), and Scheme mode does not blend wildcards with ordinary
-words the way it blends tiers 1-3 — handing back an easy word to rhyme on removes the
-only thing the mode is for.
+Two constraints the build validator enforces rather than trusting:
+
+- **Single tokens only.** Tap-to-Lock sends the prompt straight to dictionaryapi.dev,
+  which 404s on a phrase — so a multi-word prompt would open a broken dictionary panel
+  rather than a definition. This is why 25 candidate phrases were dropped rather than
+  added when the wildcard list was merged in.
+- **No cross-tier duplicates**, so the difficulty ramp means something.
+
+A fourth "wildcard" tier was built and then removed. The words that justified it — real
+unrhymables like `orange` and `month` — were too few to fill a mode, and the rest were
+ordinary polysyllables that belong on the existing ramp. Its 142 single words were
+redistributed into tiers 1-3 by syllable count. One difficulty axis, one mental model.
 
 ## The training log
 
@@ -130,9 +141,9 @@ python3 scripts/make-brand-assets.py
 
 This package was installed, tested, validated, built, and dependency-audited.
 
-- Word bank: Tier 1 `993`, Tier 2 `1,366`, Tier 3 `1,515`, Wild `167`
+- Word bank: Tier 1 `1,020`, Tier 2 `1,425`, Tier 3 `1,571`
 - Cross-tier duplicates: `0`
-- Automated tests: `119 passed`
+- Automated tests: `124 passed`
 - Production build: passed
 - `npm audit`: `0 vulnerabilities`
 - `package-lock.json`: included for reproducible Vercel/local builds
@@ -160,8 +171,10 @@ The automated suite covers:
   maxima, longest streak across month and DST boundaries, weekly bucketing
 - the daily prescription being stable within a day, varying across days, covering every
   weekday shape, and only ever emitting settings the session engine accepts
-- wildcards never blending with ordinary tiers in Scheme mode, and sharing no words
-  with them
+- the week strip marking past completions, flagging today, and not drawing later days
+  as missed, across a month boundary
+- completed days capping oldest-first while the lifetime programme count survives
+- every word bank holding single tokens only, and each tier staying on its syllabic band
 - bar-card layout: line structure preserved, continuation indent only where it
   disambiguates, width never exceeded, over-long tokens broken, overflow truncated
 - share outcomes distinguishing a completed share, a dismissed sheet, a genuine
@@ -231,7 +244,6 @@ src/
     tier-1.json
     tier-2.json
     tier-3.json
-    wildcards.json         # tier 4 — words with no clean rhyme
   __tests__/
     bar-card.test.js
     build.test.js

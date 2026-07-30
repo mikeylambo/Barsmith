@@ -19,14 +19,10 @@ function loadJSON(name) {
   return JSON.parse(readFileSync(join(dataDir, name), 'utf-8'));
 }
 
-// Wildcards are tier 4 in the app (see services/wordbank.js), so they get the same
-// shape and duplicate checks. A "wildcard" that also lives in an ordinary tier is not a
-// wildcard, and the cross-tier check below is what enforces that.
 const tiers = {
   1: loadJSON('tier-1.json'),
   2: loadJSON('tier-2.json'),
   3: loadJSON('tier-3.json'),
-  4: loadJSON('wildcards.json'),
 };
 
 let errors = 0;
@@ -44,10 +40,15 @@ for (const [tierNum, words] of Object.entries(tiers)) {
     else if (w.trim() === '') fail(`Tier ${tierNum}[${i}] is empty`);
     else if (w !== w.trim()) fail(`Tier ${tierNum}[${i}] has leading/trailing whitespace: "${w}"`);
     else if (w !== w.toLowerCase()) warn(`Tier ${tierNum}[${i}] is not lowercase: "${w}"`);
-    else if (!/^[a-z' -]+$/.test(w)) warn(`Tier ${tierNum}[${i}] has unexpected characters: "${w}"`);
+    else if (!/^[a-z'-]+$/.test(w)) {
+      // Multi-word prompts are rejected rather than warned about: Tap-to-Lock sends the
+      // prompt straight to dictionaryapi.dev, which 404s on a phrase, so the writer
+      // would get a broken dictionary panel rather than a definition.
+      fail(`Tier ${tierNum}[${i}] is not a single word: "${w}"`);
+    }
   });
 }
-ok(`Shape check complete (Tier 1: ${tiers[1].length}, Tier 2: ${tiers[2].length}, Tier 3: ${tiers[3].length}, Wild: ${tiers[4].length})`);
+ok(`Shape check complete (Tier 1: ${tiers[1].length}, Tier 2: ${tiers[2].length}, Tier 3: ${tiers[3].length})`);
 
 // ── Duplicates within a tier ──
 for (const [tierNum, words] of Object.entries(tiers)) {
@@ -59,7 +60,7 @@ for (const [tierNum, words] of Object.entries(tiers)) {
 }
 
 // ── Duplicates across tiers ──
-const NAMES = { 1: 'T1', 2: 'T2', 3: 'T3', 4: 'WILD' };
+const NAMES = { 1: 'T1', 2: 'T2', 3: 'T3' };
 const sets = Object.fromEntries(Object.entries(tiers).map(([n, w]) => [n, new Set(w)]));
 const keys = Object.keys(tiers);
 const crossDupes = [];

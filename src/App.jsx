@@ -14,7 +14,7 @@ import {
   loadDraft, clearDraft,
 } from './services/storage';
 import { seedTotals, addSessionToTotals } from './services/progress';
-import { dailySession, isCompletedToday, markCompleted } from './services/daily';
+import { dailySession, isCompletedToday, markCompleted, programmeWeek } from './services/daily';
 import { downloadText, dateStamp } from './services/download';
 // flattenNotes lives with the exporters so the on-screen Bar Pad and the text
 // export can never disagree about note shape.
@@ -100,6 +100,7 @@ function App() {
   const [daily, setDaily] = useState(() => loadDaily());
   const todaysPlan = useMemo(() => dailySession(), []);
   const dailyDone = isCompletedToday(daily);
+  const week = useMemo(() => programmeWeek(daily), [daily]);
   // Only a session actually started from the card counts as completing the
   // prescription — a freeform session is training, but it is not the programme.
   const fromDailyRef = useRef(false);
@@ -328,7 +329,7 @@ function App() {
       {navState === 'idle' && (
         <IdleScreen
           vault={vault} streak={streak} setShowInfo={setShowInfo} setShowRhymeSearch={setShowRhymeSearch} setAppState={goTo}
-          dailyPlan={todaysPlan} dailyDone={dailyDone} startDaily={startDaily}
+          dailyPlan={todaysPlan} dailyDone={dailyDone} dailyWeek={week} startDaily={startDaily}
           recoveredDraft={recoveredDraft} setRecoveredDraft={setRecoveredDraft} clearDraft={clearDraft} handleRestoreDraft={handleRestoreDraft}
           flattenNotes={flattenNotes} copyNoteText={copyNoteText} copiedNoteKey={copiedNoteKey}
           beatFileName={beatFileName} fileInputRef={fileInputRef} handleFileUpload={handleFileUpload} removeBeat={removeBeat}
@@ -394,7 +395,7 @@ function App() {
       {navState === 'progress' && (
         <ProgressScreen
           resetToIdle={resetToIdle} totals={totals} sessionHistory={sessionHistory}
-          practiceDays={practiceDays} vault={vault} streak={streak}
+          practiceDays={practiceDays} vault={vault} streak={streak} dailyCount={daily.count}
         />
       )}
 

@@ -41,7 +41,7 @@ function Section({ title, aside, children }) {
 }
 
 export default function ProgressScreen({
-  resetToIdle, totals, sessionHistory, practiceDays, vault, streak,
+  resetToIdle, totals, sessionHistory, practiceDays, vault, streak, dailyCount,
 }) {
   const p = useMemo(
     () => computeProgress({ totals, history: sessionHistory, practiceDays, vault }),
@@ -146,6 +146,13 @@ export default function ProgressScreen({
                 <div className="flex-1">
                   <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest mb-1">Longest streak</p>
                   <p className="text-white font-black text-lg tabular-nums">{p.longestStreak} {p.longestStreak === 1 ? 'day' : 'days'}</p>
+                </div>
+                {/* Distinct from the streak on purpose: a writer can practise every day for
+                    a month on freeform sessions and never complete a prescribed one. This
+                    is the number that says whether they follow the programme. */}
+                <div className="flex-1">
+                  <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest mb-1">Programme</p>
+                  <p className="text-white font-black text-lg tabular-nums">{dailyCount || 0}</p>
                 </div>
               </div>
             </Section>

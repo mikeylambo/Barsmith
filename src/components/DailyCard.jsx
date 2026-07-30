@@ -1,5 +1,41 @@
 import { describeSession } from '../services/daily';
 
+// The week strip. One session is a task; a week with gaps in it is a programme — and
+// seeing that Tuesday is still empty with two days left is a better reason to open the
+// app tomorrow than a card that only ever describes today.
+function WeekStrip({ week }) {
+  const done = week.filter(d => d.done).length;
+  return (
+    <div className="mt-4 pt-4 border-t border-white/5">
+      <div className="flex items-center justify-between mb-2.5">
+        <p className="text-[10px] font-black uppercase tracking-widest text-gray-600">This Week</p>
+        <p className="text-[10px] font-black uppercase tracking-widest text-gray-600 tabular-nums">
+          {done} of 7
+        </p>
+      </div>
+      <div className="flex gap-1.5">
+        {week.map(day => (
+          <div
+            key={day.key}
+            title={`${day.name}${day.done ? ' — done' : day.future ? '' : ' — not yet'}`}
+            className={`flex-1 rounded-lg py-2 text-center text-[10px] font-black transition-all border ${
+              day.done
+                ? 'bg-white text-black border-white'
+                : day.isToday
+                  ? 'bg-transparent text-white border-white/40'
+                  : day.future
+                    ? 'bg-transparent text-gray-800 border-white/5'
+                    : 'bg-transparent text-gray-700 border-white/5'
+            }`}
+          >
+            {day.done ? '✓' : day.initial}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────
 // DAILY CARD
 // Today's prescribed session, at the top of the idle screen.
@@ -10,20 +46,12 @@ import { describeSession } from '../services/daily';
 // answering "what am I doing today" is the entire point of it.
 // ─────────────────────────────────────────────
 
-export default function DailyCard({ plan, completed, onStart, disabled }) {
-  const isWild = plan.key === 'wild';
-
+export default function DailyCard({ plan, completed, week, onStart, disabled }) {
   return (
-    <div className={`rounded-3xl border p-5 ${
-      completed
-        ? 'bg-[#0f0f0f] border-white/5'
-        : isWild
-          ? 'bg-orange-400/[0.07] border-orange-400/25'
-          : 'bg-[#0f0f0f] border-white/10'
-    }`}>
+    <div className={`rounded-3xl border p-5 ${completed ? 'bg-[#0f0f0f] border-white/5' : 'bg-[#0f0f0f] border-white/10'}`}>
       <div className="flex items-start justify-between gap-4 mb-3">
         <div className="min-w-0">
-          <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${isWild && !completed ? 'text-orange-400' : 'text-gray-600'}`}>
+          <p className="text-[10px] font-black uppercase tracking-widest mb-1 text-gray-600">
             {plan.dayName} · Today&apos;s Session
           </p>
           <h2 className="text-2xl font-black uppercase tracking-tighter truncate">{plan.name}</h2>
@@ -49,13 +77,13 @@ export default function DailyCard({ plan, completed, onStart, disabled }) {
         className={`w-full mt-4 py-4 rounded-2xl text-sm font-black uppercase tracking-widest transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed ${
           completed
             ? 'bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10'
-            : isWild
-              ? 'bg-orange-400 text-black hover:bg-orange-300'
-              : 'bg-white text-black hover:bg-gray-200'
+            : 'bg-white text-black hover:bg-gray-200'
         }`}
       >
         {completed ? 'Run It Again' : 'Start Today’s Session'}
       </button>
+
+      {week && <WeekStrip week={week} />}
     </div>
   );
 }

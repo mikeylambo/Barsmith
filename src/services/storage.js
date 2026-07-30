@@ -121,14 +121,18 @@ export const loadTotals = () => {
 export const saveTotals = (totals) => safeSet(STORAGE_KEYS.totals, totals);
 
 // ── Daily prescribed session ──
-// `{ lastCompleted: 'Thu Jul 30 2026', count: n }`. Tiny by design — the prescription
-// itself is derived from the date, so nothing about it needs storing, only whether
-// today's has been done.
+// `{ completed: ['Thu Jul 30 2026', ...], count: n }`. Tiny by design — the prescription
+// itself is derived from the date, so nothing about it needs storing, only which days
+// have been done. `count` is a lifetime tally that survives the list being capped.
 export const loadDaily = () => {
   const stored = safeGet(STORAGE_KEYS.daily, null);
-  if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return { lastCompleted: null, count: 0 };
+  if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return { completed: [], count: 0 };
   return {
-    lastCompleted: typeof stored.lastCompleted === 'string' ? stored.lastCompleted : null,
+    // Records written before the week view existed held a single `lastCompleted` string.
+    // Promote it so an upgrading writer keeps credit for the day they already did.
+    completed: Array.isArray(stored.completed)
+      ? stored.completed.filter(d => typeof d === 'string')
+      : (typeof stored.lastCompleted === 'string' ? [stored.lastCompleted] : []),
     count: Number.isFinite(stored.count) ? stored.count : 0,
   };
 };

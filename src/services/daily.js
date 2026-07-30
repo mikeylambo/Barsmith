@@ -20,8 +20,6 @@
 //     specifics inside each day's shape still vary week to week so it never goes stale.
 // ─────────────────────────────────────────────
 
-import { WILDCARD_TIER } from './wordbank';
-
 /**
  * Deterministic 32-bit hash of a calendar date. FNV-1a over `YYYY-M-D` — the point is a
  * stable, well-mixed integer per day, not cryptographic strength.
@@ -50,7 +48,7 @@ const WEEK = [
   { key: 'tempo',       name: 'Tempo',       focus: 'Locked to a real bar grid. Write to the count, not to a timer.' },
   { key: 'scheme',      name: 'Scheme',      focus: 'Multiple words at once. Bridge them into one punchline.' },
   { key: 'heavy',       name: 'Heavy',       focus: 'Long multisyllabic words. Fit them without breaking the flow.' },
-  { key: 'wild',        name: 'Wildcard',    focus: 'Words with no clean rhyme. Slant it or restructure the line.' },
+  { key: 'sprint',      name: 'Sprint',      focus: 'Words come fast. No time to deliberate — go on instinct.' },
   { key: 'endurance',   name: 'Endurance',   focus: 'The long one. Hold quality past the point it gets hard.' },
 ];
 
@@ -111,10 +109,12 @@ export function dailySession(date = new Date()) {
       plan.intervalMs = pick(seed, 5, [4000, 4500, 5000]);
       plan.limitMinutes = pick(seed, 15, [10, 10, 15]);
       break;
-    case 'wild':
-      plan.tier = WILDCARD_TIER;
-      plan.intervalMs = pick(seed, 5, [4500, 5000, 6000]);
-      plan.limitMinutes = 10;
+    case 'sprint':
+      // The one day that trains speed rather than craft: the interval is short enough
+      // that deliberating costs you the word, which is the freestyle skill.
+      plan.tier = pick(seed, 3, [1, 1, 2]);
+      plan.intervalMs = pick(seed, 5, [2000, 2000, 2500]);
+      plan.limitMinutes = pick(seed, 15, [5, 10]);
       break;
     case 'endurance':
       plan.tier = pick(seed, 3, [2, 3]);
@@ -131,7 +131,7 @@ export function dailySession(date = new Date()) {
 
 /** One-line summary of the prescription, e.g. `Level 2 · 2 words · 5.0s · 10 min`. */
 export function describeSession(plan) {
-  const level = plan.tier === WILDCARD_TIER ? 'Wild' : `Level ${plan.tier}`;
+  const level = `Level ${plan.tier}`;
   const pace = plan.bpmMode
     ? `${plan.bpm} BPM · ${plan.barsPerWord} ${plan.barsPerWord === 1 ? 'bar' : 'bars'}/word`
     : `${(plan.intervalMs / 1000).toFixed(1)}s`;
@@ -142,21 +142,63 @@ export function describeSession(plan) {
 /** Calendar-day identity, matching the format practice days are already stored in. */
 export const dayKey = (date = new Date()) => date.toDateString();
 
+/** Calendar-day arithmetic, DST-safe: add to the date, not 24h to the clock. */
+const shiftDays = (date, delta) => {
+  const d = new Date(date);
+  d.setDate(d.getDate() + delta);
+  return d;
+};
+
+/** Completed days are kept for roughly four months — enough for any week view. */
+const COMPLETED_RETENTION = 120;
+
 /** Has today's prescription already been completed? */
 export const isCompletedToday = (record, today = new Date()) =>
-  !!record && record.lastCompleted === dayKey(today);
+  !!record?.completed?.includes(dayKey(today));
 
 /**
  * Mark today's prescription done.
  *
- * `count` is a lifetime tally of completed prescriptions, kept because it is the one
- * number that describes following the programme rather than merely showing up — a
- * writer can have a long streak of freeform sessions and never complete a single
- * prescribed one. Repeat completions on the same day do not double-count.
+ * `count` is a lifetime tally kept separately from the `completed` list because that
+ * list is capped: it is the one number describing whether a writer follows the
+ * programme rather than merely showing up, and someone can hold a long practice streak
+ * of freeform sessions without ever completing a prescribed one. Repeat sessions on the
+ * same day do not double-count.
  */
 export function markCompleted(record, today = new Date()) {
   const key = dayKey(today);
-  const current = record || { lastCompleted: null, count: 0 };
-  if (current.lastCompleted === key) return current;
-  return { lastCompleted: key, count: (current.count || 0) + 1 };
+  const current = record || { completed: [], count: 0 };
+  if (current.completed?.includes(key)) return current;
+  return {
+    completed: [...(current.completed || []), key].slice(-COMPLETED_RETENTION),
+    count: (current.count || 0) + 1,
+  };
+}
+
+/**
+ * This week's programme, Sunday through Saturday, with what has been completed.
+ *
+ * The daily card shows one session; this shows where it sits. That context is what turns
+ * a prescription into a programme — a writer can see that Tuesday was missed and that
+ * two days remain, which is a far better reason to open the app tomorrow than a card
+ * that only ever describes today.
+ */
+export function programmeWeek(record, today = new Date()) {
+  const completed = new Set(record?.completed || []);
+  const todayKey = dayKey(today);
+  const sunday = shiftDays(today, -today.getDay());
+
+  return WEEK.map((shape, i) => {
+    const date = shiftDays(sunday, i);
+    const key = dayKey(date);
+    return {
+      key,
+      date,
+      initial: date.toLocaleDateString('en-US', { weekday: 'narrow' }),
+      name: shape.name,
+      done: completed.has(key),
+      isToday: key === todayKey,
+      future: date > today && key !== todayKey,
+    };
+  });
 }

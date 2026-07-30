@@ -1,3 +1,82 @@
+# Barsmith 5.6.0 — one word bank, and a week you can see
+
+## Wildcards folded back into the tiers
+
+5.5.0 shipped wildcards as a fourth tier. On review that was the wrong shape, and this
+undoes it.
+
+The category only earns its own mode if the words are genuinely extreme. A handful were —
+`orange`, `month`, `ninth`, `cusp` — but they are far too few to fill a session, and the
+rest were ordinary polysyllables (`sombrero`, `avocado`, `wheelbarrow`) that belong on the
+existing difficulty ramp. A fourth button that mostly serves tier-3 words is a second
+mental model for no gain, and another word pass is already flagged.
+
+So: **142 single words redistributed into tiers 1-3 by syllable count**, the WILD button
+removed, and the Level selector back to three. Word bank grew from 3,874 to 4,016.
+
+| Tier | Was | Now | Rule |
+| --- | --- | --- | --- |
+| 1 | 993 | 1,020 | one syllable |
+| 2 | 1,366 | 1,425 | two syllables |
+| 3 | 1,515 | 1,571 | three or more |
+
+**25 multi-word phrases were dropped rather than placed** — including four originals
+(`real estate`, `self esteem`, `star power`, `war zone`). Not a taste call: Tap-to-Lock
+sends the prompt straight to dictionaryapi.dev, which 404s on a phrase, so a two-word
+prompt opens a broken dictionary panel instead of a definition. The build validator now
+*fails* on a multi-word entry rather than warning, so this cannot drift back in. If those
+four should return, the dictionary lookup needs a fallback first.
+
+Friday was Wildcard day in the programme; it is now **Sprint** — 2.0-2.5s intervals on
+tiers 1-2, where deliberating costs you the word. That is the freestyle skill, and it is
+the one thing the week was not training.
+
+## The week strip
+
+The daily card now shows the whole week: seven cells, Sunday to Saturday, with completed
+prescriptions filled in, today outlined, and later days dimmed rather than drawn as
+missed.
+
+One session is a task. A week with gaps in it is a programme — and seeing Tuesday still
+empty with two days left is a far better reason to open the app tomorrow than a card that
+only ever describes today. `Progress` gains a matching **Programme** count, deliberately
+distinct from the streak: a writer can practise daily for a month on freeform sessions
+and never complete a single prescribed one.
+
+Completion moved from a single `lastCompleted` marker to a set of days, capped at 120
+with the lifetime count kept separately so it survives the cap. Records written by 5.5.0
+are promoted on read, so nobody loses credit for a day already done.
+
+## On daily reminders — a correction
+
+Earlier I said web push works on installed PWAs and would carry over to the native wrap.
+The first half is true and the conclusion was wrong, so before building it: **the Web
+Push API cannot send you a notification without a server.** `pushManager.subscribe()`
+yields an endpoint that some backend must sign and POST to with a VAPID key. There is no
+client-side scheduling for a closed app — Notification Triggers never shipped past a
+Chrome origin trial and does not exist in Safari.
+
+Which means a daily nudge costs either a push backend plus mailing every subscriber's
+endpoint off-device — directly against "stores nothing off your device", the app's real
+differentiator — or waiting for the Capacitor wrap, where `@capacitor/local-notifications`
+schedules on-device with no server and no data leaving the phone.
+
+Recommendation: **wait for the wrap.** Building web push now means standing up
+infrastructure, weakening the privacy story, and then deleting it. The week strip is the
+backend-free retention mechanic that was actually available, so that is what got built.
+
+## Verification
+
+- `npm run verify`: 124/124 passed (was 119/119, minus the wildcard-specific tests,
+  plus 11 for the week strip and the merged banks)
+- Word bank: 4,016 words, 0 cross-tier duplicates, 0 multi-word entries
+- `npm audit`: 0 vulnerabilities
+- Driven end-to-end in headless Chromium: the week strip read `2 of 7` against a
+  part-completed week, a 5.5.0-format record migrated with the day still credited, the
+  Level selector reported three buttons and zero wildcard buttons, and no page errors.
+
+---
+
 # Barsmith 5.5.0 — today’s session
 
 5.4.0 gave a writer evidence they were getting stronger. This gives them something to do
