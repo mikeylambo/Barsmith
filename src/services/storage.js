@@ -14,6 +14,7 @@ export const STORAGE_KEYS = {
   sessionLimit: 'barsmithSessionLimit',
   customWords:  'barsmithCustomWords',
   practiceDays: 'barsmithPracticeDays', // independent of history retention
+  totals:       'barsmithTotals',       // likewise — see loadTotals
   draft:        'barsmithDraft',
 };
 
@@ -90,6 +91,34 @@ export const recordPracticeDay = (dateString) => {
   safeSet(STORAGE_KEYS.practiceDays, sorted);
 };
 
+// ── Lifetime training totals ──
+// Stored independently of sessionHistory for the same reason practiceDays is: history
+// keeps only the most recent 100 sessions, so anything cumulative derived from it would
+// start SHRINKING once a writer passes that mark. On a progress screen whose whole
+// purpose is showing accumulation, a total that goes down is worse than no total at all.
+//
+// This is dumb persistence only. The seeding and accumulation rules live in
+// services/progress.js so they stay pure and testable.
+export const EMPTY_TOTALS = {
+  version: 1,
+  seeded: false,      // set once existing history has been folded in — see seedTotals
+  bars: 0,
+  sessions: 0,
+  seconds: 0,
+  words: [],          // distinct prompt words the writer has actually written a bar on
+  bestBars: 0,        // most bars in a single session
+  bestSeconds: 0,     // longest single session
+};
+
+export const loadTotals = () => {
+  const stored = safeGet(STORAGE_KEYS.totals, null);
+  if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return { ...EMPTY_TOTALS };
+  // Spread over the defaults so a record written by an older build gains new fields
+  // rather than rendering as undefined.
+  return { ...EMPTY_TOTALS, ...stored, words: Array.isArray(stored.words) ? stored.words : [] };
+};
+export const saveTotals = (totals) => safeSet(STORAGE_KEYS.totals, totals);
+
 export function computeStreak(practiceDays) {
   if (!practiceDays.length) return 0;
   const days = new Set(practiceDays);
@@ -122,6 +151,10 @@ export function exportAllData() {
     customWords: loadCustomWords(),
     practiceDays: loadPracticeDays(),
     sessionLimit: loadSessionLimit(),
+    // Included so a training log survives moving devices. Without it, a restore could
+    // only rebuild totals from the 100 sessions History retains, silently erasing the
+    // lifetime record of anyone past that mark.
+    totals: loadTotals(),
   }, null, 2);
 }
 
@@ -151,6 +184,12 @@ export function importAllData(jsonString) {
     if (data.practiceDays !== undefined && !isStringArray(data.practiceDays)) return { ok: false, error: 'Practice-day data is malformed.' };
     if (data.prefs        !== undefined && !isPlainObject(data.prefs))        return { ok: false, error: 'Preferences data is malformed.' };
     if (data.sessionLimit !== undefined && !isValidSessionLimit(data.sessionLimit)) return { ok: false, error: 'Session timer data is malformed.' };
+    // Totals predate no backup version bump, so an older file simply omits them and the
+    // caller rebuilds from history instead.
+    const isTotals = (v) => isPlainObject(v)
+      && ['bars', 'sessions', 'seconds'].every(k => typeof v[k] === 'number' && Number.isFinite(v[k]))
+      && (v.words === undefined || isStringArray(v.words));
+    if (data.totals !== undefined && !isTotals(data.totals)) return { ok: false, error: 'Training totals are malformed.' };
 
     if (data.vault)        saveVault(data.vault);
     if (data.history)       saveHistory(data.history);
@@ -158,7 +197,10 @@ export function importAllData(jsonString) {
     if (data.customWords)  saveCustomWords(data.customWords);
     if (data.practiceDays) safeSet(STORAGE_KEYS.practiceDays, data.practiceDays);
     if (data.sessionLimit !== undefined) saveSessionLimit(data.sessionLimit);
-    return { ok: true };
+    if (data.totals) saveTotals({ ...EMPTY_TOTALS, ...data.totals, seeded: true });
+    // Report whether the file carried totals so the caller knows to rebuild them from
+    // the restored history — a backup written before this feature existed has none.
+    return { ok: true, hadTotals: !!data.totals };
   } catch (e) {
     return { ok: false, error: 'File is not valid JSON.' };
   }

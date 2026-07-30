@@ -24,16 +24,25 @@ export default function IdleScreen({
               <span className="text-white">BAR</span><span className="text-slate-600">SMITH</span>
             </h1>
           </div>
+          {/* The streak was display-only. It is now the shortcut into the training log,
+              which is the thing a writer actually wants when they glance at it. */}
           {streak > 0 && (
-            <div className="flex items-center gap-1.5 bg-white/5 border border-white/8 px-3 py-2 rounded-full shrink-0" title={`${streak}-day streak`}>
+            <button
+              onClick={() => setAppState('progress')}
+              aria-label={`${streak}-day streak — open Progress`}
+              className="flex items-center gap-1.5 bg-white/5 border border-white/8 px-3 py-2 rounded-full shrink-0 hover:bg-white/10 transition-all active:scale-95"
+            >
               <span className="text-orange-400 text-xs">🔥</span>
               <span className="text-xs font-black text-white tabular-nums">{streak}</span>
-            </div>
+            </button>
           )}
         </div>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <button onClick={() => setShowRhymeSearch(true)} className="bg-white/5 border border-white/8 px-3 py-2.5 rounded-full text-xs font-bold text-gray-300 hover:text-white hover:bg-white/10 flex items-center justify-center gap-1.5 transition-all active:scale-95">
             <span className="text-green-400">◎</span> Rhymes
+          </button>
+          <button onClick={() => setAppState('progress')} className="bg-white/5 border border-white/8 px-3 py-2.5 rounded-full text-xs font-bold text-gray-300 hover:text-white hover:bg-white/10 flex items-center justify-center gap-1.5 transition-all active:scale-95">
+            <span className="text-orange-400">▲</span> Progress
           </button>
           <button onClick={() => setAppState('history')} className="bg-white/5 border border-white/8 px-3 py-2.5 rounded-full text-xs font-bold text-gray-300 hover:text-white hover:bg-white/10 flex items-center justify-center gap-1.5 transition-all active:scale-95">
             <span className="text-gray-500">◷</span> History

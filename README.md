@@ -51,6 +51,28 @@ Two things in there are load-bearing and easy to break:
   seam for this; swapping in `@capacitor/share` for a native build touches that file
   and nothing else.
 
+## The training log
+
+`ProgressScreen` is the evidence behind the "writing gym" claim: bars written, time
+trained, a 26-week consistency grid, weekly volume, vocabulary breadth, and personal
+bests. Everything is computed on-device from data already stored.
+
+One thing here is load-bearing. **Cumulative figures come from `barsmithTotals`, never
+from `sessionHistory`.** History is capped at 100 sessions, so lifetime bars derived
+from it would climb, plateau, and then *fall* — the precise opposite of what a progress
+screen exists to say. Totals are stored independently, exactly as `practiceDays`
+already is, and:
+
+- are seeded once from whatever history exists, so writers upgrading into this release
+  do not open the log to zeroes;
+- refuse to mark themselves seeded against an *empty* history, because doing so on a
+  fresh install would permanently lock in zeroes and prevent later data from folding in;
+- are included in the JSON backup, so a lifetime record survives moving devices, and
+  are rebuilt from history when restoring a backup written before they existed.
+
+`services/progress.js` holds the arithmetic and takes `today` as an argument, so the
+calendar logic is tested against fixed dates rather than the clock.
+
 ## Brand assets
 
 `public/og-image.png`, `public/icon-512.png`, and `public/icon-maskable-512.png` are
@@ -69,7 +91,7 @@ This package was installed, tested, validated, built, and dependency-audited.
 
 - Word bank: Tier 1 `993`, Tier 2 `1,366`, Tier 3 `1,515`
 - Cross-tier duplicates: `0`
-- Automated tests: `68 passed`
+- Automated tests: `97 passed`
 - Production build: passed
 - `npm audit`: `0 vulnerabilities`
 - `package-lock.json`: included for reproducible Vercel/local builds
@@ -93,6 +115,8 @@ The automated suite covers:
   that clears only Barsmith's own storage keys
 - History search matching bar text and frozen words, and clearing back to the full archive
 - Copy All reporting a real outcome when the clipboard rejects or is absent entirely
+- training-log arithmetic: idempotent seeding, distinct-word breadth, personal bests as
+  maxima, longest streak across month and DST boundaries, weekly bucketing
 - bar-card layout: line structure preserved, continuation indent only where it
   disambiguates, width never exceeded, over-long tokens broken, overflow truncated
 - share outcomes distinguishing a completed share, a dismissed sheet, a genuine
@@ -132,6 +156,7 @@ src/
     HistoryScreen.jsx
     IdleScreen.jsx
     InfoModal.jsx
+    ProgressScreen.jsx
     RhymeSearch.jsx
     Splash.jsx
     SummaryScreen.jsx
@@ -146,6 +171,7 @@ src/
     download.js
     export-text.js
     haptic.js
+    progress.js            # training-log arithmetic; pure, date-injected
     share.js               # the one seam to swap for @capacitor/share
     storage.js
     wordbank.js
@@ -161,6 +187,7 @@ src/
     bar-card.test.js
     build.test.js
     export-text.test.js
+    progress.test.js
     release.smoke.test.jsx
     resilience.test.jsx
     services.test.js

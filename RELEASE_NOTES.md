@@ -1,3 +1,71 @@
+# Barsmith 5.4.0 — the training log
+
+Barsmith has called itself a writing gym since the beginning while only ever showing
+attendance: a streak counter, and nothing else. A gym that cannot show you getting
+stronger has no answer to "why open this today", which is the whole retention question.
+
+## Progress
+
+A new screen, reachable from the idle nav and by tapping the streak chip — which was
+previously display-only and is now the shortcut to the thing a writer actually wants
+when they glance at it.
+
+- **Bars, sessions, time trained** — lifetime, not windowed.
+- **Consistency** — a 26-week grid of practice days, plus current and longest streak.
+  Longest streak is the record that a missed day cannot take away.
+- **Volume** — bars written per week over twelve weeks.
+- **Vocabulary breadth** — how many of the ~3,900 bank words the writer has actually
+  written a bar on, alongside the count claimed in the Vault. Distinct words, so
+  re-drilling a favourite does not inflate it.
+- **Personal bests** — most bars in a session, longest session.
+
+Everything is computed on-device from data already stored. Nothing new is asked of the
+writer, and nothing leaves the device.
+
+## Lifetime totals that survive History rollover
+
+This is the part that took the care. History keeps only the most recent 100 sessions,
+so any cumulative figure derived from it would climb, plateau, and then **fall** once a
+writer passed that mark — a "bars written" number that goes down is worse than no number
+at all on a screen whose entire purpose is showing accumulation.
+
+Totals are therefore stored independently, exactly as `practiceDays` already was, with
+three rules that each exist because of a specific way this goes wrong:
+
+- **Seeded once from existing history**, so anyone already using Barsmith opens the log
+  to their real numbers rather than zeroes. Seeding recomputes rather than accumulates,
+  which makes it safe to re-run.
+- **Never marked seeded against an empty history.** Found while testing: a first launch
+  on a fresh install wrote the seeded flag with zeroes, after which history arriving by
+  any other route could never be folded in. Staying unseeded is safe precisely because
+  seeding recomputes, and the flag only has to win before History begins rolling over.
+- **Included in the JSON backup**, so a training log survives moving devices. Restoring
+  a backup written before totals existed rebuilds them from the restored history.
+
+## Smaller things
+
+- Time trained renders as decimal hours past the hour mark: "635" reads as noise where
+  "10.6h" reads as a season of work. The two-part "10h 35m" form was tried first and
+  wrapped to a second line in a third-width stat tile, breaking the row's alignment.
+- The vocabulary bar shows a visible sliver for any progress at all. Against a ~3,900
+  word bank, real early work rounds to 0% and the bar read as "you have done nothing".
+- The idle nav went from three buttons to four, in a 2×2 grid on phones.
+
+## Verification
+
+- `npm run verify`: 97/97 passed (build + full suite; was 68/68)
+- 29 new tests covering the training-log arithmetic — idempotent seeding, the
+  empty-history seeding trap, distinct-word breadth, personal bests as maxima, longest
+  streak across month and DST boundaries, weekly bucketing, and a fully empty install
+- `npm audit`: 0 vulnerabilities
+- Bundle: 281 KB JS (88 KB gzip), 30 KB CSS (6 KB gzip)
+- Driven end-to-end in headless Chromium at iPhone viewport against a seeded five-month
+  training history: totals seeded correctly from existing sessions (182 bars across 73),
+  a reload left them unchanged rather than double-counting, and a cleared install showed
+  the empty state rather than a wall of zeroes.
+
+---
+
 # Barsmith 5.3.0 — the bar card
 
 5.2.0 got a writer's work out of the app as text. This release is about the other

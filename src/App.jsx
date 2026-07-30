@@ -8,9 +8,11 @@ import {
   loadCustomWords, saveCustomWords,
   hasSeenInfo, markSeenInfo,
   loadPracticeDays, computeStreak,
+  loadTotals, saveTotals,
   exportAllData, importAllData,
   loadDraft, clearDraft,
 } from './services/storage';
+import { seedTotals, addSessionToTotals } from './services/progress';
 import { downloadText, dateStamp } from './services/download';
 // flattenNotes lives with the exporters so the on-screen Bar Pad and the text
 // export can never disagree about note shape.
@@ -25,6 +27,7 @@ import ActiveScreen from './components/ActiveScreen.jsx';
 import SummaryScreen from './components/SummaryScreen.jsx';
 import VaultScreen from './components/VaultScreen.jsx';
 import HistoryScreen from './components/HistoryScreen.jsx';
+import ProgressScreen from './components/ProgressScreen.jsx';
 import ActionBar from './components/ActionBar.jsx';
 
 function App() {
@@ -72,6 +75,22 @@ function App() {
   const [practiceDays, setPracticeDays] = useState(() => loadPracticeDays());
   const streak = computeStreak(practiceDays);
 
+  // Lifetime training totals, kept outside History for the same reason as practiceDays:
+  // History holds only 100 sessions, so cumulative figures read off it would start
+  // falling once a writer passed that mark. Seeded once from whatever history already
+  // exists, so anyone who has been using Barsmith does not open the training log to
+  // zeroes; `seeded` makes that fold-in idempotent across reloads.
+  const [totals, setTotals] = useState(() => {
+    const seeded = seedTotals(loadHistory(), loadTotals());
+    saveTotals(seeded);
+    return seeded;
+  });
+  const recordTotals = (rec) => setTotals(prev => {
+    const next = addSessionToTotals(prev, rec);
+    saveTotals(next);
+    return next;
+  });
+
   // Recovered draft from an interrupted session (crash/close/reload) — shown as a
   // dismissible banner on the idle screen so nothing written mid-session is silently lost.
   const [recoveredDraft, setRecoveredDraft] = useState(() => {
@@ -106,6 +125,7 @@ function App() {
       source: 'recovered',
     };
     setSessionHistory(prev => [rec, ...prev].slice(0, 100));
+    recordTotals(rec);
     clearDraft();
     setRecoveredDraft(null);
     haptic(20);
@@ -157,6 +177,7 @@ function App() {
     onSessionComplete: (rec) => {
       setSessionHistory(prev => [rec, ...prev].slice(0, 100));
       setPracticeDays(loadPracticeDays());
+      recordTotals(rec);
     },
   });
 
@@ -190,10 +211,16 @@ function App() {
 
       const result = importAllData(reader.result);
       if (result.ok) {
+        const restoredHistory = loadHistory();
         setVault(loadVault());
-        setSessionHistory(loadHistory());
+        setSessionHistory(restoredHistory);
         setCustomWords(loadCustomWords());
         setPracticeDays(loadPracticeDays());
+        // A backup written before training totals existed carries none, so rebuild from
+        // the restored history. Forced, because whatever counters are in storage describe
+        // the data this restore just replaced.
+        if (!result.hadTotals) saveTotals(seedTotals(restoredHistory, null, { force: true }));
+        setTotals(loadTotals());
         // Reapply restored preferences to live state — previously these were written to
         // storage but the running app kept its old in-memory values until reload.
         const restoredPrefs = loadPrefs();
@@ -230,10 +257,10 @@ function App() {
   // The session engine only models idle|active|vault-drill|summary. Vault and History are
   // separate idle-adjacent screens layered on top, tracked here so they're independent of
   // the engine's own state machine.
-  const [navScreen, setNavScreen] = useState('idle'); // idle | vault | history
+  const [navScreen, setNavScreen] = useState('idle'); // idle | vault | history | progress
   const navState = engine.appState === 'idle' ? navScreen : engine.appState;
   const goTo = (screen) => {
-    if (screen === 'idle' || screen === 'vault' || screen === 'history') {
+    if (screen === 'idle' || screen === 'vault' || screen === 'history' || screen === 'progress') {
       setNavScreen(screen); engine.setAppState('idle');
     } else {
       engine.setAppState(screen);
@@ -316,6 +343,13 @@ function App() {
           fmtDate={fmtDate} fmtDur={fmtDur} flattenNotes={flattenNotes} copyNoteText={copyNoteText} copiedNoteKey={copiedNoteKey}
           historyAtCap={sessionHistory.length >= 95} historyCount={sessionHistory.length}
           handleExportData={handleExportData} handleExportBars={handleExportBars}
+        />
+      )}
+
+      {navState === 'progress' && (
+        <ProgressScreen
+          resetToIdle={resetToIdle} totals={totals} sessionHistory={sessionHistory}
+          practiceDays={practiceDays} vault={vault} streak={streak}
         />
       )}
 
