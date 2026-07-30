@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import DictionaryModal from './DictionaryModal.jsx';
+import { sessionToText, sessionBarsOnly, hasBars } from '../services/export-text';
+import { downloadText, dateStamp } from '../services/download';
 
 export default function SummaryScreen({
   latestSession, sessionDuration, totalWordsSeen, bpmMode, bpm, intervalMs,
@@ -8,6 +10,22 @@ export default function SummaryScreen({
 }) {
   const [activeWord, setActiveWord] = useState(null);
   const hasNotes = latestSession?.notes && Object.keys(latestSession.notes).length > 0;
+
+  // Bars are only worth exporting if some were actually written. `hasNotes` can be true
+  // for a session where every Bar Pad entry was opened and left blank.
+  const sessionHasBars = hasBars(latestSession);
+  // 'idle' | 'copied' | 'failed'. Unlike the per-note Copy buttons, this one moves a
+  // whole session, so a silent failure that still shows a checkmark could cost real
+  // work — the clipboard is unavailable outright in some in-app browsers.
+  const [copyState, setCopyState] = useState('idle');
+  const copyAllBars = () => {
+    const done = (state) => { setCopyState(state); setTimeout(() => setCopyState('idle'), 1800); };
+    const write = navigator.clipboard?.writeText(sessionBarsOnly(latestSession));
+    if (!write) return done('failed');
+    write.then(() => done('copied')).catch(() => done('failed'));
+  };
+  const exportSession = () =>
+    downloadText(`barsmith-session-${dateStamp(new Date(latestSession.date))}.txt`, sessionToText(latestSession));
 
   return (
     <div className="flex-1 flex flex-col items-center p-6 overflow-y-auto custom-scrollbar pb-36">
@@ -28,6 +46,30 @@ export default function SummaryScreen({
           <button onClick={downloadRecording} className="w-full mb-5 py-4 rounded-2xl bg-red-500/8 border border-red-500/25 text-red-400 text-sm font-black uppercase tracking-widest hover:bg-red-500/15 transition-all flex items-center justify-center gap-2">
             ⬇ Download Recording
           </button>
+        )}
+
+        {/* Take the work with you. This sits above the Bar Pad because at the end of a
+            session getting the bars out is the point — the per-note Copy buttons below
+            are for cherry-picking one line, not for moving a whole session. */}
+        {sessionHasBars && (
+          <div className="grid grid-cols-2 gap-3 mb-5">
+            <button
+              onClick={copyAllBars}
+              className={`py-4 rounded-2xl text-sm font-black uppercase tracking-widest transition-all ${
+                copyState === 'copied' ? 'bg-green-500/15 border border-green-500/30 text-green-400'
+                : copyState === 'failed' ? 'bg-red-500/15 border border-red-500/30 text-red-400'
+                : 'bg-white text-black hover:bg-gray-200'
+              }`}
+            >
+              {copyState === 'copied' ? '✓ Copied' : copyState === 'failed' ? 'Copy Failed — Use Export' : 'Copy All Bars'}
+            </button>
+            <button
+              onClick={exportSession}
+              className="py-4 rounded-2xl bg-white/5 border border-white/10 text-white text-sm font-black uppercase tracking-widest hover:bg-white/10 transition-all"
+            >
+              Export .txt
+            </button>
+          </div>
         )}
 
         {/* Bar Pad notes from session */}

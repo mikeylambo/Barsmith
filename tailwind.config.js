@@ -4,7 +4,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+        // Fallbacks match the html/body stack in index.css so `font-sans` and the base
+        // style degrade to the same native face if the self-hosted woff2 fails to load.
+        sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
       },
     },
   },

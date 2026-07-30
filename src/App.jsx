@@ -11,6 +11,10 @@ import {
   exportAllData, importAllData,
   loadDraft, clearDraft,
 } from './services/storage';
+import { downloadText, dateStamp } from './services/download';
+// flattenNotes lives with the exporters so the on-screen Bar Pad and the text
+// export can never disagree about note shape.
+import { flattenNotes, historyToText } from './services/export-text';
 import { useSessionEngine, cameraFacingLabel } from './hooks/useSessionEngine';
 
 import Splash from './components/Splash.jsx';
@@ -108,11 +112,19 @@ function App() {
   };
 
   // ── Splash ──
+  // Was a hard 2.2s block with no way past it. Nothing is actually loading during it —
+  // word banks are bundled and prefs are a synchronous localStorage read — so it was
+  // pure delay in front of a tool whose entire job is catching an idea before it goes.
+  // Now: a brief brand beat that a tap can cut short.
+  const splashDismissedRef = useRef(false);
+  const dismissSplash = () => {
+    if (splashDismissedRef.current) return; // tap and timer can both fire
+    splashDismissedRef.current = true;
+    setShowSplash(false);
+    if (!hasSeenInfo()) { setShowInfo(true); markSeenInfo(); }
+  };
   useEffect(() => {
-    const t = setTimeout(() => {
-      setShowSplash(false);
-      if (!hasSeenInfo()) { setShowInfo(true); markSeenInfo(); }
-    }, 2200);
+    const t = setTimeout(dismissSplash, 900);
     return () => clearTimeout(t);
   }, []);
 
@@ -154,14 +166,14 @@ function App() {
   const importFileRef = useRef(null);
   const [importMsg, setImportMsg] = useState('');
   const handleExportData = () => {
-    const json = exportAllData();
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob), a = document.createElement('a');
-    a.href = url; a.download = `barsmith-backup-${new Date().toISOString().slice(0,10)}.json`; a.click();
-    // Mobile Safari can need a moment to actually start the download before the object URL
-    // is revoked — revoking synchronously right after click() risks the download silently
-    // failing there.
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    downloadText(`barsmith-backup-${dateStamp()}.json`, exportAllData(), 'application/json');
+    haptic(12);
+  };
+  // The JSON backup above is for restoring Barsmith; this one is for actually using the
+  // work somewhere else. Both matter, and conflating them is why bars used to be stuck
+  // in the app.
+  const handleExportBars = () => {
+    downloadText(`barsmith-bars-${dateStamp()}.txt`, historyToText(sessionHistory));
     haptic(12);
   };
   const handleImportFile = (e) => {
@@ -214,22 +226,6 @@ function App() {
   const fmtDur  = (s)   => `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
   const fmtCountdown = (s) => `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
 
-  // Notes are stored per-word as { [entryId]: text }, so the same word locked multiple
-  // times across a session accumulates separate bars instead of overwriting. Older
-  // drafts/history saved before this change stored a single string per word — this
-  // normalizes both shapes into a flat [word, entryKey, text][] list for rendering.
-  const flattenNotes = (notesObj) => {
-    const out = [];
-    Object.entries(notesObj || {}).forEach(([word, val]) => {
-      if (val && typeof val === 'object') {
-        Object.entries(val).forEach(([entryId, text]) => out.push([word, entryId, text]));
-      } else if (typeof val === 'string') {
-        out.push([word, 'legacy', val]);
-      }
-    });
-    return out;
-  };
-
   // ── Navigation ──
   // The session engine only models idle|active|vault-drill|summary. Vault and History are
   // separate idle-adjacent screens layered on top, tracked here so they're independent of
@@ -249,7 +245,7 @@ function App() {
 
   const latestSession = sessionHistory[0];
 
-  if (showSplash) return <Splash />;
+  if (showSplash) return <Splash onDismiss={dismissSplash} />;
 
   return (
     <div className="min-h-[100dvh] w-full bg-[#050505] text-white flex flex-col font-sans select-none relative overflow-x-hidden">
@@ -318,7 +314,8 @@ function App() {
         <HistoryScreen
           resetToIdle={resetToIdle} sessionHistory={sessionHistory} setSessionHistory={setSessionHistory}
           fmtDate={fmtDate} fmtDur={fmtDur} flattenNotes={flattenNotes} copyNoteText={copyNoteText} copiedNoteKey={copiedNoteKey}
-          historyAtCap={sessionHistory.length >= 95} historyCount={sessionHistory.length} handleExportData={handleExportData}
+          historyAtCap={sessionHistory.length >= 95} historyCount={sessionHistory.length}
+          handleExportData={handleExportData} handleExportBars={handleExportBars}
         />
       )}
 

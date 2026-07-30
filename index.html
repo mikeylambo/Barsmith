@@ -2,15 +2,57 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <link rel="icon" type="image/png" href="/icon-192.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
-  <meta name="theme-color" content="#050505" />
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Barsmith">
-  <link rel="apple-touch-icon" href="/icon-192.png">
+
+  <title>Barsmith — A Writing Gym for Serious Hip-Hop Writers</title>
+  <meta name="description" content="A writing gym, rhyme reference, and idea-capture tool for serious hip-hop writers. Timed word drills on a real BPM grid, full rhyme maps, and a Bar Pad that keeps everything you write. Works offline and stores nothing off your device." />
+
+  <!-- Absolute URLs are mandatory for Open Graph — crawlers do not resolve relative
+       paths, so a relative og:image simply yields no preview. If Barsmith ever moves
+       to a custom domain, this block is the only place the origin is written down. -->
+  <link rel="canonical" href="https://barsmith.vercel.app/" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Barsmith" />
+  <meta property="og:title" content="Barsmith — A Writing Gym for Serious Hip-Hop Writers" />
+  <meta property="og:description" content="Timed word drills on a real BPM grid, full rhyme maps, and a Bar Pad that keeps everything you write. Works offline and stores nothing off your device." />
+  <meta property="og:url" content="https://barsmith.vercel.app/" />
+  <meta property="og:image" content="https://barsmith.vercel.app/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Barsmith — a writing gym, rhyme reference, and idea-capture tool for serious hip-hop writers." />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Barsmith — A Writing Gym for Serious Hip-Hop Writers" />
+  <meta name="twitter:description" content="Timed word drills on a real BPM grid, full rhyme maps, and a Bar Pad that keeps everything you write. Works offline and stores nothing off your device." />
+  <meta name="twitter:image" content="https://barsmith.vercel.app/og-image.png" />
+
+  <link rel="icon" type="image/png" href="/icon-192.png" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
   <link rel="manifest" href="/manifest.json" />
-  <title>BARSMITH</title>
+
+  <!-- Barsmith has no light theme. Declaring the scheme stops the browser from painting
+       form controls, scrollbars, and the pre-hydration background in light colours. -->
+  <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#050505" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Barsmith" />
+
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Barsmith",
+      "url": "https://barsmith.vercel.app/",
+      "description": "A writing gym, rhyme reference, and idea-capture tool for serious hip-hop writers.",
+      "applicationCategory": "MusicApplication",
+      "operatingSystem": "Any",
+      "browserRequirements": "Requires JavaScript.",
+      "isAccessibleForFree": true,
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+    }
+  </script>
 </head>
 <body>
   <div id="root"></div>

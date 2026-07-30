@@ -24,15 +24,20 @@ async function main() {
   let assetFiles = [];
   try {
     const entries = await readdir(join(DIST, 'assets'));
+    // .woff2 belongs here too: Inter is self-hosted (see index.css), so the font is a
+    // hashed same-origin asset. Without it in the install set, an offline first-load
+    // would boot the app but render it in the fallback system face.
     assetFiles = entries
-      .filter(f => ['.js', '.css'].includes(extname(f)))
+      .filter(f => ['.js', '.css', '.woff2'].includes(extname(f)))
       .map(f => `/assets/${f}`);
   } catch {
     console.warn('[inject-sw-precache] dist/assets not found — skipping asset injection');
   }
 
   // Full precache set: shell URLs + this build's hashed assets
-  const shellUrls = ['/', '/manifest.json', '/icon-192.png', '/icon-512.png'];
+  // Every icon the manifest references, so an install initiated while offline still
+  // finds its artwork. og-image.png is deliberately absent — only crawlers read it.
+  const shellUrls = ['/', '/manifest.json', '/icon-192.png', '/icon-512.png', '/icon-maskable-512.png'];
   const allUrls = [...shellUrls, ...assetFiles];
 
   // Read the cache-version stamp from package.json so bumping the npm version
