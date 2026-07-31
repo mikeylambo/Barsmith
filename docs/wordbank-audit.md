@@ -8,13 +8,13 @@ Re-run after any word pass to see the numbers move.
 | Tier | Words | Bare roots | Abstract nouns | Distinct endings | Top-10 endings cover |
 | --- | --- | --- | --- | --- | --- |
 | 1 | 1223 | 97.1% | 0.0% | 368 | 11.9% |
-| 2 | 1436 | 71.9% | 5.4% | 455 | 20.3% |
+| 2 | 2037 | 76.9% | 5.3% | 578 | 18.2% |
 | 3 | 2175 | 47.4% | 29.5% | 459 | 44.9% |
 
 ### What that table says
 
 Tier 3 holds 2175 words and can end **459** different ways.
-Tier 1 holds 1223 and can end **368** ways; tier 2, **455**.
+Tier 1 holds 1223 and can end **368** ways; tier 2, **578**.
 
 Tier 3 no longer rhymes narrower than the tiers below it — the condition this audit
 was written to measure. It got there by addition rather than subtraction: concrete
@@ -93,22 +93,22 @@ of these to be a false positive. Review by eye before moving anything.
 
 `bypass` (~2) · `cycle` (~2) · `early` (~2) · `fifty` (~2) · `hardly` (~2) · `hustle` (~2) · `hydrant` (~2) · `mercy` (~2) · `only` (~2) · `onyx` (~2) · `razor` (~2) · `skinny` (~2) · `supply` (~2) · `talon` (~2) · `theory` (~2) · `tumble` (~2) · `typhoon` (~2)
 
-## Tier 2 — 1436 words (two syllables)
+## Tier 2 — 2037 words (two syllables)
 
 ### Composition
 
 | Word class | Count | Share |
 | --- | --- | --- |
-| bare root | 1032 | 71.9% |
-| inflected verb | 136 | 9.5% |
-| adjective | 126 | 8.8% |
-| abstract noun | 78 | 5.4% |
-| derived verb | 52 | 3.6% |
-| adverb | 12 | 0.8% |
+| bare root | 1566 | 76.9% |
+| adjective | 148 | 7.3% |
+| inflected verb | 139 | 6.8% |
+| abstract noun | 107 | 5.3% |
+| derived verb | 65 | 3.2% |
+| adverb | 12 | 0.6% |
 
-**Endings:** 455 distinct (317 per 1,000 words) · top ten cover 20.3% · 234 endings used exactly once.
+**Endings:** 578 distinct (284 per 1,000 words) · top ten cover 18.2% · 286 endings used exactly once.
 
-Most crowded: `-ing` 84 · `-ess` 34 · `-ter` 33 · `-ent` 28 · `-ous` 25 · `-ain` 19 · `-end` 19 · `-ion` 17
+Most crowded: `-ing` 86 · `-ter` 62 · `-ent` 38 · `-ess` 36 · `-der` 32 · `-her` 27 · `-ous` 25 · `-ure` 24
 
 ### Rhyme families
 
@@ -117,29 +117,29 @@ repeatedly hands out the same ending.
 
 | Family | Count | Share | Cut to reach 3% | Or add to reach 3% | Sample |
 | --- | --- | --- | --- | --- | --- |
-| `-ness` | 18 | 1.3% | 0 | +0 | boldness, coldness, darkness, deepness |
-| `-ity` | 10 | 0.7% | 0 | +0 | cavity, dignity, duality, gravity |
-| `-tion` | 7 | 0.5% | 0 | +0 | auction, caution, fiction, friction |
-| `-ment` | 6 | 0.4% | 0 | +0 | fragment, judgment, payment, segment |
-| `-ship` | 5 | 0.3% | 0 | +0 | flagship, hardship, kinship, township |
-| `-ical` | 4 | 0.3% | 0 | +0 | cyclical, cynical, lyrical, typical |
-| `-ence` | 4 | 0.3% | 0 | +0 | essence, patience, silence, conscience |
-| `-ive` | 4 | 0.3% | 0 | +0 | motive, skydive, survive, thrive |
-| `-sion` | 3 | 0.2% | 0 | +0 | mission, tension, version |
+| `-ness` | 18 | 0.9% | 0 | +0 | boldness, coldness, darkness, deepness |
+| `-ity` | 10 | 0.5% | 0 | +0 | cavity, dignity, duality, gravity |
+| `-ment` | 9 | 0.4% | 0 | +0 | fragment, judgment, payment, segment |
+| `-tion` | 8 | 0.4% | 0 | +0 | auction, caution, fiction, friction |
+| `-ship` | 5 | 0.2% | 0 | +0 | flagship, hardship, kinship, township |
+| `-ical` | 4 | 0.2% | 0 | +0 | cyclical, cynical, lyrical, typical |
+| `-ence` | 4 | 0.2% | 0 | +0 | essence, patience, silence, conscience |
+| `-ive` | 4 | 0.2% | 0 | +0 | motive, skydive, survive, thrive |
+| `-ist` | 4 | 0.2% | 0 | +0 | persist, resist, dentist, tourist |
+| `-sion` | 3 | 0.1% | 0 | +0 | mission, tension, version |
 | `-ism` | 2 | 0.1% | 0 | +0 | baptism, symbolism |
 | `-ual` | 2 | 0.1% | 0 | +0 | casual, gradual |
-| `-ency` | 2 | 0.1% | 0 | +0 | currency, frequency |
 
 ### Shared roots
 
-**26** words have a stem that is also in the banks. This is *not* a
+**28** words have a stem that is also in the banks. This is *not* a
 cut list — it measures how much of the tier is morphology rather than new
 vocabulary. Some pairs are genuine families a writer would use differently
 (`improve` / `improvement`); others are string coincidences the check cannot
 distinguish (`apart` / `apartment`, unrelated in origin). Read it as a texture
 signal, not a verdict.
 
-`boldness` ← `bold` · `casual` ← `case` · `cavity` ← `cave` · `coldness` ← `cold` · `cyclical` ← `cycle` · `darkness` ← `dark` · `deepness` ← `deep` · `gradual` ← `grade` · `gravity` ← `grave` · `greatness` ← `great` · `hardness` ← `hard` · `hardship` ← `hard` · `illness` ← `ill` · `loudness` ← `loud` · `madness` ← `mad` · `movement` ← `move` · `rarity` ← `rare` · `rashness` ← `rash` · `reality` ← `real` · `sharpness` ← `sharp` · `station` ← `stay` · `stillness` ← `still` · `symbolism` ← `symbol` · `traction` ← `trace` · `treatment` ← `treat` · `witness` ← `wit`
+`boldness` ← `bold` · `casual` ← `case` · `cavity` ← `cave` · `coldness` ← `cold` · `cyclical` ← `cycle` · `darkness` ← `dark` · `deepness` ← `deep` · `gradual` ← `grade` · `gravity` ← `grave` · `greatness` ← `great` · `hardness` ← `hard` · `hardship` ← `hard` · `illness` ← `ill` · `loudness` ← `loud` · `madness` ← `mad` · `movement` ← `move` · `rarity` ← `rare` · `rashness` ← `rash` · `reality` ← `real` · `sharpness` ← `sharp` · `station` ← `stay` · `stillness` ← `still` · `symbolism` ← `symbol` · `traction` ← `trace` · `treatment` ← `treat` · `witness` ← `wit` · `dentist` ← `dent` · `shipment` ← `ship`
 
 ### Syllable-band drift
 
@@ -198,16 +198,16 @@ Terminal four letters, to catch concentration the named list above misses.
 
 ### Shared roots
 
-**153** words have a stem that is also in the banks. This is *not* a
+**157** words have a stem that is also in the banks. This is *not* a
 cut list — it measures how much of the tier is morphology rather than new
 vocabulary. Some pairs are genuine families a writer would use differently
 (`improve` / `improvement`); others are string coincidences the check cannot
 distinguish (`apart` / `apartment`, unrelated in origin). Read it as a texture
 signal, not a verdict.
 
-`accountability` ← `account` · `allegation` ← `allege` · `alteration` ← `alter` · `amendment` ← `amend` · `apartment` ← `apart` · `archive` ← `arch` · `argument` ← `argue` · `assassination` ← `assassin` · `assignment` ← `assign` · `atonement` ← `atone` · `attachment` ← `attach` · `attainment` ← `attain` · `authority` ← `author` · `authorization` ← `author` · `awareness` ← `aware` · `balance` ← `bale` · `bitterness` ← `bitter` · `bombardment` ← `bombard` · `brokenness` ← `broken` · `brutality` ← `brute` · `capability` ← `cap` · `capitalization` ← `capital` · `captivation` ← `captive` · `carelessness` ← `careless` · `characterization` ← `character` · `coalition` ← `coal` · `collective` ← `collect` · `combative` ← `combat` · `commandment` ← `command` · `commodity` ← `commode` · `competition` ← `compete` · `complement` ← `comply` · `complexity` ← `complex` · `complication` ← `comply` · `composition` ← `compose` · `concealment` ← `conceal` · `condemnation` ← `condemn` · `confidence` ← `confide` · `declaration` ← `declare` · `divinity` ← `divine`
+`accountability` ← `account` · `allegation` ← `allege` · `alteration` ← `alter` · `amendment` ← `amend` · `apartment` ← `apart` · `archive` ← `arch` · `argument` ← `argue` · `assassination` ← `assassin` · `assignment` ← `assign` · `atonement` ← `atone` · `attachment` ← `attach` · `attainment` ← `attain` · `authority` ← `author` · `authorization` ← `author` · `awareness` ← `aware` · `balance` ← `bale` · `bitterness` ← `bitter` · `bombardment` ← `bombard` · `brokenness` ← `broken` · `brutality` ← `brute` · `capability` ← `cap` · `capitalization` ← `capital` · `captivation` ← `captive` · `carelessness` ← `careless` · `characterization` ← `character` · `coalition` ← `coal` · `collective` ← `collect` · `combative` ← `combat` · `commandment` ← `command` · `commodity` ← `commode` · `competition` ← `compete` · `complement` ← `comply` · `complexity` ← `complex` · `complication` ← `comply` · `composition` ← `compose` · `concealment` ← `conceal` · `condemnation` ← `condemn` · `confidence` ← `confide` · `declaration` ← `declare` · `digitization` ← `digit`
 
-…and 113 more.
+…and 117 more.
 
 ### Syllable-band drift
 

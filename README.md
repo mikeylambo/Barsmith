@@ -97,9 +97,18 @@ bar-heavy, punchline-driven writer the app is for:
   end alike and each mean exactly one thing. It now leads on endings (459) rather than
   trailing, reached by adding concrete multisyllabic roots rather than cutting anything.
 
-`npm run audit-wordbank` is the diagnostic counterpart to the validator: the validator
-says a bank is well-*formed*, the audit says whether it is *good*. It writes
-`docs/wordbank-audit.md` and changes nothing. Re-run it after any word pass.
+Two diagnostics sit alongside the build validator. The validator says a bank is
+well-*formed*; these say whether it is *good*. Neither edits anything — re-run both after
+any word pass.
+
+- `npm run audit-wordbank` → `docs/wordbank-audit.md`. Shape: composition by word class,
+  rhyme-tail diversity, where concentration sits, syllable-band drift.
+- `python3 scripts/check-word-frequency.py` → `docs/wordbank-frequency.md`. Whether the
+  words are ones anyone actually uses, by Zipf frequency (`pip install wordfreq`). This is
+  what catches entries a suffix rule can build but no writer will pick up — tier 3 still
+  holds 19 words below the not-in-use line, `officialize` and `territorialization` among
+  them. Treat it as a review list, not a cut list: rap vocabulary skews away from general
+  English, so `sycophant` at 2.2 earns its place.
 
 Two constraints the build validator enforces rather than trusting:
 
@@ -157,7 +166,7 @@ python3 scripts/make-brand-assets.py
 
 This package was installed, tested, validated, built, and dependency-audited.
 
-- Word bank: Tier 1 `1,223`, Tier 2 `1,436`, Tier 3 `2,175`
+- Word bank: Tier 1 `1,223`, Tier 2 `2,037`, Tier 3 `2,175`
 - Cross-tier duplicates: `0`
 - Automated tests: `124 passed`
 - Production build: passed
