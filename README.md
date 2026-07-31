@@ -124,6 +124,32 @@ unrhymables like `orange` and `month` — were too few to fill a mode, and the r
 ordinary polysyllables that belong on the existing ramp. Its 142 single words were
 redistributed into tiers 1-3 by syllable count. One difficulty axis, one mental model.
 
+### Why the bank isn't bigger
+
+The obvious next move is always "add more words", and for freshness it is the wrong one.
+Repeats used to be governed by the birthday problem, because only the previous draw was
+blocked. At tier 1's 1,223 words the first repeat landed around draw 44 — under three
+minutes — with roughly 11 across a ten-minute session. Bank size barely moves that,
+because the curve is a square root:
+
+| Tier 1 bank | Repeats per 10-min session | First repeat at |
+| --- | --- | --- |
+| 1,223 (today) | 11.4 | 44 draws |
+| 2,446 (2×) | 5.8 | 62 draws |
+| 4,892 (4×) | 2.9 | 88 draws |
+| 9,784 (8×) | 1.5 | 124 draws |
+
+Eight times the words still repeats inside a single session. Remembering the session
+instead settles it outright: the longest prescribable session is 342 draws against a
+smallest tier of 1,223 words, so a session-scoped exclusion fits with 3.6× headroom and
+costs about 1.4µs per draw. That is the no-repeat window in `getNextWords`.
+
+So the bank grows for **reach** — more distinct rhyme endings, more second meanings, more
+registers a writer can be pushed into — and never for freshness, which is already solved.
+That is also why a hip-hop lyric corpus is not the answer to tier 3's remaining
+concentration: corpora rank by what rappers already say, and those are exactly the words
+a writer does not need prompting for.
+
 ## The training log
 
 `ProgressScreen` is the evidence behind the "writing gym" claim: bars written, time
@@ -169,10 +195,11 @@ This package was installed, tested, validated, built, and dependency-audited.
 
 - Word bank: Tier 1 `1,223`, Tier 2 `2,035`, Tier 3 `2,156`
 - Cross-tier duplicates: `0`
-- Automated tests: `126 passed`
+- Automated tests: `132 passed`
 - Production build: passed
 - `npm audit`: `0 vulnerabilities`
 - `package-lock.json`: included for reproducible Vercel/local builds
+- Device checklist, automated half: `7/7 passed` against the production build
 
 The automated suite covers:
 
@@ -201,6 +228,10 @@ The automated suite covers:
   as missed, across a month boundary
 - completed days capping oldest-first while the lifetime programme count survives
 - every word bank holding single tokens only, and each tier staying on its syllabic band
+- the session-scoped no-repeat window: no repeat across the longest prescribable session
+  on any tier, holding across a Scheme round drawing from all three at once, clearing
+  between sessions, still producing words past a deliberately exhausted tier, never
+  repeating the previous word mid-cycle-restart, and leaving personal words exempt
 - bar-card layout: line structure preserved, continuation indent only where it
   disambiguates, width never exceeded, over-long tokens broken, overflow truncated
 - share outcomes distinguishing a completed share, a dismissed sheet, a genuine
@@ -212,11 +243,33 @@ The automated suite covers:
 
 Browser automation cannot substitute for hardware-specific media/audio behavior. Before replacing production, run one preview deployment through this on both an iPhone (Safari) and an Android phone (Chrome) where possible — mark each box, note the device/OS version next to any failure, and don't ship until every box is checked on at least one real iOS device and one real Android device.
 
+Seven of these fourteen are really assertions about the built app rather than about
+hardware, and a check that is only ever run by hand is one that eventually stops being
+run. Those seven — **2, 9, 10, 11, 12, 13, 14 (render half)** — are automated against the
+production build:
+
+```bash
+npm run build
+npm run preview &          # serves dist on :4173
+npm run device-checklist   # CHECKLIST_BASE / CHECKLIST_CHROME override the defaults
+```
+
+It prints PASS/FAIL with the evidence for each, then lists the remaining seven as an
+explicit hardware list rather than skipping them silently. Two caveats it states rather
+than hides: item 2 verifies the precache *contract* (every asset the built HTML
+references is in Cache Storage and served with the network down) because Playwright's
+offline mode fails subresources below the service worker, so an end-to-end offline boot
+still needs a phone in Airplane Mode; and item 12 checks what the manifest declares, not
+how the icon looks inside Android's circular mask.
+
+The hardware-only items are **1, 3, 4, 5, 6, 7, 8**, plus the share sheet itself in 14 —
+the iOS user-gesture rule only bites on a real device.
+
 1. **Install.** Open the preview URL in Safari on iPhone → Share → Add to Home Screen. Launch from the home screen icon (not the Safari tab) and confirm it opens full-screen with no browser chrome, correct icon, and correct name ("Barsmith").
 2. **Offline load.** With the app already opened once while online, turn on Airplane Mode, fully close the app, and relaunch from the home screen icon. Confirm the app shell loads and a session can be started and written in. Confirm the dictionary panel shows a network-error state (not a blank/broken one) when a word is locked while offline. Turn Airplane Mode back off.
 3. **Camera + mic permission.** From a fresh app state (or after removing the site's permissions in Settings), tap Record. Confirm the OS permission prompt appears, and that denying it surfaces "Camera permission denied." in the UI rather than a silent failure or a crash.
 4. **Recording round-trip.** On the setup screen, tap Record and grant camera/microphone permission. Then Start Session and write for at least 30 seconds. Tap Stop (visible in the red recording bar or in-session controls), end the session, and download the recording from the Summary screen. Confirm the downloaded file opens and plays with audio in Photos/Files.
-5. **Camera facing toggle.** Before recording, tap the camera-switch button and confirm the preview and resulting recording use the rear camera; switch back and confirm the front camera preview is mirrored (rear should not be).
+5. **Front-camera framing.** Confirm the in-session preview is mirrored — you should see yourself as a mirror would, not reversed — and that the recording itself is *not* mirrored when played back. There is deliberately no rear-camera option: a rear-facing recording points the screen, and the prompt words, away from the writer.
 6. **BPM by ear.** Turn on BPM mode, set a familiar tempo (e.g. 90), and confirm the count-in and beat clicks sound correct and evenly spaced by ear, with no audible drift over a 2–3 minute session.
 7. **Keyboard-open scrolling.** Lock a word to open the dictionary panel, tap into the Bar Pad textarea to bring up the keyboard, and confirm the panel scrolls/resizes so the textarea and Save/Copy buttons stay visible above the keyboard, with no content cut off at the bottom.
 8. **Safe-area spacing.** On a notched/Dynamic Island device in both portrait and landscape, confirm no controls (Start/End Session button, top info bar, recording preview) sit under the notch, home indicator, or camera cutout.

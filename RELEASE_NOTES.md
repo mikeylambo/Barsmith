@@ -1,3 +1,195 @@
+# Barsmith 5.8.1 — say what Level and Scheme mean, drop the rear camera
+
+## Two settings labelled with bare numbers
+
+Level and Scheme were the only controls on the setup screen offering nothing but `1 2 3`
+and `1 2 3 4`. A writer opening Barsmith for the first time had no way to know that Level
+is syllable weight and Scheme is how many words land at once — the two settings that most
+change what the session *is* were the two least readable.
+
+Both now carry a caption that moves with the selection:
+
+> **3. Level** — *Three or more. Bend the phrase to make it fit.*
+> **4. Scheme** — *Three at once. One punchline has to hold all of them.*
+
+Phrased as what the setting does to the work rather than to the data: "three or more
+syllables" is the mechanism, "bend the phrase" is the reason to pick it. A caption rather
+than a tooltip because nobody taps a tooltip, and it keeps the row's existing shape
+instead of adding another control.
+
+The How To now leads with both, in the order they appear on screen, ahead of Tap to Lock.
+
+## The rear camera is gone
+
+It was a real option with a toggle, a mirroring branch, a test, and a checklist item that
+needed a second physical camera to verify. The argument against it is structural, not
+taste: **a rear-facing recording points the screen away from the writer.** The prompt
+words they are meant to be rapping over end up behind the phone, and they cannot frame
+themselves either, because the preview is on the far side too. The one thing worth
+filming here is the writer's own delivery, and that is the camera on the same side as the
+words.
+
+So `facingMode` is pinned to `'user'`, the preview is always mirrored, and the button
+reads *Record Yourself*. The test that used to assert the toggle now pins the front
+camera and additionally covers the permission-denied path reaching the UI — so nobody
+reintroduces a facing option without meeting the argument first. Device checklist item 5
+becomes a mirroring check rather than a two-camera check.
+
+## A flaky test, found and fixed
+
+The session-scope test shipped in 5.8.0 compared two 40-draw samples from a 1,223-word
+bank and asserted they overlapped. They miss each other about **27% of the time** — a
+test that fails one run in four teaches people to re-run rather than to look. Resized to
+half the bank each, where zero overlap is not something that happens. Confirmed over
+fifteen consecutive full-suite runs.
+
+## Verification
+
+- Automated tests: `132 passed`, stable across 15 consecutive runs
+- Device checklist, automated half: `7/7 passed`
+- Captions, How To, and the absence of any camera-facing control verified in the browser
+  against the production build
+
+---
+
+# Barsmith 5.8.0 — a session never hands you the same word twice
+
+The standing assumption was that the word bank should keep growing. Measuring it says
+otherwise, and points at a change that costs nothing.
+
+## The bank was never the problem
+
+`getNextWords` blocked only the *previous* draw, so repeats were governed by the birthday
+problem. At tier 1's 1,223 words, in a ten-minute session at 3.5s — 171 draws:
+
+| Tier | Words | Repeats/session | First repeat at |
+| --- | --- | --- | --- |
+| 1 | 1,223 | 11.4 (6.6%) | 44 draws — 2.6 min in |
+| 2 | 2,035 | 6.9 (4.1%) | 57 draws |
+| 3 | 2,156 | 6.6 (3.8%) | 58 draws |
+
+Buying your way out with vocabulary does not work, because the curve is a square root:
+
+| Tier 1 bank | Repeats/session | First repeat |
+| --- | --- | --- |
+| 1,223 (today) | 11.4 | 44 draws |
+| 2,446 (2×) | 5.8 | 62 draws |
+| 4,892 (4×) | 2.9 | 88 draws |
+| 9,784 (8×) | 1.5 | 124 draws |
+
+**Eight times the words still repeats inside one session.** 5.7.0 added 1,093 words
+across the bank and moved tier 1's first repeat from draw 40 to draw 44.
+
+## Remembering the session settles it
+
+The longest session Today's Session can prescribe is 20 minutes at 3.5s — 342 draws —
+against a smallest tier of 1,223 words. That is 3.6× headroom, so a session-scoped
+exclusion fits with room to spare and never has to give way. It is still written to
+degrade rather than assume that.
+
+Measured over a live session in the browser, interval forced below the UI minimum so a
+full session's worth of draws fits in seconds:
+
+```
+session A: 417 draws, 417 distinct, 0 repeats
+session B: 134 draws, 48 of them also appeared in A
+```
+
+417 consecutive prompts, none repeated — past the longest session the app can prescribe.
+The same run under the old rule would have averaged **64 repeats**. Session B reusing 48
+of A's words is the other half: the memory is scoped to the session and the slate clears
+at the start of the next one, not on resume from a locked word.
+
+Cost is 1.4µs per draw, and across the longest session on every tier the fallback scan
+never runs once.
+
+## Three deliberate exceptions
+
+- **Personal words are exempt.** A writer who added three custom words wants all three,
+  repeatedly — that is why they added them. Session-scoping would spend that pool in
+  three draws and then quietly stop honouring the 20% custom chance for the rest of the
+  session. They still never repeat back-to-back.
+- **An exhausted tier restarts its cycle** rather than dropping the exclusion for the rest
+  of the session. Other tiers keep their memory, which matters for a Scheme round drawing
+  across all three at once.
+- **Probing gives way to a scan.** Drawing at random is right while most of the pool is
+  eligible, which is nearly always — but a fixed try budget fails *by luck* as the pool
+  thins, and would silently return the repeat it was asked to avoid. When probing runs
+  out, the code scans for what is genuinely left instead of guessing harder.
+
+## What this means for the word bank
+
+The bank grows for **reach** — more rhyme endings, more second meanings, more registers
+to be pushed into — and never again for freshness, which is now solved outright. It is
+also why a hip-hop lyric corpus is not the answer to tier 3's remaining ending
+concentration: corpora rank by what rappers already say, and those are precisely the
+words a writer does not need prompting for.
+
+## Verification
+
+- Automated tests: `133 passed` (7 new, covering the exhaustion and cycle-restart paths
+  that cannot occur in the app — the untaken branch is the one that rots)
+- Live browser run: 417 draws, 0 repeats, slate cleared between sessions
+- Device checklist, automated half: `7/7 passed` · `npm audit`: `0 vulnerabilities`
+
+---
+
+# Barsmith 5.7.1 — half the device checklist now runs itself
+
+The README has carried a 14-item checklist for a real phone since 5.2.0. Running it
+against 5.7.0 turned up something about the checklist itself: seven of those fourteen
+are not really about hardware at all. They are assertions about the built app that
+happened to be written as instructions for a human, and a check that is only ever run by
+hand is a check that eventually stops being run.
+
+## `npm run device-checklist`
+
+Items **2, 9, 10, 11, 12, 13** and the render half of **14** now run against the exact
+production build and print PASS/FAIL with their evidence:
+
+```
+PASS   9. Background/return during a timed session
+        countdown read ⏱ 4:59 before a +6min clock jump on a 5min sprint; session auto-ended: true
+PASS  13. Today's session rolls at local midnight
+        23:50 showed "Sprint", 00:10 next day showed "Endurance"
+```
+
+7/7 pass. The remaining seven — install to home screen, camera and mic permission, the
+recording round-trip, the facing toggle, BPM by ear, keyboard-open scrolling, safe-area
+spacing — are printed at the end as an explicit hardware list. Skipping them silently
+would be worse than not running at all, because a green run that quietly covered half of
+what it claims is a green run nobody should trust.
+
+Two items are honest about covering less than the manual check does, and say so in their
+own output rather than in a footnote:
+
+- **Item 2** verifies the precache *contract* — every asset the built HTML references is
+  in Cache Storage and served with the network down — because Playwright's offline mode
+  fails subresources below the service worker, so an end-to-end offline boot is not
+  observable in a container. Airplane Mode on a phone still proves something this cannot.
+- **Item 12** checks what the manifest declares, not how the icon looks inside Android's
+  circular mask.
+
+## What the run found
+
+One real defect, in the dialog with the least room for one:
+
+> Restore **1 sessions**, 0 vault words, and 0 personal words? Existing local data will
+> be replaced.
+
+This is the last thing a writer reads before every session they have ever saved is
+overwritten. A count that disagrees with its own noun reads as a bug in the very dialog
+asking to be trusted with all of it. Fixed, and the checklist now asserts the counts
+agree rather than merely printing them for eyeballing.
+
+## Verification
+
+- Automated tests: `126 passed`
+- Device checklist, automated half: `7/7 passed`
+- Production build: passed · `npm audit`: `0 vulnerabilities`
+
+---
+
 # Barsmith 5.7.0 — the word bank pass
 
 5.6.0 asked whether the banks were any good. This answers it, with measurements

@@ -1,11 +1,4 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-
-/**
- * Maps a getUserMedia facingMode value to the human label used in the
- * recording banner and any other UI. Exported so tests can verify against
- * the same function rather than re-implementing the mapping independently.
- */
-export const cameraFacingLabel = (facing) => facing === 'user' ? 'Front' : 'Rear';
 import { BeatScheduler } from '../services/audio-clock';
 import { getNextWords as getNextWordsService } from '../services/wordbank';
 import { fetchDictData as fetchDictDataService } from '../services/dictionary';
@@ -59,15 +52,15 @@ export function useSessionEngine({
   const [recordingAvailable, setRecordingAvailable] = useState(false);
   const [recordingBlob, setRecordingBlob] = useState(null);
   const [cameraError, setCameraError] = useState('');
-  // 'user' = front (selfie) camera, 'environment' = rear. Front by default since the
-  // whole point is capturing the writer's own delivery/flow, but some writers want to
-  // film a whiteboard, a beat-machine, or their hands instead.
-  const [cameraFacing, setCameraFacing] = useState('user');
 
   const timerRef = useRef(null);
   const metronomeRef = useRef(null);
   const audioCtxRef = useRef(null);
   const lastWordRef = useRef(null);
+  // Every word this session has already handed out. A ref rather than state because
+  // nothing renders from it, and it must be current on the very next tick of the word
+  // timer rather than after a re-render.
+  const drawnRef = useRef(new Set());
   const fetchAbortRef = useRef(null);
   const wakeLockRef = useRef(null);
   const mediaRecorderRef = useRef(null);
@@ -193,7 +186,9 @@ export function useSessionEngine({
 
   // ── Word engine ──
   const getNextWords = (count) => {
-    const sel = getNextWordsService(selectedTier, count, customWords, 0.20, lastWordRef.current || []);
+    const sel = getNextWordsService(
+      selectedTier, count, customWords, 0.20, lastWordRef.current || [], drawnRef.current,
+    );
     lastWordRef.current = sel;
     return sel;
   };
@@ -309,8 +304,12 @@ export function useSessionEngine({
     setCameraError('');
     let stream;
     try {
+      // Front camera only, and not as a simplification — a rear-facing recording points
+      // the screen away from the writer, so the prompt words they are meant to be
+      // rapping over are behind the phone. The one thing worth filming here is the
+      // writer's own delivery, and that is the camera on the same side as the words.
       stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: cameraFacing, width: { ideal: 1280 }, height: { ideal: 720 } },
+        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: true,
       });
       cameraStreamRef.current = stream;
@@ -342,14 +341,6 @@ export function useSessionEngine({
       setCameraError(e.name === 'NotAllowedError' ? 'Camera permission denied.' : 'Camera unavailable.');
     }
   };
-  // Switching cameras mid-recording would require tearing down and restarting the
-  // MediaRecorder/stream, which risks losing whatever was already captured — simplest
-  // and safest is to only allow the swap between recordings.
-  const toggleCameraFacing = () => {
-    if (isRecording) return;
-    setCameraFacing(f => (f === 'user' ? 'environment' : 'user'));
-  };
-
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) { mediaRecorderRef.current.stop(); setIsRecording(false); }
     cameraStreamRef.current?.getTracks().forEach(t => t.stop());
@@ -378,6 +369,10 @@ export function useSessionEngine({
     setSessionStartTime(startedAt); updateWordsSeen(wordCount); updateFrozenWords(new Set());
     replaceSessionNotes({});
     setTimeRemaining(sessionLimit > 0 ? sessionLimit * 60 : 0);
+    // Session-scoped, so the slate clears here and only here. Not on resume from the
+    // dictionary panel — a locked word is a pause inside one session, and carrying the
+    // memory across it is the whole point.
+    drawnRef.current = new Set();
     setCurrentWords(getNextWords(wordCount)); setAppState('active'); setIsPausedForDict(false);
     setRecordingAvailable(false); setRecordingBlob(null);
   };
@@ -531,7 +526,6 @@ export function useSessionEngine({
     sessionNotes, handleSaveNote, registerActiveNoteFlush,
     dictData, isLoadingDict, fetchDictData,
     isRecording, canRecord, recordingAvailable, recordingBlob, cameraError, cameraPreviewRef,
-    cameraFacing, toggleCameraFacing,
     startRecording, stopRecording, downloadRecording,
     startSession, stopSession, startVaultDrill, stopVaultDrill,
     pauseForDict, resumeFromDict, resetToIdle,

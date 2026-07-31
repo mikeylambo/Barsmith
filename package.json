@@ -1,7 +1,7 @@
 {
   "name": "barsmith",
   "private": true,
-  "version": "5.7.0",
+  "version": "5.8.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,21 +11,23 @@
     "validate-wordbank": "node scripts/validate-wordbank.js",
     "test": "vitest run",
     "verify": "npm run build && vitest run",
-    "audit-wordbank": "node scripts/audit-wordbank.js"
+    "audit-wordbank": "node scripts/audit-wordbank.js",
+    "device-checklist": "node scripts/device-checklist.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@testing-library/react": "^14.3.1",
     "@vitejs/plugin-react": "^5.1.4",
     "autoprefixer": "^10.4.19",
+    "jsdom": "^24.1.0",
+    "playwright-core": "^1.62.1",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.3",
     "vite": "^7.3.1",
-    "vitest": "^4.1.9",
-    "jsdom": "^24.1.0",
-    "@testing-library/react": "^14.3.1"
+    "vitest": "^4.1.9"
   },
   "engines": {
     "node": "22.x || 24.x"

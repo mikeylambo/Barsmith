@@ -151,11 +151,15 @@ describe('v1 real implementation tests (React rendering)', () => {
     expect(screen.getByRole('button', { name: /export/i })).toBeTruthy();
   });
 
-  // Uses renderHook to drive useSessionEngine directly. Toggles to rear camera, then
-  // calls startRecording, and asserts getUserMedia received facingMode:'environment'.
-  // canRecord requires both getUserMedia AND MediaRecorder to be present — both must
-  // be mocked or startRecording() exits at the guard and tests nothing.
-  it('rear camera toggle passes facingMode environment to getUserMedia', async () => {
+  // Uses renderHook to drive useSessionEngine directly. canRecord requires both
+  // getUserMedia AND MediaRecorder to be present — both must be mocked or
+  // startRecording() exits at the guard and tests nothing.
+  //
+  // The rear camera was removed rather than kept as an option: recording rear-facing
+  // points the screen away from the writer, so the prompt words they are meant to be
+  // rapping over end up behind the phone. This pins the request to the front camera so
+  // nobody reintroduces a facing option without meeting that argument first.
+  it('always requests the front camera, and surfaces a denied permission', async () => {
     const capturedConstraints = { video: {} };
 
     // Minimal MediaRecorder fake — just enough for canRecord to pass and startRecording
@@ -189,13 +193,13 @@ describe('v1 real implementation tests (React rendering)', () => {
       onSessionComplete: vi.fn(),
     }));
 
-    // Toggle from default 'user' to 'environment'
-    act(() => { result.current.toggleCameraFacing(); });
-    expect(result.current.cameraFacing).toBe('environment');
-
-    // Trigger recording — canRecord is now true, so startRecording reaches getUserMedia
+    // canRecord is now true, so startRecording reaches getUserMedia
     await act(async () => { await result.current.startRecording(); });
     expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalled();
-    expect(capturedConstraints.video.facingMode).toBe('environment');
+    expect(capturedConstraints.video.facingMode).toBe('user');
+    expect(result.current.toggleCameraFacing).toBeUndefined();
+    // The mock rejects with NotAllowedError, so this also covers the denial path
+    // reaching the UI as a message rather than failing silently.
+    expect(result.current.cameraError).toBe('Camera permission denied.');
   });
 });

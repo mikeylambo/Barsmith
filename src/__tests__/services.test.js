@@ -4,7 +4,6 @@ import { getNextWords } from '../services/wordbank.js';
 import { computeStreak, importAllData } from '../services/storage.js';
 import { fetchDictData, _cacheGet, _cacheSet, _cacheClear, _cacheSize, _setCacheMax } from '../services/dictionary.js';
 import { BeatScheduler } from '../services/audio-clock.js';
-import { cameraFacingLabel } from '../hooks/useSessionEngine.js';
 
 describe('release services', () => {
   beforeEach(() => { localStorage.clear(); });
@@ -73,12 +72,5 @@ describe('v1 real implementation tests', () => {
     expect(_cacheGet('c')).toBe(3);   // survived
     expect(_cacheGet('d')).toBe(4);   // newly inserted
     expect(_cacheSize()).toBe(3);
-  });
-
-  // Exercises the exported cameraFacingLabel function that App.jsx imports for the
-  // recording banner. If someone breaks the mapping in the source, this fails.
-  it('cameraFacingLabel maps getUserMedia facingMode to human-readable label', () => {
-    expect(cameraFacingLabel('user')).toBe('Front');
-    expect(cameraFacingLabel('environment')).toBe('Rear');
   });
 });
