@@ -30,7 +30,7 @@ async function main() {
     // draws the brand lockup, and a card missing its mark is a worse card to share.
     // Anything Vite emits into assets/ is by definition something the build references.
     assetFiles = entries
-      .filter(f => ['.js', '.css', '.woff2', '.woff', '.png', '.svg', '.webp'].includes(extname(f)))
+      .filter(f => ['.js', '.css', '.woff2', '.woff', '.png', '.svg', '.webp', '.txt'].includes(extname(f)))
       .map(f => `/assets/${f}`);
   } catch {
     console.warn('[inject-sw-precache] dist/assets not found — skipping asset injection');

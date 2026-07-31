@@ -1,3 +1,98 @@
+# Barsmith 5.9.0 — the rhyme reference, offline
+
+Barsmith has called itself "a writing gym, rhyme reference, and idea-capture tool" since
+5.2.0. Two of those three were true. Rhymes came from three Datamuse calls, which meant
+the feature a writer reaches for most was the only part of an offline-first app that
+needed a network — dead in airplane mode, dead on the subway, dead in a booth with no
+signal. That is now the app's own code, running on the device.
+
+## It answers a better question, too
+
+A flat list of perfect rhymes is a beginner's tool. The writers this is built for work in
+*multis* — runs where the vowels line up across two, three, four syllables and the
+consonants are free to drift. So results are grouped by what kind of rhyme they are:
+
+| Group | What it means | Example |
+| --- | --- | --- |
+| **Perfect** | the stressed tail lands whole | `nation` / `station` |
+| **Multi** | 2+ syllables agree, offset from the stress | `sacrament` / `detriment` |
+| **Slant** | the vowel holds, the consonants bend | `silver` / `pilfer` |
+| **Assonance** | the vowel run matches, consonants free | `hostile` / `gospel` |
+
+What that looks like on the words people say cannot be rhymed:
+
+```
+orange      slant      lozenge, challenge, scavenge, damage, image, knowledge, language
+silver      slant      pilfer, river, liver, giver, quiver, shiver, sliver, differ
+month       slant      once, seventh, eleventh, corinth, millionth, billionth
+laboratory  multi      mandatory, statutory, lavatory, transitory, excretory, dilatory
+```
+
+`month` and `orange` return **no perfect rhymes**, because they have none — the engine
+says so rather than padding the list. It still hands over the near misses that actually
+get used.
+
+## Four judgements that were wrong first
+
+The unit of comparison is the **rime**: a vowel plus every consonant up to the next vowel.
+Comparing rime-by-rime from the end sidesteps the alignment problem a raw phoneme walk
+has, where `cat` and `cast` fall out of step on the coda and score as unrelated. Past
+that, four decisions each started out wrong, and each now has a test pinning it:
+
+- **Match against the query's stress, not the candidate's.** Keying every word by where
+  its own primary stress falls meant `time` and `lifetime` got different keys and never
+  met. A rhyme is the query's stressed tail reappearing at the end of another word; where
+  that word carries its own main stress is not the query's business.
+- **Weight the final consonant hardest.** Averaging coda positions evenly scored `orange`
+  against `government` as a rhyme, on the strength of a shared `N`, even though `JH` and
+  `T` have nothing in common.
+- **Treat secondary stress as a wildcard.** CMU writes `lifetime`'s full `AY2` and
+  `company`'s reduced word-final `IY2` identically. Demanding an answer breaks `money` /
+  `company` to fix `time` / `lifetime`, or the reverse.
+- **A run of unstressed schwas is not assonance.** Schwa is the most common vowel in
+  English, so before the stress test `cinema` came back with `london`, `services` and
+  `available`.
+
+## Every prompt is pronounceable
+
+Tap-to-Lock sends the prompt straight to the engine, so a bank word the payload cannot
+pronounce is a dead panel on a word Barsmith itself chose. CMU is missing **151** of them.
+92 are derived by rule — compounds (`cashback` → `cash` + `back`, with the trailing
+stress demoted, because English says BACKstab not backSTAB) and Latinate forms
+(`weaponize` → `weaponization`). The remaining 59 are loanwords no rule can reach —
+`wasabi`, `quesadilla`, `didgeridoo`, `trebuchet` — hand-authored in
+`pronunciation-extra.json`. **The build fails if any bank word is left without one.**
+
+## Size, and where it sits
+
+Frequency alone turned out to be the wrong filter for what to carry: in the Zipf 2.0-2.5
+band, **44% of CMU's entries are surnames and brand names** — `borthwick`, `botelho`,
+`hesketh`, `cigna` — sitting right beside `curmudgeon`, `bollard`, `oleander` and
+`minaret`. So the test is "is this a word", answered by Webster's Second, plus a second
+clause for anything common enough today that a 1934 dictionary missing it proves nothing
+(`internet`, `podcast`, `emoji`, `vibe`).
+
+That lands at **41,257 words, 289KB gzipped**. It is fetched on first use rather than at
+start-up — the app's own bundle is 99KB and nothing on the idle screen needs a rhyme — and
+precached by the service worker, so it is there offline from the second visit on. Queries
+run in about **4ms**.
+
+The dictionary panel mid-session now shows the strongest kind of rhyme a word has and
+says which kind it is. Definitions still need the network; when it is gone the panel says
+so, and the rhymes are still right.
+
+## Verification
+
+- Automated tests: `154 passed` (22 new, against the real payload rather than a fixture)
+- Bank coverage: `5,414 / 5,414` prompts pronounceable, asserted in both build and tests
+- Verified in the browser with the network down: search and Tap-to-Lock both return rhymes
+- Device checklist, automated half: `7/7 passed` · `npm audit`: `0 vulnerabilities`
+
+Pronunciations are the CMU Pronouncing Dictionary, BSD-2-clause, notice shipped in
+`src/data/PRONUNCIATION-LICENSE`.
+
+---
+
 # Barsmith 5.8.1 — say what Level and Scheme mean, drop the rear camera
 
 ## Two settings labelled with bare numbers

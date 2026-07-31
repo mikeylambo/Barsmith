@@ -1,14 +1,21 @@
 // ─────────────────────────────────────────────
 // DICTIONARY SERVICE
-// Handles rhyme, synonym, antonym, definition, and syllable lookups against
-// the free dictionaryapi.dev and Datamuse APIs. Pulled out of the component
-// tree so it's independently testable and so the URL-encoding/abort logic
-// lives in exactly one place.
+// Synonym, antonym and definition lookups against dictionaryapi.dev and Datamuse.
+// Pulled out of the component tree so it's independently testable and so the
+// URL-encoding/abort logic lives in exactly one place.
+//
+// Rhymes and syllable counts no longer come from here. They are computed on-device by
+// services/rhyme.js, so the half of this panel a writer actually uses mid-session keeps
+// working with no network — and gives multis and slants rather than one flat list.
+// Definitions still need the network; when it is not there, the panel says so and the
+// rhymes are still right.
 // ─────────────────────────────────────────────
 
 // Bounded LRU cache. A Map preserves insertion order; deleting-then-reinserting on a
 // hit moves the entry to the back, so the oldest *least recently used* entry is always
 // at the front. Cap at 300 — plenty for even a very long multi-hour session.
+import { loadRhymeIndex, findRhymes } from './rhyme';
+
 let DICT_CACHE_MAX = 300;
 const dictCache = new Map();
 function cacheGet(key) {
@@ -55,21 +62,26 @@ export async function fetchDictData(rawWord, signal) {
   if (hit) return hit;
 
   const enc = encodeURIComponent(w);
-  const [dictPayload, rhymes, nearRhymes, syns, ants, meansLike, sylData] = await Promise.all([
+  // Rhymes are local and synchronous once the index is warm, so they are resolved before
+  // the network is even asked. A dictionary outage costs the definition, not the rhymes.
+  let local = null;
+  try {
+    await loadRhymeIndex();
+    local = findRhymes(w);
+  } catch { /* payload unavailable; fall through with no local data */ }
+
+  const [dictPayload, syns, ants, meansLike] = await Promise.all([
     fetchWithAbort(`https://api.dictionaryapi.dev/api/v2/entries/en/${enc}`, signal),
-    fetchWithAbort(`https://api.datamuse.com/words?rel_rhy=${enc}`, signal),
-    fetchWithAbort(`https://api.datamuse.com/words?rel_nry=${enc}`, signal),
     fetchWithAbort(`https://api.datamuse.com/words?rel_syn=${enc}`, signal),
     fetchWithAbort(`https://api.datamuse.com/words?rel_ant=${enc}`, signal),
     fetchWithAbort(`https://api.datamuse.com/words?ml=${enc}`, signal),
-    fetchWithAbort(`https://api.datamuse.com/words?sp=${enc}&md=s&max=1`, signal),
   ]);
 
-  // A total transport failure should not masquerade as a legitimate word with no data,
-  // and must not be cached. Individual 404s are fine as long as another service responds.
-  if ([dictPayload, rhymes, nearRhymes, syns, ants, meansLike, sylData].every(v => v === null)) {
-    throw new Error('Network error');
-  }
+  // A total transport failure used to be fatal, because every field came from the
+  // network. Now the rhymes survive it, so it only means "no definition" — and the
+  // result is still worth caching and showing.
+  const offline = [dictPayload, syns, ants, meansLike].every(v => v === null);
+  if (offline && !local?.found) throw new Error('Network error');
 
   let defs = [], foundSyn = [], foundAnt = [];
   dictPayload?.[0]?.meanings?.forEach(m => {
@@ -84,18 +96,29 @@ export async function fetchDictData(rawWord, signal) {
   if (!foundSyn.length && meansLike) foundSyn.push(...meansLike.map(s => s.word));
   if (ants) foundAnt.push(...ants.map(a => a.word));
 
-  const foundRhymes = (rhymes?.length ? rhymes : nearRhymes || []).map(r => r.word).filter(x => x !== w).slice(0, 14);
-  const syllables = sylData?.[0]?.numSyllables || null;
+  // Mid-session the panel has room for one short list, so it shows the strongest kind of
+  // rhyme the word actually has and says which kind that is. A writer who wants the full
+  // map opens Rhyme Search; here the point is to hand back something usable without
+  // breaking the flow of the round.
+  const best = !local?.found ? null
+    : local.perfect.length ? { label: 'Perfect Rhymes', words: local.perfect }
+    : local.multi.length ? { label: 'Multis', words: local.multi }
+    : local.slant.length ? { label: 'Slant Rhymes', words: local.slant }
+    : local.assonance.length ? { label: 'Assonance', words: local.assonance }
+    : null;
 
   const final = {
     definitions: defs.slice(0, 3),
-    rhymes: foundRhymes,
-    rhymeLabel: rhymes?.length ? 'Top Rhymes' : 'Near Rhymes',
+    rhymes: (best?.words || []).map(r => r.word).slice(0, 14),
+    rhymeLabel: best?.label || 'Rhymes',
     synonyms: clean(foundSyn).slice(0, 12),
     antonyms: clean(foundAnt).slice(0, 10),
-    syllables,
+    syllables: local?.found ? local.syllables : null,
+    phonemes: local?.found ? local.phonemes : null,
   };
-  if (!final.definitions.length) final.definitions.push({ pos: '', text: 'Definition not found.' });
+  if (!final.definitions.length) {
+    final.definitions.push({ pos: '', text: offline ? 'No connection — definition unavailable. Rhymes are on-device.' : 'Definition not found.' });
+  }
 
   cacheSet(w, final);
   return final;
