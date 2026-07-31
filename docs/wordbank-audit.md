@@ -5,13 +5,34 @@ Re-run after any word pass to see the numbers move.
 
 ## Summary
 
-| Tier | Words | In syllable band | Abstraction suffixes | Largest rhyme family |
-| --- | --- | --- | --- | --- |
-| 1 | 1020 | 98.3% | 0 (0.0%) | none |
-| 2 | 1425 | 85.0% | 73 (5.1%) | `-ness` 18 (1.3%) |
-| 3 | 1571 | 84.6% | 683 (43.5%) | `-ation` 175 (11.1%) |
+| Tier | Words | Bare roots | Abstract nouns | Distinct endings | Top-10 endings cover |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 1020 | 96.8% | 0.0% | 321 | 13.6% |
+| 2 | 1425 | 71.6% | 5.5% | 450 | 20.4% |
+| 3 | 1571 | 33.0% | 38.8% | 251 | 59.4% |
 
-## Fixing the worst family
+### What that table says
+
+Tier 3 holds 1571 words and can end **251** different ways.
+Tier 1 holds 1020 — half again fewer — and can end **321** ways.
+
+**The hardest tier is the biggest and rhymes the narrowest.** Its top ten endings
+cover 59.4% of it, against 13.6% for tier 1.
+
+The composition column explains why. Tier 1 is almost entirely bare concrete roots —
+Germanic monosyllables, each ending its own way. Tier 3 inverted that: it is mostly
+Latinate abstractions, and Latinate abstractions all end alike. The tiers were meant
+to be a ramp in *length*; they became a ramp in *abstraction* as well, which nothing
+in the design asked for.
+
+So the gap to fill is specific, and it is an addition rather than a subtraction:
+**concrete multisyllabic roots** — three or more syllables, but a thing or an action
+rather than a concept. `carburetor`, `alabaster`, `porcupine`, `metropolis`,
+`kerosene`, `avalanche`, `jackhammer`. Words like that are rare in tier 3 today, they
+are what rap actually reaches for, and each one lands on an ending the tier is short
+of — so they widen the rhyme surface and lower the `-tion` share at the same time.
+
+## Where the concentration sits
 
 ### Rhyme clusters — tier 3
 
@@ -44,14 +65,28 @@ Two ways to bring that share down:
 
 Growing alone cannot realistically fix this: diluting the cluster to 3% would mean a
 tier of 10,467 words — more than twice the entire current bank.
-The affordable path is a hybrid: remove the derivational duplicates listed below,
-which narrow no vocabulary because the root is already in the bank, then grow with
-rhyme-diverse words. Every word added anywhere else in the tier also lowers this
-share, so growth still helps — it just cannot carry the whole distance.
+Growth still moves it: every word added anywhere else in the tier lowers this share,
+and words chosen for ending-diversity raise the distinct-endings count at the same
+time. The two problems have one fix. The table above is only saying that reaching a
+3% target on growth alone is not realistic — 8% is, at roughly +2,350 words.
 
 ## Tier 1 — 1020 words (one syllable)
 
-### Derivational duplication
+### Composition
+
+| Word class | Count | Share |
+| --- | --- | --- |
+| bare root | 987 | 96.8% |
+| inflected verb | 23 | 2.3% |
+| adverb | 4 | 0.4% |
+| derived verb | 3 | 0.3% |
+| adjective | 3 | 0.3% |
+
+**Endings:** 321 distinct (315 per 1,000 words) · top ten cover 13.6% · 166 endings used exactly once.
+
+Most crowded: `-ash` 18 · `-ill` 17 · `-ank` 14 · `-ail` 13 · `-eak` 13 · `-ell` 13 · `-ain` 13 · `-ght` 13
+
+### Shared roots
 
 None.
 
@@ -66,6 +101,21 @@ of these to be a false positive. Review by eye before moving anything.
 `bypass` (~2) · `cycle` (~2) · `early` (~2) · `fifty` (~2) · `hardly` (~2) · `hustle` (~2) · `hydrant` (~2) · `mercy` (~2) · `only` (~2) · `onyx` (~2) · `razor` (~2) · `skinny` (~2) · `supply` (~2) · `talon` (~2) · `theory` (~2) · `tumble` (~2) · `typhoon` (~2)
 
 ## Tier 2 — 1425 words (two syllables)
+
+### Composition
+
+| Word class | Count | Share |
+| --- | --- | --- |
+| bare root | 1021 | 71.6% |
+| inflected verb | 136 | 9.5% |
+| adjective | 126 | 8.8% |
+| abstract noun | 78 | 5.5% |
+| derived verb | 52 | 3.6% |
+| adverb | 12 | 0.8% |
+
+**Endings:** 450 distinct (316 per 1,000 words) · top ten cover 20.4% · 231 endings used exactly once.
+
+Most crowded: `-ing` 84 · `-ess` 34 · `-ter` 33 · `-ent` 28 · `-ous` 25 · `-ain` 19 · `-end` 19 · `-ion` 17
 
 ### Rhyme families
 
@@ -87,10 +137,14 @@ repeatedly hands out the same ending.
 | `-ual` | 2 | 0.1% | 0 | +0 | casual, gradual |
 | `-ency` | 2 | 0.1% | 0 | +0 | currency, frequency |
 
-### Derivational duplication
+### Shared roots
 
-**26** words are a suffixed form of a word already in the banks —
-the same root drilled twice. Removing these narrows no vocabulary.
+**26** words have a stem that is also in the banks. This is *not* a
+cut list — it measures how much of the tier is morphology rather than new
+vocabulary. Some pairs are genuine families a writer would use differently
+(`improve` / `improvement`); others are string coincidences the check cannot
+distinguish (`apart` / `apartment`, unrelated in origin). Read it as a texture
+signal, not a verdict.
 
 `boldness` ← `bold` · `casual` ← `case` · `cavity` ← `cave` · `coldness` ← `cold` · `cyclical` ← `cycle` · `darkness` ← `dark` · `deepness` ← `deep` · `gradual` ← `grade` · `gravity` ← `grave` · `greatness` ← `great` · `hardness` ← `hard` · `hardship` ← `hard` · `illness` ← `ill` · `loudness` ← `loud` · `madness` ← `mad` · `movement` ← `move` · `rarity` ← `rare` · `rashness` ← `rash` · `reality` ← `real` · `sharpness` ← `sharp` · `station` ← `stay` · `stillness` ← `still` · `symbolism` ← `symbol` · `traction` ← `trace` · `treatment` ← `treat` · `witness` ← `wit`
 
@@ -107,6 +161,20 @@ of these to be a false positive. Review by eye before moving anything.
 …and 174 more.
 
 ## Tier 3 — 1571 words (three or more)
+
+### Composition
+
+| Word class | Count | Share |
+| --- | --- | --- |
+| abstract noun | 610 | 38.8% |
+| bare root | 518 | 33.0% |
+| adjective | 243 | 15.5% |
+| derived verb | 159 | 10.1% |
+| inflected verb | 41 | 2.6% |
+
+**Endings:** 251 distinct (160 per 1,000 words) · top ten cover 59.4% · 133 endings used exactly once.
+
+Most crowded: `-ion` 319 · `-ate` 120 · `-ity` 111 · `-ent` 91 · `-ive` 81 · `-ous` 61 · `-ess` 49 · `-ine` 40
 
 ### Rhyme families
 
@@ -134,10 +202,14 @@ Terminal four letters, to catch concentration the named list above misses.
 
 `-tion` 296 · `-ment` 69 · `-tive` 50 · `-lity` 44 · `-ness` 44 · `-ious` 37 · `-rate` 31 · `-sive` 28
 
-### Derivational duplication
+### Shared roots
 
-**150** words are a suffixed form of a word already in the banks —
-the same root drilled twice. Removing these narrows no vocabulary.
+**150** words have a stem that is also in the banks. This is *not* a
+cut list — it measures how much of the tier is morphology rather than new
+vocabulary. Some pairs are genuine families a writer would use differently
+(`improve` / `improvement`); others are string coincidences the check cannot
+distinguish (`apart` / `apartment`, unrelated in origin). Read it as a texture
+signal, not a verdict.
 
 `accountability` ← `account` · `allegation` ← `allege` · `alteration` ← `alter` · `amendment` ← `amend` · `apartment` ← `apart` · `archive` ← `arch` · `argument` ← `argue` · `assassination` ← `assassin` · `assignment` ← `assign` · `atonement` ← `atone` · `attachment` ← `attach` · `attainment` ← `attain` · `authority` ← `author` · `authorization` ← `author` · `awareness` ← `aware` · `balance` ← `bale` · `bitterness` ← `bitter` · `bombardment` ← `bombard` · `brokenness` ← `broken` · `brutality` ← `brute` · `capability` ← `cap` · `capitalization` ← `capital` · `captivation` ← `captive` · `carelessness` ← `careless` · `characterization` ← `character` · `coalition` ← `coal` · `collective` ← `collect` · `combative` ← `combat` · `commandment` ← `command` · `commodity` ← `commode` · `competition` ← `compete` · `complement` ← `comply` · `complexity` ← `complex` · `complication` ← `comply` · `composition` ← `compose` · `concealment` ← `conceal` · `condemnation` ← `condemn` · `confidence` ← `confide` · `declaration` ← `declare` · `divinity` ← `divine`
 

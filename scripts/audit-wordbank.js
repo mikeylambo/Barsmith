@@ -5,23 +5,26 @@
 // Diagnostic only — this script never edits the banks. `validate-wordbank.js` is the
 // build gate that says a bank is *well-formed*; this says whether it is *good*.
 //
-// What it looks for, and why:
+// What it measures, and why:
 //
-//   Rhyme-family concentration.  The defect that motivated this audit is not that
-//   tier 3 contains abstract words — it is that 175 of them end in `-ation`, and those
-//   all rhyme with each other perfectly. On the hardest level, roughly one prompt in
-//   nine hands the writer a free rhyme, which is the tier failing at its own job. The
-//   family tables below are the measurement of that.
+//   Rhyme-tail diversity.  The most useful number here. Tier 3 is the biggest bank and
+//   can end the fewest different ways — fewer even than tier 1, which has half again
+//   fewer words. A tier that ends the same way over and over hands out free rhymes on
+//   the level that is supposed to be hardest.
 //
-//   Derivational duplication.  `apartment` next to `apart`, `argument` next to `argue`.
-//   Same root drilled twice. It inflates the count without widening the vocabulary,
-//   which is the signature of a list padded from a frequency dump rather than curated.
+//   Composition by word class.  This explains the above. Tier 1 is ~96% bare concrete
+//   roots, each ending its own way; tier 3 inverted that into ~40% abstract nouns, and
+//   abstract nouns all end alike. The tiers were designed as a ramp in word *length*
+//   and quietly became a ramp in *abstraction* too, which nothing asked for.
 //
-//   Syllable-band drift.  The tiers are a difficulty ramp by syllabic weight. A word
-//   in the wrong tier quietly breaks that promise.
+//   Rhyme-family and cluster concentration.  Where that abstraction piles up, grouped
+//   by sound rather than spelling — `-ation`, `-ization` and `-tion` are one rhyme.
 //
-// Writes docs/wordbank-audit.md, which is the reviewable artifact — the point is to
-// approve a dozen family-level decisions rather than read six hundred words.
+//   Shared roots and syllable-band drift.  Both reported with their error modes stated;
+//   neither is precise enough to act on without a human reading the list.
+//
+// Writes docs/wordbank-audit.md. The point is to make the shape of each tier legible so
+// additions can be aimed at what is actually missing.
 // ─────────────────────────────────────────────
 
 import { readFileSync, writeFileSync, mkdirSync } from 'fs';
@@ -116,9 +119,16 @@ function tally(words, keyFn) {
   return [...map.entries()].sort((a, b) => b[1].length - a[1].length);
 }
 
-// ── Derivational duplication ──
-// A word is padding if stripping its suffix leaves something already in the banks.
-function derivations(words) {
+// ── Shared roots ──
+// Words whose stem, after stripping a suffix, is also in the banks.
+//
+// Reported as information, NOT as a cut list. An earlier version of this script called
+// these "padding", which was wrong twice over: string-stripping cannot tell a real
+// family (`improve` → `improvement`) from a coincidence (`apart` → `apartment`, which
+// comes from Italian and shares nothing), and even a real family is not a defect —
+// `improve` and `improvement` are different tools for a writer. What this number
+// actually indicates is how much of a tier is morphology rather than new vocabulary.
+function sharedRoots(words) {
   const out = [];
   for (const w of words) {
     const s = familyOf(w);
@@ -129,6 +139,46 @@ function derivations(words) {
     if (hit) out.push([w, hit]);
   }
   return out;
+}
+
+// ── Word class ──
+// Suffix-based approximation. It cannot tell a noun from a verb for a bare root, which
+// is exactly why that bucket is left honestly named rather than guessed at. The useful
+// signal is the ratio: a tier made mostly of bare concrete roots reads very differently
+// to a writer than one made mostly of abstract nouns.
+const ADJ = ['ous', 'ful', 'ive', 'able', 'ible', 'ical', 'ic', 'ish', 'less', 'ary', 'ory', 'al'];
+const NOUN = ['tion', 'sion', 'ment', 'ness', 'ity', 'ance', 'ence', 'ism', 'ist', 'age', 'ship', 'hood', 'ure', 'ery'];
+const VERB = ['ize', 'ise', 'ify', 'ate', 'en'];
+const hasSuffix = (w, s) => w.endsWith(s) && w.length > s.length + 2;
+function wordClass(w) {
+  if (w.endsWith('ly')) return 'adverb';
+  if (w.endsWith('ing') || w.endsWith('ed')) return 'inflected verb';
+  if (VERB.some(s => hasSuffix(w, s))) return 'derived verb';
+  if (NOUN.some(s => hasSuffix(w, s))) return 'abstract noun';
+  if (ADJ.some(s => hasSuffix(w, s))) return 'adjective';
+  return 'bare root';
+}
+
+// ── Rhyme-tail diversity ──
+// The single most useful number in this report. Terminal three letters is a coarse
+// stand-in for a rhyme, but it is consistent across tiers, so the comparison is fair:
+// how many different ways can this tier end, and how much of it piles into the top few.
+function endingStats(words) {
+  const c = new Map();
+  for (const w of words) {
+    if (w.length < 4) continue;
+    const k = w.slice(-3);
+    c.set(k, (c.get(k) || 0) + 1);
+  }
+  const sorted = [...c.entries()].sort((a, b) => b[1] - a[1]);
+  const top10 = sorted.slice(0, 10).reduce((n, [, v]) => n + v, 0);
+  return {
+    distinct: sorted.length,
+    perThousand: Math.round((1000 * sorted.length) / words.length),
+    top10Share: top10 / words.length,
+    once: sorted.filter(([, v]) => v === 1).length,
+    top: sorted.slice(0, 8),
+  };
 }
 
 // ── How much work each path implies ──
@@ -154,17 +204,44 @@ say();
 
 say('## Summary');
 say();
-say('| Tier | Words | In syllable band | Abstraction suffixes | Largest rhyme family |');
-say('| --- | --- | --- | --- | --- |');
+say('| Tier | Words | Bare roots | Abstract nouns | Distinct endings | Top-10 endings cover |');
+say('| --- | --- | --- | --- | --- | --- |');
 for (const t of [1, 2, 3]) {
   const bank = tiers[t];
-  const inBand = bank.filter(w => BAND[t](syllables(w))).length;
-  const abstract = bank.filter(familyOf).length;
-  const top = tally(bank, familyOf)[0];
-  const topCell = top ? `\`-${top[0]}\` ${top[1].length} (${pct(top[1].length, bank.length)})` : 'none';
-  say(`| ${t} | ${bank.length} | ${pct(inBand, bank.length)} | ${abstract} (${pct(abstract, bank.length)}) | ${topCell} |`);
+  const cls = tally(bank, wordClass);
+  const roots = (cls.find(([k]) => k === 'bare root') || [, []])[1].length;
+  const abstract = (cls.find(([k]) => k === 'abstract noun') || [, []])[1].length;
+  const e = endingStats(bank);
+  say(`| ${t} | ${bank.length} | ${pct(roots, bank.length)} | ${pct(abstract, bank.length)} | ${e.distinct} | ${pct(e.top10Share * bank.length, bank.length)} |`);
 }
 say();
+
+// ── The headline ──
+{
+  const e1 = endingStats(tiers[1]);
+  const e3 = endingStats(tiers[3]);
+  say('### What that table says');
+  say();
+  say(`Tier 3 holds ${tiers[3].length} words and can end **${e3.distinct}** different ways.`);
+  say(`Tier 1 holds ${tiers[1].length} — half again fewer — and can end **${e1.distinct}** ways.`);
+  say();
+  say('**The hardest tier is the biggest and rhymes the narrowest.** Its top ten endings');
+  say(`cover ${pct(e3.top10Share * tiers[3].length, tiers[3].length)} of it, against ${pct(e1.top10Share * tiers[1].length, tiers[1].length)} for tier 1.`);
+  say();
+  say('The composition column explains why. Tier 1 is almost entirely bare concrete roots —');
+  say('Germanic monosyllables, each ending its own way. Tier 3 inverted that: it is mostly');
+  say('Latinate abstractions, and Latinate abstractions all end alike. The tiers were meant');
+  say('to be a ramp in *length*; they became a ramp in *abstraction* as well, which nothing');
+  say('in the design asked for.');
+  say();
+  say('So the gap to fill is specific, and it is an addition rather than a subtraction:');
+  say('**concrete multisyllabic roots** — three or more syllables, but a thing or an action');
+  say('rather than a concept. `carburetor`, `alabaster`, `porcupine`, `metropolis`,');
+  say('`kerosene`, `avalanche`, `jackhammer`. Words like that are rare in tier 3 today, they');
+  say('are what rap actually reaches for, and each one lands on an ending the tier is short');
+  say('of — so they widen the rhyme surface and lower the `-tion` share at the same time.');
+  say();
+}
 
 // ── What it costs to fix the worst concentration ──
 // Reported for the largest family in the worst tier, because that is the number that
@@ -174,7 +251,7 @@ say();
 {
   const bank = tiers[3];
   const [name, words] = tally(bank, clusterOf)[0];
-  say('## Fixing the worst family');
+  say('## Where the concentration sits');
   say();
   say('### Rhyme clusters — tier 3');
   say();
@@ -204,10 +281,10 @@ say();
   const growTo3 = bank.length + growthTo(words.length, bank.length, 0.03);
   say(`Growing alone cannot realistically fix this: diluting the cluster to 3% would mean a`);
   say(`tier of ${growTo3.toLocaleString('en-US')} words — more than twice the entire current bank.`);
-  say('The affordable path is a hybrid: remove the derivational duplicates listed below,');
-  say('which narrow no vocabulary because the root is already in the bank, then grow with');
-  say('rhyme-diverse words. Every word added anywhere else in the tier also lowers this');
-  say('share, so growth still helps — it just cannot carry the whole distance.');
+  say('Growth still moves it: every word added anywhere else in the tier lowers this share,');
+  say('and words chosen for ending-diversity raise the distinct-endings count at the same');
+  say('time. The two problems have one fix. The table above is only saying that reaching a');
+  say('3% target on growth alone is not realistic — 8% is, at roughly +2,350 words.');
   say();
 }
 
@@ -215,10 +292,25 @@ for (const t of [1, 2, 3]) {
   const bank = tiers[t];
   const families = tally(bank, familyOf);
   const tails = tally(bank, tailOf);
-  const derived = derivations(bank);
+  const derived = sharedRoots(bank);
   const strays = bank.filter(w => !BAND[t](syllables(w)));
 
   say(`## Tier ${t} — ${bank.length} words (${BAND_LABEL[t]})`);
+  say();
+
+  say('### Composition');
+  say();
+  say('| Word class | Count | Share |');
+  say('| --- | --- | --- |');
+  for (const [cls, ws] of tally(bank, wordClass)) {
+    say(`| ${cls} | ${ws.length} | ${pct(ws.length, bank.length)} |`);
+  }
+  say();
+  const e = endingStats(bank);
+  say(`**Endings:** ${e.distinct} distinct (${e.perThousand} per 1,000 words) · top ten cover `
+    + `${pct(e.top10Share * bank.length, bank.length)} · ${e.once} endings used exactly once.`);
+  say();
+  say(`Most crowded: ${e.top.map(([k, v]) => `\`-${k}\` ${v}`).join(' · ')}`);
   say();
 
   if (families.length) {
@@ -246,11 +338,15 @@ for (const t of [1, 2, 3]) {
     say();
   }
 
-  say('### Derivational duplication');
+  say('### Shared roots');
   say();
   if (derived.length) {
-    say(`**${derived.length}** words are a suffixed form of a word already in the banks —`);
-    say('the same root drilled twice. Removing these narrows no vocabulary.');
+    say(`**${derived.length}** words have a stem that is also in the banks. This is *not* a`);
+    say('cut list — it measures how much of the tier is morphology rather than new');
+    say('vocabulary. Some pairs are genuine families a writer would use differently');
+    say('(`improve` / `improvement`); others are string coincidences the check cannot');
+    say('distinguish (`apart` / `apartment`, unrelated in origin). Read it as a texture');
+    say('signal, not a verdict.');
     say();
     say(derived.slice(0, 40).map(([w, stem]) => `\`${w}\` ← \`${stem}\``).join(' · '));
     if (derived.length > 40) say(`\n…and ${derived.length - 40} more.`);
@@ -276,6 +372,7 @@ for (const t of [1, 2, 3]) {
   say();
 }
 
+mkdirSync(join(root, 'docs'), { recursive: true });
 writeFileSync(join(root, 'docs', 'wordbank-audit.md'), `${lines.join('\n')}\n`, 'utf-8');
 
 // ── Terminal summary ──
@@ -284,12 +381,12 @@ for (const t of [1, 2, 3]) {
   const bank = tiers[t];
   const abstract = bank.filter(familyOf).length;
   const top = tally(bank, familyOf)[0];
-  const derived = derivations(bank).length;
+  const derived = sharedRoots(bank).length;
   const strays = bank.filter(w => !BAND[t](syllables(w))).length;
   console.log(`  tier ${t}: ${bank.length} words`);
   console.log(`     abstraction suffixes : ${abstract} (${pct(abstract, bank.length)})`);
   console.log(`     largest rhyme family : ${top ? `-${top[0]} ${top[1].length} (${pct(top[1].length, bank.length)})` : 'none'}`);
-  console.log(`     derivational dupes   : ${derived}`);
+  console.log(`     shared roots         : ${derived}`);
   console.log(`     out of syllable band : ${strays}`);
 }
 console.log('\nWrote docs/wordbank-audit.md');
