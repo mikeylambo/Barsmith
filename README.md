@@ -85,6 +85,17 @@ Three tiers, graded by syllabic weight — tier 1 is ~97% single-syllable, tier 
 two-syllable, tier 3 predominantly three or more. **New words are placed by that rule**,
 and the test suite asserts each tier stays on its band.
 
+Beyond the band, two things decide whether a word earns its place, both aimed at the
+bar-heavy, punchline-driven writer the app is for:
+
+- **A second meaning.** A punchline turns on a word's other sense — `clip`, `iron`,
+  `piece`, `deck`, `pawn`, `charge`. Words carrying only one sense give a writer nothing
+  to turn.
+- **A distinct ending.** Rhyme-tail diversity, not word count, is the measure of a tier's
+  usefulness — see `npm run audit-wordbank`. Tier 3's weakness is that it is the biggest
+  bank and ends the fewest different ways, because it filled up with Latinate
+  abstractions that all end alike and each mean exactly one thing.
+
 `npm run audit-wordbank` is the diagnostic counterpart to the validator: the validator
 says a bank is well-*formed*, the audit says whether it is *good*. It writes
 `docs/wordbank-audit.md` and changes nothing. Re-run it after any word pass.
@@ -145,7 +156,7 @@ python3 scripts/make-brand-assets.py
 
 This package was installed, tested, validated, built, and dependency-audited.
 
-- Word bank: Tier 1 `1,020`, Tier 2 `1,425`, Tier 3 `1,571`
+- Word bank: Tier 1 `1,223`, Tier 2 `1,436`, Tier 3 `1,683`
 - Cross-tier duplicates: `0`
 - Automated tests: `124 passed`
 - Production build: passed
