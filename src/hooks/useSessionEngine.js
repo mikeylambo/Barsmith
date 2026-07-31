@@ -68,6 +68,10 @@ export function useSessionEngine({
   const metronomeRef = useRef(null);
   const audioCtxRef = useRef(null);
   const lastWordRef = useRef(null);
+  // Every word this session has already handed out. A ref rather than state because
+  // nothing renders from it, and it must be current on the very next tick of the word
+  // timer rather than after a re-render.
+  const drawnRef = useRef(new Set());
   const fetchAbortRef = useRef(null);
   const wakeLockRef = useRef(null);
   const mediaRecorderRef = useRef(null);
@@ -193,7 +197,9 @@ export function useSessionEngine({
 
   // ── Word engine ──
   const getNextWords = (count) => {
-    const sel = getNextWordsService(selectedTier, count, customWords, 0.20, lastWordRef.current || []);
+    const sel = getNextWordsService(
+      selectedTier, count, customWords, 0.20, lastWordRef.current || [], drawnRef.current,
+    );
     lastWordRef.current = sel;
     return sel;
   };
@@ -378,6 +384,10 @@ export function useSessionEngine({
     setSessionStartTime(startedAt); updateWordsSeen(wordCount); updateFrozenWords(new Set());
     replaceSessionNotes({});
     setTimeRemaining(sessionLimit > 0 ? sessionLimit * 60 : 0);
+    // Session-scoped, so the slate clears here and only here. Not on resume from the
+    // dictionary panel — a locked word is a pause inside one session, and carrying the
+    // memory across it is the whole point.
+    drawnRef.current = new Set();
     setCurrentWords(getNextWords(wordCount)); setAppState('active'); setIsPausedForDict(false);
     setRecordingAvailable(false); setRecordingBlob(null);
   };

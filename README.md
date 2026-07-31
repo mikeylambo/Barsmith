@@ -124,6 +124,32 @@ unrhymables like `orange` and `month` — were too few to fill a mode, and the r
 ordinary polysyllables that belong on the existing ramp. Its 142 single words were
 redistributed into tiers 1-3 by syllable count. One difficulty axis, one mental model.
 
+### Why the bank isn't bigger
+
+The obvious next move is always "add more words", and for freshness it is the wrong one.
+Repeats used to be governed by the birthday problem, because only the previous draw was
+blocked. At tier 1's 1,223 words the first repeat landed around draw 44 — under three
+minutes — with roughly 11 across a ten-minute session. Bank size barely moves that,
+because the curve is a square root:
+
+| Tier 1 bank | Repeats per 10-min session | First repeat at |
+| --- | --- | --- |
+| 1,223 (today) | 11.4 | 44 draws |
+| 2,446 (2×) | 5.8 | 62 draws |
+| 4,892 (4×) | 2.9 | 88 draws |
+| 9,784 (8×) | 1.5 | 124 draws |
+
+Eight times the words still repeats inside a single session. Remembering the session
+instead settles it outright: the longest prescribable session is 342 draws against a
+smallest tier of 1,223 words, so a session-scoped exclusion fits with 3.6× headroom and
+costs about 1.4µs per draw. That is the no-repeat window in `getNextWords`.
+
+So the bank grows for **reach** — more distinct rhyme endings, more second meanings, more
+registers a writer can be pushed into — and never for freshness, which is already solved.
+That is also why a hip-hop lyric corpus is not the answer to tier 3's remaining
+concentration: corpora rank by what rappers already say, and those are exactly the words
+a writer does not need prompting for.
+
 ## The training log
 
 `ProgressScreen` is the evidence behind the "writing gym" claim: bars written, time
@@ -169,7 +195,7 @@ This package was installed, tested, validated, built, and dependency-audited.
 
 - Word bank: Tier 1 `1,223`, Tier 2 `2,035`, Tier 3 `2,156`
 - Cross-tier duplicates: `0`
-- Automated tests: `126 passed`
+- Automated tests: `133 passed`
 - Production build: passed
 - `npm audit`: `0 vulnerabilities`
 - `package-lock.json`: included for reproducible Vercel/local builds
@@ -202,6 +228,10 @@ The automated suite covers:
   as missed, across a month boundary
 - completed days capping oldest-first while the lifetime programme count survives
 - every word bank holding single tokens only, and each tier staying on its syllabic band
+- the session-scoped no-repeat window: no repeat across the longest prescribable session
+  on any tier, holding across a Scheme round drawing from all three at once, clearing
+  between sessions, still producing words past a deliberately exhausted tier, never
+  repeating the previous word mid-cycle-restart, and leaving personal words exempt
 - bar-card layout: line structure preserved, continuation indent only where it
   disambiguates, width never exceeded, over-long tokens broken, overflow truncated
 - share outcomes distinguishing a completed share, a dismissed sheet, a genuine

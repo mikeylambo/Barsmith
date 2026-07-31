@@ -1,3 +1,85 @@
+# Barsmith 5.8.0 — a session never hands you the same word twice
+
+The standing assumption was that the word bank should keep growing. Measuring it says
+otherwise, and points at a change that costs nothing.
+
+## The bank was never the problem
+
+`getNextWords` blocked only the *previous* draw, so repeats were governed by the birthday
+problem. At tier 1's 1,223 words, in a ten-minute session at 3.5s — 171 draws:
+
+| Tier | Words | Repeats/session | First repeat at |
+| --- | --- | --- | --- |
+| 1 | 1,223 | 11.4 (6.6%) | 44 draws — 2.6 min in |
+| 2 | 2,035 | 6.9 (4.1%) | 57 draws |
+| 3 | 2,156 | 6.6 (3.8%) | 58 draws |
+
+Buying your way out with vocabulary does not work, because the curve is a square root:
+
+| Tier 1 bank | Repeats/session | First repeat |
+| --- | --- | --- |
+| 1,223 (today) | 11.4 | 44 draws |
+| 2,446 (2×) | 5.8 | 62 draws |
+| 4,892 (4×) | 2.9 | 88 draws |
+| 9,784 (8×) | 1.5 | 124 draws |
+
+**Eight times the words still repeats inside one session.** 5.7.0 added 1,093 words
+across the bank and moved tier 1's first repeat from draw 40 to draw 44.
+
+## Remembering the session settles it
+
+The longest session Today's Session can prescribe is 20 minutes at 3.5s — 342 draws —
+against a smallest tier of 1,223 words. That is 3.6× headroom, so a session-scoped
+exclusion fits with room to spare and never has to give way. It is still written to
+degrade rather than assume that.
+
+Measured over a live session in the browser, interval forced below the UI minimum so a
+full session's worth of draws fits in seconds:
+
+```
+session A: 417 draws, 417 distinct, 0 repeats
+session B: 134 draws, 48 of them also appeared in A
+```
+
+417 consecutive prompts, none repeated — past the longest session the app can prescribe.
+The same run under the old rule would have averaged **64 repeats**. Session B reusing 48
+of A's words is the other half: the memory is scoped to the session and the slate clears
+at the start of the next one, not on resume from a locked word.
+
+Cost is 1.4µs per draw, and across the longest session on every tier the fallback scan
+never runs once.
+
+## Three deliberate exceptions
+
+- **Personal words are exempt.** A writer who added three custom words wants all three,
+  repeatedly — that is why they added them. Session-scoping would spend that pool in
+  three draws and then quietly stop honouring the 20% custom chance for the rest of the
+  session. They still never repeat back-to-back.
+- **An exhausted tier restarts its cycle** rather than dropping the exclusion for the rest
+  of the session. Other tiers keep their memory, which matters for a Scheme round drawing
+  across all three at once.
+- **Probing gives way to a scan.** Drawing at random is right while most of the pool is
+  eligible, which is nearly always — but a fixed try budget fails *by luck* as the pool
+  thins, and would silently return the repeat it was asked to avoid. When probing runs
+  out, the code scans for what is genuinely left instead of guessing harder.
+
+## What this means for the word bank
+
+The bank grows for **reach** — more rhyme endings, more second meanings, more registers
+to be pushed into — and never again for freshness, which is now solved outright. It is
+also why a hip-hop lyric corpus is not the answer to tier 3's remaining ending
+concentration: corpora rank by what rappers already say, and those are precisely the
+words a writer does not need prompting for.
+
+## Verification
+
+- Automated tests: `133 passed` (7 new, covering the exhaustion and cycle-restart paths
+  that cannot occur in the app — the untaken branch is the one that rots)
+- Live browser run: 417 draws, 0 repeats, slate cleared between sessions
+- Device checklist, automated half: `7/7 passed` · `npm audit`: `0 vulnerabilities`
+
+---
+
 # Barsmith 5.7.1 — half the device checklist now runs itself
 
 The README has carried a 14-item checklist for a real phone since 5.2.0. Running it

@@ -15,7 +15,7 @@ import { describe, it, expect } from 'vitest';
 import {
   dateSeed, dailySession, describeSession, isCompletedToday, markCompleted, dayKey, programmeWeek,
 } from '../services/daily.js';
-import { globalWordBanks, getNextWords, normalizeTier } from '../services/wordbank.js';
+import { globalWordBanks, getNextWords, normalizeTier, TIERS } from '../services/wordbank.js';
 
 /** Every day across a full year, to assert properties rather than spot-check. */
 const YEAR = Array.from({ length: 365 }, (_, i) => new Date(2026, 0, 1 + i));
@@ -246,5 +246,87 @@ describe('word banks', () => {
     const t1 = new Set(globalWordBanks[1]);
     const drawn = Array.from({ length: 60 }, () => getNextWords(1, 3, [], 0, [])).flat();
     expect(drawn.some(w => !t1.has(w))).toBe(true);
+  });
+});
+
+// Blocking only the previous draw left repeats governed by the birthday problem: at
+// tier 1's 1,223 words the first one lands around draw 44 — under three minutes — and a
+// ten-minute session sees roughly eleven. Growing the bank barely moves that, because
+// the curve is a square root. Remembering the whole session does move it, and these
+// assert the properties that make that safe rather than the happy path alone.
+describe('session-scoped no-repeat window', () => {
+  /** The longest session Today's Session can prescribe: 20 minutes at 3.5s. */
+  const LONGEST = Math.ceil((20 * 60) / 3.5);
+
+  it('hands out no repeat across the longest prescribable session, on every tier', () => {
+    for (const tier of TIERS) {
+      const seen = new Set();
+      const drawn = [];
+      for (let i = 0; i < LONGEST; i++) drawn.push(...getNextWords(tier, 1, [], 0, [], seen));
+      expect(drawn.length, `tier ${tier} stopped producing words`).toBe(LONGEST);
+      expect(new Set(drawn).size, `tier ${tier} repeated within one session`).toBe(LONGEST);
+    }
+  });
+
+  it('holds across a Scheme round drawing from all three tiers at once', () => {
+    const seen = new Set();
+    const drawn = [];
+    for (let i = 0; i < LONGEST; i++) drawn.push(...getNextWords(1, 3, [], 0, [], seen));
+    expect(new Set(drawn).size).toBe(drawn.length);
+  });
+
+  it('is scoped to the session, so a new one starts from a clean slate', () => {
+    const first = new Set();
+    const a = Array.from({ length: 40 }, () => getNextWords(1, 1, [], 0, [], first)[0]);
+    const b = Array.from({ length: 40 }, () => getNextWords(1, 1, [], 0, [], new Set())[0]);
+    // Not an assertion about any particular word — only that the second session is
+    // drawing from the whole bank again rather than inheriting the first one's blocks.
+    expect(a.some(w => b.includes(w))).toBe(true);
+  });
+
+  it('keeps producing words after a tier is genuinely exhausted', () => {
+    // The headroom is 3.6x, so this cannot happen in the app. It is exactly why it is
+    // worth a test: the untaken branch is the one that rots. Drawing a full bank plus
+    // half again must keep returning words rather than stalling on an empty pool.
+    const bank = globalWordBanks[1];
+    const seen = new Set();
+    const drawn = [];
+    for (let i = 0; i < bank.length * 1.5; i++) {
+      const w = getNextWords(1, 1, [], 0, [], seen);
+      expect(w, `stalled at draw ${i} of ${Math.floor(bank.length * 1.5)}`).toHaveLength(1);
+      drawn.push(w[0]);
+    }
+    // Past exhaustion the cycle restarts, so the whole bank is reachable again.
+    expect(new Set(drawn).size).toBe(bank.length);
+  });
+
+  it('never repeats the immediately previous word, even mid-cycle-restart', () => {
+    const bank = globalWordBanks[1];
+    const seen = new Set();
+    let last = [];
+    for (let i = 0; i < bank.length + 50; i++) {
+      const w = getNextWords(1, 1, [], 0, last, seen);
+      expect(w[0], `repeated the previous word at draw ${i}`).not.toBe(last[0]);
+      last = w;
+    }
+  });
+
+  it('exempts personal words, which a writer added precisely to see again', () => {
+    // Session-scoping a three-word custom pool would spend it in three draws and then
+    // silently stop honouring the custom chance for the rest of the session.
+    const mine = ['axolotl', 'zugzwang', 'quokka'];
+    const seen = new Set();
+    const hits = [];
+    for (let i = 0; i < 200; i++) {
+      const w = getNextWords(1, 1, mine, 1, [], seen)[0];
+      if (mine.includes(w)) hits.push(w);
+    }
+    expect(hits.length).toBeGreaterThan(150);
+    expect(new Set(hits).size).toBe(3);
+  });
+
+  it('works without a window at all, so the argument stays optional', () => {
+    expect(getNextWords(1, 1, [], 0, [])).toHaveLength(1);
+    expect(getNextWords(2, 2, [], 0, [], null)).toHaveLength(2);
   });
 });
