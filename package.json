@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "validate-wordbank": "node scripts/validate-wordbank.js",
     "test": "vitest run",
-    "verify": "npm run build && vitest run"
+    "verify": "npm run build && vitest run",
+    "audit-wordbank": "node scripts/audit-wordbank.js"
   },
   "dependencies": {
     "react": "^18.3.1",

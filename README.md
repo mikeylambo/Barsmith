@@ -85,6 +85,10 @@ Three tiers, graded by syllabic weight — tier 1 is ~97% single-syllable, tier 
 two-syllable, tier 3 predominantly three or more. **New words are placed by that rule**,
 and the test suite asserts each tier stays on its band.
 
+`npm run audit-wordbank` is the diagnostic counterpart to the validator: the validator
+says a bank is well-*formed*, the audit says whether it is *good*. It writes
+`docs/wordbank-audit.md` and changes nothing. Re-run it after any word pass.
+
 Two constraints the build validator enforces rather than trusting:
 
 - **Single tokens only.** Tap-to-Lock sends the prompt straight to dictionaryapi.dev,
