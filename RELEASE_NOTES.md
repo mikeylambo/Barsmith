@@ -1,3 +1,57 @@
+# Barsmith 5.8.1 — say what Level and Scheme mean, drop the rear camera
+
+## Two settings labelled with bare numbers
+
+Level and Scheme were the only controls on the setup screen offering nothing but `1 2 3`
+and `1 2 3 4`. A writer opening Barsmith for the first time had no way to know that Level
+is syllable weight and Scheme is how many words land at once — the two settings that most
+change what the session *is* were the two least readable.
+
+Both now carry a caption that moves with the selection:
+
+> **3. Level** — *Three or more. Bend the phrase to make it fit.*
+> **4. Scheme** — *Three at once. One punchline has to hold all of them.*
+
+Phrased as what the setting does to the work rather than to the data: "three or more
+syllables" is the mechanism, "bend the phrase" is the reason to pick it. A caption rather
+than a tooltip because nobody taps a tooltip, and it keeps the row's existing shape
+instead of adding another control.
+
+The How To now leads with both, in the order they appear on screen, ahead of Tap to Lock.
+
+## The rear camera is gone
+
+It was a real option with a toggle, a mirroring branch, a test, and a checklist item that
+needed a second physical camera to verify. The argument against it is structural, not
+taste: **a rear-facing recording points the screen away from the writer.** The prompt
+words they are meant to be rapping over end up behind the phone, and they cannot frame
+themselves either, because the preview is on the far side too. The one thing worth
+filming here is the writer's own delivery, and that is the camera on the same side as the
+words.
+
+So `facingMode` is pinned to `'user'`, the preview is always mirrored, and the button
+reads *Record Yourself*. The test that used to assert the toggle now pins the front
+camera and additionally covers the permission-denied path reaching the UI — so nobody
+reintroduces a facing option without meeting the argument first. Device checklist item 5
+becomes a mirroring check rather than a two-camera check.
+
+## A flaky test, found and fixed
+
+The session-scope test shipped in 5.8.0 compared two 40-draw samples from a 1,223-word
+bank and asserted they overlapped. They miss each other about **27% of the time** — a
+test that fails one run in four teaches people to re-run rather than to look. Resized to
+half the bank each, where zero overlap is not something that happens. Confirmed over
+fifteen consecutive full-suite runs.
+
+## Verification
+
+- Automated tests: `132 passed`, stable across 15 consecutive runs
+- Device checklist, automated half: `7/7 passed`
+- Captions, How To, and the absence of any camera-facing control verified in the browser
+  against the production build
+
+---
+
 # Barsmith 5.8.0 — a session never hands you the same word twice
 
 The standing assumption was that the word bank should keep growing. Measuring it says

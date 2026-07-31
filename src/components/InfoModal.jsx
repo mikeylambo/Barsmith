@@ -1,16 +1,21 @@
 import { useEffect, useRef } from 'react';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 
+// The two settings that most need explaining are the two labelled with bare numbers —
+// a writer opening the app sees "Level: 1 2 3" and "Scheme: 1 2 3 4" with nothing
+// saying what either does. Both now lead here, and both carry a caption on the setup
+// screen itself.
 const STEPS = [
   ['01','Session',     'Words rotate at your tempo. Rap over them. Build bars, find internal rhymes, discover new angles on familiar sounds.'],
-  ['02','Tap to Lock', 'Tap any word to freeze and pull its full rhyme family, syllable count, synonyms, and definition. Write a bar directly in the panel.'],
-  ['03','Scheme Mode', 'Set word count to 2–4 to run multiple words at once. Bridge unrelated concepts into a punchline. This is where the craft lives.'],
-  ['04','BPM Grid',    'Lock word changes to a real bar grid. Set BPM and bars-per-word — practice to the actual time signature, not a vague timer.'],
-  ['05','Session Timer','Set a 5–20 minute block. Session ends automatically with a summary. Serious writers work in timed sprints — this is that.'],
-  ['06','Rhyme Search','Type any word and get a full rhyme map bucketed by syllable count. Perfect, near, and phonetic matches. Tap to copy.'],
-  ['07','Your Words',  'Add personal vocabulary in the Vault — names, slang, places. They surface in your sessions. The tool becomes yours.'],
-  ['08', 'Vault Drill', "Your saved words become a custom session. Drill vocabulary you've claimed — words you know are yours."],
-  ['09','Record',      'Capture yourself on front camera while you write. Review the footage, clip the best moments, study your own flow.'],
+  ['02','Level',       'How heavy the words hit. Level 1 is single-syllable — short, concrete, fast to rhyme. Level 2 is two syllables. Level 3 is three or more, where you have to bend a phrase to make it land. Start at 1 to build speed, move up to build control. No level is the "real" one.'],
+  ['03','Scheme',      'How many words at once. 1 is a straight prompt. Set 2–4 and you get unrelated words drawn from across the levels at the same time — the work is bridging them into one punchline before the round ends. Harder than a bigger word, and where the craft lives.'],
+  ['04','Tap to Lock', 'Tap any word to freeze and pull its full rhyme family, syllable count, synonyms, and definition. Write a bar directly in the panel.'],
+  ['05','BPM Grid',    'Lock word changes to a real bar grid. Set BPM and bars-per-word — practice to the actual time signature, not a vague timer.'],
+  ['06','Session Timer','Set a 5–20 minute block. Session ends automatically with a summary. Serious writers work in timed sprints — this is that.'],
+  ['07','Rhyme Search','Type any word and get a full rhyme map bucketed by syllable count. Perfect, near, and phonetic matches. Tap to copy.'],
+  ['08','Your Words',  'Add personal vocabulary in the Vault — names, slang, places. They surface in your sessions. The tool becomes yours.'],
+  ['09','Vault Drill', "Your saved words become a custom session. Drill vocabulary you've claimed — words you know are yours."],
+  ['10','Record',      'Capture yourself while you write. Review the footage, clip the best moments, study your own flow.'],
 ];
 
 export default function InfoModal({ onClose }) {

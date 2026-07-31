@@ -1,12 +1,28 @@
 import DailyCard from './DailyCard.jsx';
 
+// Short enough to read at a glance while choosing, and phrased as what the setting does
+// to the work rather than what it does to the data — "three or more syllables" is the
+// mechanism, "you have to bend the phrase" is the reason to pick it. The full version
+// lives in the How To.
+const LEVEL_CAPTIONS = {
+  1: 'One syllable. Short, concrete, fast — build speed.',
+  2: 'Two syllables. More weight, still lands clean.',
+  3: 'Three or more. Bend the phrase to make it fit.',
+};
+
+const SCHEME_CAPTIONS = {
+  1: 'One word at a time. A straight prompt.',
+  2: 'Two at once, drawn across levels. Bridge them.',
+  3: 'Three at once. One punchline has to hold all of them.',
+  4: 'Four at once. The hardest thing here.',
+};
+
 export default function IdleScreen({
   vault, streak, setShowInfo, setShowRhymeSearch, setAppState,
   dailyPlan, dailyDone, dailyWeek, startDaily,
   recoveredDraft, setRecoveredDraft, clearDraft, handleRestoreDraft, flattenNotes, copyNoteText, copiedNoteKey,
   beatFileName, fileInputRef, handleFileUpload, removeBeat,
   canRecord, isRecording, startRecording, stopRecording, cameraError,
-  cameraFacing, toggleCameraFacing,
   hapticsOn, setHapticsOn,
   bpmMode, setBpmMode,
   isMetronomeOn, setIsMetronomeOn, beatAudioSrc,
@@ -116,20 +132,10 @@ export default function IdleScreen({
             <input type="file" accept="audio/*" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
             {canRecord ? (
               <div className="w-full">
-                <div className="flex gap-2">
-                  <button onClick={isRecording ? stopRecording : startRecording} className={`flex-1 py-3.5 px-4 rounded-xl border text-sm font-bold flex items-center justify-center gap-2 transition-all ${isRecording ? 'border-red-500/40 bg-red-500/8 text-red-400' : 'border-white/8 bg-white/4 text-gray-500 hover:text-gray-200 hover:bg-white/8'}`}>
-                    <span className={`w-2 h-2 rounded-full ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-gray-700'}`} />
-                    {isRecording ? 'Recording…' : `Record (${cameraFacing === 'user' ? 'Front' : 'Rear'} Camera)`}
-                  </button>
-                  {!isRecording && toggleCameraFacing && (
-                    <button
-                      onClick={toggleCameraFacing}
-                      aria-label={`Switch to ${cameraFacing === 'user' ? 'rear' : 'front'} camera`}
-                      title={`Switch to ${cameraFacing === 'user' ? 'rear' : 'front'} camera`}
-                      className="shrink-0 w-12 py-3.5 rounded-xl border border-white/8 bg-white/4 text-gray-500 hover:text-gray-200 hover:bg-white/8 transition-all flex items-center justify-center text-base"
-                    >⟲</button>
-                  )}
-                </div>
+                <button onClick={isRecording ? stopRecording : startRecording} className={`w-full py-3.5 px-4 rounded-xl border text-sm font-bold flex items-center justify-center gap-2 transition-all ${isRecording ? 'border-red-500/40 bg-red-500/8 text-red-400' : 'border-white/8 bg-white/4 text-gray-500 hover:text-gray-200 hover:bg-white/8'}`}>
+                  <span className={`w-2 h-2 rounded-full ${isRecording ? 'bg-red-500 animate-pulse' : 'bg-gray-700'}`} />
+                  {isRecording ? 'Recording…' : 'Record Yourself'}
+                </button>
                 {cameraError && <p className="text-[10px] text-red-400/80 mt-2 px-1">{cameraError}</p>}
               </div>
             ) : (
@@ -180,23 +186,29 @@ export default function IdleScreen({
           )}
         </div>
 
-        {/* 3+4. Complexity + Scheme Mode */}
+        {/* 3+4. Complexity + Scheme Mode
+            These are the only two settings labelled with bare numbers, so they are the
+            two nobody can read. The caption below each says what the number means and
+            moves with the selection — cheaper than a tooltip nobody taps, and it keeps
+            the row's shape rather than adding another control. */}
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-[#0f0f0f] border border-white/5 p-5 rounded-3xl">
             <h2 className="text-[10px] text-gray-600 font-black uppercase tracking-widest mb-4">3. Level</h2>
             <div className="flex gap-2">
               {[1,2,3].map(t=>(
-                <button key={t} onClick={()=>setSelectedTier(t)} aria-pressed={selectedTier===t} aria-label={`Difficulty level ${t}`} className={`flex-1 py-4 rounded-2xl font-black text-sm transition-all border ${selectedTier===t?'bg-white border-white text-black shadow-[0_0_18px_rgba(255,255,255,0.18)]':'bg-[#0a0a0a] border-white/5 text-gray-600 hover:text-gray-300 hover:bg-[#151515]'}`}>{t}</button>
+                <button key={t} onClick={()=>setSelectedTier(t)} aria-pressed={selectedTier===t} aria-label={`Difficulty level ${t} — ${LEVEL_CAPTIONS[t]}`} className={`flex-1 py-4 rounded-2xl font-black text-sm transition-all border ${selectedTier===t?'bg-white border-white text-black shadow-[0_0_18px_rgba(255,255,255,0.18)]':'bg-[#0a0a0a] border-white/5 text-gray-600 hover:text-gray-300 hover:bg-[#151515]'}`}>{t}</button>
               ))}
             </div>
+            <p className="text-[10px] text-gray-600 mt-3 leading-relaxed">{LEVEL_CAPTIONS[selectedTier] || LEVEL_CAPTIONS[1]}</p>
           </div>
           <div className="bg-[#0f0f0f] border border-white/5 p-5 rounded-3xl">
             <h2 className="text-[10px] text-gray-600 font-black uppercase tracking-widest mb-4">4. Scheme</h2>
             <div className="flex gap-2">
               {[1,2,3,4].map(n=>(
-                <button key={n} onClick={()=>setWordCount(n)} aria-pressed={wordCount===n} aria-label={`${n} word${n===1?'':'s'} at once`} className={`flex-1 py-4 rounded-2xl font-black text-sm transition-all border ${wordCount===n?'bg-white border-white text-black shadow-[0_0_18px_rgba(255,255,255,0.18)]':'bg-[#0a0a0a] border-white/5 text-gray-600 hover:text-gray-300 hover:bg-[#151515]'}`}>{n}</button>
+                <button key={n} onClick={()=>setWordCount(n)} aria-pressed={wordCount===n} aria-label={`${n} word${n===1?'':'s'} at once — ${SCHEME_CAPTIONS[n]}`} className={`flex-1 py-4 rounded-2xl font-black text-sm transition-all border ${wordCount===n?'bg-white border-white text-black shadow-[0_0_18px_rgba(255,255,255,0.18)]':'bg-[#0a0a0a] border-white/5 text-gray-600 hover:text-gray-300 hover:bg-[#151515]'}`}>{n}</button>
               ))}
             </div>
+            <p className="text-[10px] text-gray-600 mt-3 leading-relaxed">{SCHEME_CAPTIONS[wordCount] || SCHEME_CAPTIONS[1]}</p>
           </div>
         </div>
 

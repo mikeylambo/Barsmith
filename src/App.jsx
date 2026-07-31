@@ -20,7 +20,7 @@ import { downloadText, dateStamp } from './services/download';
 // export can never disagree about note shape.
 import { flattenNotes, historyToText } from './services/export-text';
 import { normalizeTier } from './services/wordbank';
-import { useSessionEngine, cameraFacingLabel } from './hooks/useSessionEngine';
+import { useSessionEngine } from './hooks/useSessionEngine';
 
 import Splash from './components/Splash.jsx';
 import InfoModal from './components/InfoModal.jsx';
@@ -340,7 +340,6 @@ function App() {
           flattenNotes={flattenNotes} copyNoteText={copyNoteText} copiedNoteKey={copiedNoteKey}
           beatFileName={beatFileName} fileInputRef={fileInputRef} handleFileUpload={handleFileUpload} removeBeat={removeBeat}
           canRecord={engine.canRecord} isRecording={engine.isRecording} startRecording={engine.startRecording} stopRecording={engine.stopRecording} cameraError={engine.cameraError}
-          cameraFacing={engine.cameraFacing} toggleCameraFacing={engine.toggleCameraFacing}
           hapticsOn={hapticsOn} setHapticsOn={setHapticsOn}
           bpmMode={bpmMode} setBpmMode={setBpmMode}
           isMetronomeOn={isMetronomeOn} setIsMetronomeOn={setIsMetronomeOn} beatAudioSrc={beatAudioSrc}
@@ -363,7 +362,7 @@ function App() {
           totalWordsSeen={engine.totalWordsSeen} activeWords={engine.activeWords} activeDictWord={engine.activeDictWord}
           pauseForDict={engine.pauseForDict} dictData={engine.dictData} isLoadingDict={engine.isLoadingDict}
           resumeFromDict={engine.resumeFromDict} sessionNotes={engine.sessionNotes} handleSaveNote={engine.handleSaveNote}
-          cameraPreviewRef={engine.cameraPreviewRef} stopRecording={engine.stopRecording} cameraFacing={engine.cameraFacing}
+          cameraPreviewRef={engine.cameraPreviewRef} stopRecording={engine.stopRecording}
           registerActiveNoteFlush={engine.registerActiveNoteFlush}
         />
       )}
@@ -413,7 +412,7 @@ function App() {
         <div className="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-5 pb-2.5 bg-red-600/95 backdrop-blur-sm" style={{ paddingTop: 'calc(0.625rem + env(safe-area-inset-top, 0px))' }}>
           <div className="flex items-center gap-2.5">
             <span className="w-2 h-2 rounded-full bg-white animate-pulse shrink-0" />
-            <span className="text-white text-[11px] font-black uppercase tracking-widest">Recording — {cameraFacingLabel(engine.cameraFacing)} Camera &amp; Mic</span>
+            <span className="text-white text-[11px] font-black uppercase tracking-widest">Recording — Camera &amp; Mic</span>
           </div>
           <button
             onClick={engine.stopRecording}

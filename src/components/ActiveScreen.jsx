@@ -15,7 +15,7 @@ export default function ActiveScreen({
   wordCount, sessionLimit, timeRemaining, fmtCountdown,
   totalWordsSeen, activeWords, activeDictWord, pauseForDict,
   dictData, isLoadingDict, resumeFromDict, sessionNotes, handleSaveNote,
-  cameraPreviewRef, stopRecording, registerActiveNoteFlush, cameraFacing,
+  cameraPreviewRef, stopRecording, registerActiveNoteFlush,
 }) {
   return (
     <div className={`flex-1 flex flex-col justify-center items-center p-6 relative overflow-hidden ${isRecording?'rec-ring':''}`}>
@@ -78,10 +78,11 @@ export default function ActiveScreen({
         ))}
       </div>
 
-      {/* Camera preview (front-facing, muted, mirrored) */}
+      {/* Camera preview — always front-facing, muted, and mirrored so the writer sees
+          themselves the way a mirror would rather than reversed. */}
       {isRecording && (
         <div className="absolute right-5 w-20 h-28 rounded-2xl overflow-hidden border-2 border-red-500/50 shadow-[0_0_20px_rgba(0,0,0,0.6)] z-20 bg-black" style={{ bottom: 'calc(7rem + env(safe-area-inset-bottom, 0px))' }}>
-          <video ref={cameraPreviewRef} autoPlay muted playsInline className="w-full h-full object-cover" style={{ transform: cameraFacing === 'user' ? 'scaleX(-1)' : 'none' }} />
+          <video ref={cameraPreviewRef} autoPlay muted playsInline className="w-full h-full object-cover scale-x-[-1]" />
         </div>
       )}
 

@@ -195,7 +195,7 @@ This package was installed, tested, validated, built, and dependency-audited.
 
 - Word bank: Tier 1 `1,223`, Tier 2 `2,035`, Tier 3 `2,156`
 - Cross-tier duplicates: `0`
-- Automated tests: `133 passed`
+- Automated tests: `132 passed`
 - Production build: passed
 - `npm audit`: `0 vulnerabilities`
 - `package-lock.json`: included for reproducible Vercel/local builds
@@ -269,7 +269,7 @@ the iOS user-gesture rule only bites on a real device.
 2. **Offline load.** With the app already opened once while online, turn on Airplane Mode, fully close the app, and relaunch from the home screen icon. Confirm the app shell loads and a session can be started and written in. Confirm the dictionary panel shows a network-error state (not a blank/broken one) when a word is locked while offline. Turn Airplane Mode back off.
 3. **Camera + mic permission.** From a fresh app state (or after removing the site's permissions in Settings), tap Record. Confirm the OS permission prompt appears, and that denying it surfaces "Camera permission denied." in the UI rather than a silent failure or a crash.
 4. **Recording round-trip.** On the setup screen, tap Record and grant camera/microphone permission. Then Start Session and write for at least 30 seconds. Tap Stop (visible in the red recording bar or in-session controls), end the session, and download the recording from the Summary screen. Confirm the downloaded file opens and plays with audio in Photos/Files.
-5. **Camera facing toggle.** Before recording, tap the camera-switch button and confirm the preview and resulting recording use the rear camera; switch back and confirm the front camera preview is mirrored (rear should not be).
+5. **Front-camera framing.** Confirm the in-session preview is mirrored — you should see yourself as a mirror would, not reversed — and that the recording itself is *not* mirrored when played back. There is deliberately no rear-camera option: a rear-facing recording points the screen, and the prompt words, away from the writer.
 6. **BPM by ear.** Turn on BPM mode, set a familiar tempo (e.g. 90), and confirm the count-in and beat clicks sound correct and evenly spaced by ear, with no audible drift over a 2–3 minute session.
 7. **Keyboard-open scrolling.** Lock a word to open the dictionary panel, tap into the Bar Pad textarea to bring up the keyboard, and confirm the panel scrolls/resizes so the textarea and Save/Copy buttons stay visible above the keyboard, with no content cut off at the bottom.
 8. **Safe-area spacing.** On a notched/Dynamic Island device in both portrait and landscape, confirm no controls (Start/End Session button, top info bar, recording preview) sit under the notch, home indicator, or camera cutout.

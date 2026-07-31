@@ -268,7 +268,7 @@ for (const [n, name, why] of [
   [1, 'Install to home screen', 'iOS Safari Add to Home Screen; no installable surface here'],
   [3, 'Camera + mic permission', 'no camera device in the container'],
   [4, 'Recording round-trip', 'MediaRecorder needs real capture hardware'],
-  [5, 'Camera facing toggle', 'needs a second physical camera'],
+  [5, 'Front-camera framing', 'preview mirroring is a visual judgement on real capture'],
   [6, 'BPM by ear', 'audible drift is a human judgement'],
   [7, 'Keyboard-open scrolling', 'needs a soft keyboard resizing the viewport'],
   [8, 'Safe-area spacing', 'needs a notch / Dynamic Island'],

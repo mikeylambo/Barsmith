@@ -276,12 +276,17 @@ describe('session-scoped no-repeat window', () => {
   });
 
   it('is scoped to the session, so a new one starts from a clean slate', () => {
-    const first = new Set();
-    const a = Array.from({ length: 40 }, () => getNextWords(1, 1, [], 0, [], first)[0]);
-    const b = Array.from({ length: 40 }, () => getNextWords(1, 1, [], 0, [], new Set())[0]);
-    // Not an assertion about any particular word — only that the second session is
-    // drawing from the whole bank again rather than inheriting the first one's blocks.
-    expect(a.some(w => b.includes(w))).toBe(true);
+    // Sized so the assertion is not a coin flip. Two 40-draw samples from a 1,223-word
+    // bank miss each other about 27% of the time — a test that fails one run in four
+    // teaches people to re-run rather than to look. Half the bank each makes the
+    // expected overlap ~294 words and zero overlap impossible in practice.
+    const half = Math.floor(globalWordBanks[1].length / 2);
+    const draw = (seen) => Array.from({ length: half }, () => getNextWords(1, 1, [], 0, [], seen)[0]);
+    const a = draw(new Set());
+    const b = draw(new Set());
+    // Not an assertion about any particular word — only that the second session draws
+    // from the whole bank again rather than inheriting the first one's blocks.
+    expect(a.filter(w => b.includes(w)).length).toBeGreaterThan(0);
   });
 
   it('keeps producing words after a tier is genuinely exhausted', () => {
