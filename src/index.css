@@ -1,0 +1,80 @@
+/* Inter is self-hosted rather than pulled from the Google Fonts CDN. The CDN version
+   cost two extra DNS+TLS handshakes on a render-blocking path, leaked every visitor's
+   IP to a third party, and — because the service worker deliberately never intercepts
+   cross-origin requests — was the one asset a fully "offline-capable" PWA still could
+   not render offline. Launching the app in airplane mode dropped the whole interface
+   to the system sans fallback.
+
+   Inter v20 ships as a variable font, so a single file covers every weight the UI uses
+   (400/500/700/900) — declaring the 100–900 range also means font-medium gets a real
+   500 cut instead of a synthesized one. Only the `latin` subset is vendored: `latin-ext`
+   is another 85KB of accented glyphs that this English word bank never renders, and it
+   would nearly double the offline install payload. Characters outside `latin` (an
+   accented name typed into the Bar Pad, say) fall back to the system UI font. */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('./assets/fonts/inter-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+    U+FEFF, U+FFFD;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body {
+  background-color: #050505;
+  margin: 0; padding: 0; width: 100%; height: 100%;
+  overscroll-behavior: none;
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: white;
+}
+
+@keyframes shrinkBar { 0% { width: 100%; } 100% { width: 0%; } }
+
+@keyframes wordIn {
+  0%   { opacity: 0; transform: translateY(18px) scale(0.92); filter: blur(6px); }
+  100% { opacity: 1; transform: translateY(0)    scale(1);    filter: blur(0); }
+}
+@keyframes flashBg {
+  0%   { background: rgba(255,255,255,0.12); }
+  100% { background: rgba(255,255,255,0); }
+}
+.animate-word-strike { animation: wordIn 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards; }
+.word-flash { animation: flashBg 0.35s ease-out forwards; }
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%;
+  background: #fff; cursor: pointer; margin-top: -8px;
+  box-shadow: 0 0 15px rgba(255,255,255,0.5);
+}
+input[type=range]::-webkit-slider-runnable-track {
+  width: 100%; height: 4px; cursor: pointer;
+  background: rgba(255,255,255,0.2); border-radius: 2px;
+}
+.custom-scrollbar::-webkit-scrollbar { width: 5px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 10px; }
+
+textarea { resize: none; }
+textarea:focus { outline: none; }
+
+@keyframes recPulse {
+  0%,100% { box-shadow: 0 0 0 2px rgba(239,68,68,0.5); }
+  50%      { box-shadow: 0 0 0 4px rgba(239,68,68,0.7), 0 0 24px rgba(239,68,68,0.3); }
+}
+.rec-ring { animation: recPulse 2s ease-in-out infinite; }
+
+/* Rhyme search chip hover */
+.rhyme-chip { transition: background 0.15s, color 0.15s; cursor: pointer; }
+.rhyme-chip:hover { background: rgba(255,255,255,0.15); }
+
+/* Respect reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .animate-word-strike, .word-flash, .rec-ring, .animate-pulse, .animate-spin {
+    animation: none !important;
+  }
+}
