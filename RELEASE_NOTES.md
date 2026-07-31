@@ -1,3 +1,96 @@
+# Barsmith 5.7.0 — the word bank pass
+
+5.6.0 asked whether the banks were any good. This answers it, with measurements
+rather than taste, and grows them from 4,016 words to 5,414.
+
+## What was actually wrong
+
+The first diagnosis — "tier 3 is 43% abstract" — described a symptom. Two better
+measurements replaced it.
+
+**Rhyme-tail diversity.** How many different ways can a tier end, and how much of it
+piles into the top few? Tier 3 was the biggest bank and could end the fewest ways —
+fewer than tier 1, which had half again fewer words:
+
+| Tier | Words | Bare roots | Distinct endings | Top-10 cover |
+| --- | --- | --- | --- | --- |
+| 1 | 1,020 → 1,223 | 96.8% → 97.1% | 321 → 368 | 13.6% → 11.9% |
+| 2 | 1,425 → 2,035 | 71.6% → 76.9% | 450 → 578 | 20.4% → 18.2% |
+| 3 | 1,571 → 2,156 | 33.0% → 47.6% | 251 → **457** | 59.4% → 44.7% |
+
+Tier 1 is almost entirely bare concrete roots, each ending its own way. Tier 3 had
+inverted that into Latinate abstractions, which all end alike. The tiers were designed
+as a ramp in word *length* and had quietly become a ramp in *abstraction* too.
+
+**Polysemy.** A punchline turns on a word's second meaning. Checking a sample of 118
+obviously double-meaning words — `clip`, `iron`, `piece`, `toast`, `deck`, `pawn` —
+against each tier:
+
+    tier 1: 70/118 present     tier 2: 6/118     tier 3: 0/118
+
+Zero. Latinate abstractions are monosemous by construction: `classification` means
+exactly one thing, so there is nothing for a writer to turn. 42 of those words were
+missing from the bank entirely.
+
+## What was added
+
+1,093 words across tiers 1-3, aimed at two properties rather than volume alone: a
+second meaning, and an ending the tier was short of. Drafted across domains chosen for
+concrete imagery — weapons, anatomy, machines, architecture, wildlife, food, crime and
+law, instruments, materials, vehicles, myth, cosmology — then filtered against band,
+duplicates, the single-token rule, and obscurity.
+
+Tier 3 now leads the bank on rhyme diversity instead of trailing it, reached **entirely
+by addition**. The `-ation` family is untouched at 175 words; its share fell to 8% by
+dilution alone.
+
+## Obscurity is now measured
+
+`pip` reaches PyPI from the build container even though datamuse and the academic
+concreteness hosts are blocked, so `wordfreq` provides a Zipf-frequency gate. It cleanly
+separates words that needed removing by hand (`clavichord` 1.6, `caravel` 1.7) from ones
+worth keeping (`ambulance` 4.1, `locomotive` 3.5, `ligament` 3.3), and auto-rejected 44
+candidates that would otherwise have needed an eyeball.
+
+Run over the existing bank, it found 21 entries that are effectively not English:
+`officialize`, `territorialization`, `groundlessness`, `predomination` — all at Zipf 0.0,
+meaning the corpus contains them essentially never. These are strings a suffix rule can
+build, which is direct evidence the tier was padded from a stem list rather than curated.
+All 21 removed.
+
+## A migration bug, found while reviewing for release
+
+Preferences persist. A writer who had selected the short-lived WILD tier still had
+`tier: 4` in localStorage, and with that bank removed in 5.6.0, every prompt slot
+resolved to nothing — `getNextWords` returned an empty array and a session started with
+a blank where the word belongs. No crash, no error message. Silent failure is the worst
+kind.
+
+`normalizeTier()` now coerces any tier without a bank behind it back to 1, applied at
+the preference boundary and again inside `getTierDist`. Tested against `4`, `0`, `-1`,
+`99`, `null`, `undefined` and a string, across all four Scheme counts. Real-world
+exposure was nil — 5.5.0 only existed on a branch behind SSO — but the bug class is not:
+any persisted setting pointing at a removed option behaves this way.
+
+## Two diagnostics, neither of which edits anything
+
+- `npm run audit-wordbank` → `docs/wordbank-audit.md`. Shape: composition by word class,
+  rhyme-tail diversity, concentration, syllable-band drift. Its narrative is derived
+  rather than asserted — it detects whether tier 3 still rhymes narrowest and reports
+  the current state instead of repeating a claim that has stopped being true.
+- `python3 scripts/check-word-frequency.py` → `docs/wordbank-frequency.md`. Whether the
+  words are ones anyone uses. A review list, not a cut list: rap vocabulary skews from
+  general English, so `sycophant` at 2.2 earns its place.
+
+## Verification
+
+- `npm run verify`: 126/126 passed (was 124/124)
+- Word bank: 5,414 words · 0 cross-tier duplicates · 0 multi-word entries · 0 entries
+  below the not-in-use line in tiers 2 and 3
+- `npm audit`: 0 vulnerabilities
+
+---
+
 # Barsmith 5.6.0 — one word bank, and a week you can see
 
 ## Wildcards folded back into the tiers

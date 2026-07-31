@@ -13,8 +13,8 @@
 //
 //  1. **Structured by weekday, not randomised.** A random draw each morning is noise; a
 //     writer cannot anticipate it, and there is nothing to build a habit around. A
-//     training week has a shape — foundations, tempo, scheme, heavy, wild, long, light
-//     — so Friday means something, and skipping it means missing something specific.
+//     training week has a shape — reset, foundations, tempo, scheme, heavy, sprint,
+//     endurance — so Friday means something, and skipping it misses something specific.
 //  2. **Derived from the date, so no backend.** Everyone on a given day gets the same
 //     prescription, computed on-device, working offline like the rest of the app. The
 //     specifics inside each day's shape still vary week to week so it never goes stale.

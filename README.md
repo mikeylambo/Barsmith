@@ -94,7 +94,7 @@ bar-heavy, punchline-driven writer the app is for:
 - **A distinct ending.** Rhyme-tail diversity, not word count, is the measure of a tier's
   usefulness — see `npm run audit-wordbank`. Tier 3 used to be the biggest bank that ended
   the fewest different ways, because it had filled up with Latinate abstractions that all
-  end alike and each mean exactly one thing. It now leads on endings (459) rather than
+  end alike and each mean exactly one thing. It now leads on endings (457) rather than
   trailing, reached by adding concrete multisyllabic roots rather than cutting anything.
 
 Two diagnostics sit alongside the build validator. The validator says a bank is
@@ -105,10 +105,11 @@ any word pass.
   rhyme-tail diversity, where concentration sits, syllable-band drift.
 - `python3 scripts/check-word-frequency.py` → `docs/wordbank-frequency.md`. Whether the
   words are ones anyone actually uses, by Zipf frequency (`pip install wordfreq`). This is
-  what catches entries a suffix rule can build but no writer will pick up — tier 3 still
-  holds 19 words below the not-in-use line, `officialize` and `territorialization` among
-  them. Treat it as a review list, not a cut list: rap vocabulary skews away from general
-  English, so `sycophant` at 2.2 earns its place.
+  what catches entries a suffix rule can build but no writer will pick up: it found 21
+  such words — `officialize`, `territorialization`, `groundlessness` — all since removed,
+  and tiers 2 and 3 now sit at zero below the line. Treat it as a review list rather than
+  a cut list: rap vocabulary skews from general English, so `sycophant` at 2.2 earns its
+  place.
 
 Two constraints the build validator enforces rather than trusting:
 
@@ -166,9 +167,9 @@ python3 scripts/make-brand-assets.py
 
 This package was installed, tested, validated, built, and dependency-audited.
 
-- Word bank: Tier 1 `1,223`, Tier 2 `2,037`, Tier 3 `2,175`
+- Word bank: Tier 1 `1,223`, Tier 2 `2,035`, Tier 3 `2,156`
 - Cross-tier duplicates: `0`
-- Automated tests: `124 passed`
+- Automated tests: `126 passed`
 - Production build: passed
 - `npm audit`: `0 vulnerabilities`
 - `package-lock.json`: included for reproducible Vercel/local builds
