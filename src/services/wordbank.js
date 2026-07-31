@@ -19,14 +19,26 @@ import tier3 from '../data/tier-3.json';
 // across tiers 1-3 keeps one difficulty axis and one mental model.
 export const globalWordBanks = { 1: tier1, 2: tier2, 3: tier3 };
 
-const TIERS = [1, 2, 3];
+export const TIERS = [1, 2, 3];
+
+/**
+ * Coerce a tier to one that actually has a bank behind it.
+ *
+ * Preferences persist, so a writer who picked the short-lived WILD tier still has
+ * `tier: 4` in localStorage. With that bank gone, every slot in getTierDist resolved to
+ * nothing and a session started with an empty word list — no crash, no error, just a
+ * blank screen where the prompt should be. Anything reading a stored tier goes through
+ * here.
+ */
+export const normalizeTier = (tier) => (globalWordBanks[tier]?.length ? Number(tier) : 1);
 
 function getTierDist(base, n) {
-  if (n === 1) return [base];
-  const others = TIERS.filter(t => t !== base);
-  if (n === 2) return [base, others[Math.floor(Math.random() * others.length)]];
+  const t = normalizeTier(base);
+  if (n === 1) return [t];
+  const others = TIERS.filter(x => x !== t);
+  if (n === 2) return [t, others[Math.floor(Math.random() * others.length)]];
   if (n === 3) return [...TIERS];
-  return [base, base, others[0], others[1]];
+  return [t, t, others[0], others[1]];
 }
 
 export function getNextWords(tier, count, customWords = [], customChance = 0.2, lastWords = []) {

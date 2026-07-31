@@ -15,7 +15,7 @@ import { describe, it, expect } from 'vitest';
 import {
   dateSeed, dailySession, describeSession, isCompletedToday, markCompleted, dayKey, programmeWeek,
 } from '../services/daily.js';
-import { globalWordBanks, getNextWords } from '../services/wordbank.js';
+import { globalWordBanks, getNextWords, normalizeTier } from '../services/wordbank.js';
 
 /** Every day across a full year, to assert properties rather than spot-check. */
 const YEAR = Array.from({ length: 365 }, (_, i) => new Date(2026, 0, 1 + i));
@@ -220,6 +220,26 @@ describe('word banks', () => {
     expect(share(1, n => n === 1)).toBeGreaterThan(0.9);
     expect(share(2, n => n === 2)).toBeGreaterThan(0.8);
     expect(share(3, n => n >= 3)).toBeGreaterThan(0.8);
+  });
+
+  it('never returns an empty prompt list for a tier that no longer exists', () => {
+    // Preferences persist. A writer who selected the short-lived WILD tier still has
+    // `tier: 4` in localStorage, and with that bank gone every slot resolved to nothing
+    // — no crash, no error, just a session that started with a blank where the prompt
+    // should be. The failure is silent, which is what makes it worth a test.
+    for (const stale of [4, 0, -1, 99, null, undefined, 'wild']) {
+      for (let count = 1; count <= 4; count++) {
+        const words = getNextWords(stale, count, [], 0, []);
+        expect(words.length, `tier ${stale} x${count} returned nothing`).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('normalizes an unknown tier to a real one', () => {
+    expect(normalizeTier(4)).toBe(1);
+    expect(normalizeTier(undefined)).toBe(1);
+    expect(normalizeTier(2)).toBe(2);
+    expect(normalizeTier('3')).toBe(3);
   });
 
   it('blends tiers for a Scheme round so a writer bridges registers', () => {

@@ -19,6 +19,7 @@ import { downloadText, dateStamp } from './services/download';
 // flattenNotes lives with the exporters so the on-screen Bar Pad and the text
 // export can never disagree about note shape.
 import { flattenNotes, historyToText } from './services/export-text';
+import { normalizeTier } from './services/wordbank';
 import { useSessionEngine, cameraFacingLabel } from './hooks/useSessionEngine';
 
 import Splash from './components/Splash.jsx';
@@ -41,7 +42,8 @@ function App() {
 
   // ── Idle-screen settings (persisted prefs) ──
   const [wordCount, setWordCount] = useState(_prefs.wordCount || 1);
-  const [selectedTier, setSelectedTier] = useState(_prefs.tier || 1);
+  // Normalized, not trusted: a stored tier can point at a bank that no longer exists.
+  const [selectedTier, setSelectedTier] = useState(normalizeTier(_prefs.tier));
   const [intervalMs, setIntervalMs] = useState(_prefs.interval || 3500);
   const [beatAudioSrc, setBeatAudioSrc] = useState(null);
   const [beatFileName, setBeatFileName] = useState('');
@@ -242,7 +244,7 @@ function App() {
         // Reapply restored preferences to live state — previously these were written to
         // storage but the running app kept its old in-memory values until reload.
         const restoredPrefs = loadPrefs();
-        setSelectedTier(restoredPrefs.tier || 1);
+        setSelectedTier(normalizeTier(restoredPrefs.tier));
         setIntervalMs(restoredPrefs.interval || 3500);
         setBpm(restoredPrefs.bpm || 90);
         setBpmMode(restoredPrefs.bpmMode || false);

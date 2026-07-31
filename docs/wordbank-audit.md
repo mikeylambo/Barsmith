@@ -8,12 +8,12 @@ Re-run after any word pass to see the numbers move.
 | Tier | Words | Bare roots | Abstract nouns | Distinct endings | Top-10 endings cover |
 | --- | --- | --- | --- | --- | --- |
 | 1 | 1223 | 97.1% | 0.0% | 368 | 11.9% |
-| 2 | 2037 | 76.9% | 5.3% | 578 | 18.2% |
-| 3 | 2175 | 47.4% | 29.5% | 459 | 44.9% |
+| 2 | 2035 | 76.9% | 5.3% | 578 | 18.2% |
+| 3 | 2156 | 47.6% | 29.4% | 457 | 44.7% |
 
 ### What that table says
 
-Tier 3 holds 2175 words and can end **459** different ways.
+Tier 3 holds 2156 words and can end **457** different ways.
 Tier 1 holds 1223 and can end **368** ways; tier 2, **578**.
 
 Tier 3 no longer rhymes narrower than the tiers below it — the condition this audit
@@ -34,16 +34,16 @@ and plain `-tion` are one rhyme, not four.
 
 | Cluster | Count | Share of tier 3 |
 | --- | --- | --- |
-| shun (-tion/-sion) | 314 | 14.4% |
+| shun (-tion/-sion) | 309 | 14.3% |
 | ity (-ity/-ality) | 111 | 5.1% |
 | iv (-ive) | 87 | 4.0% |
-| ment (-ment) | 77 | 3.5% |
+| ment (-ment) | 77 | 3.6% |
 | ance (-ance/-ence) | 42 | 1.9% |
-| ness (-ness) | 41 | 1.9% |
+| ness (-ness) | 38 | 1.8% |
 | ical/ally | 13 | 0.6% |
 | ism/ist | 5 | 0.2% |
 
-The **shun (-tion/-sion)** cluster alone is 314 words — 14.4% of the tier.
+The **shun (-tion/-sion)** cluster alone is 309 words — 14.3% of the tier.
 Every one rhymes with every other, so the hardest level hands out a free rhyme
 roughly one prompt in 7.
 
@@ -51,13 +51,13 @@ Two ways to bring that share down:
 
 | Target share | Grow: add this many unrelated words | Cut: remove this many family members |
 | --- | --- | --- |
-| 3% | +8292 (tier 3 → 10467) | −257 (tier 3 → 1918) |
-| 5% | +4105 (tier 3 → 6280) | −217 (tier 3 → 1958) |
-| 7% | +2311 (tier 3 → 4486) | −174 (tier 3 → 2001) |
-| 8% | +1750 (tier 3 → 3925) | −153 (tier 3 → 2022) |
+| 3% | +8144 (tier 3 → 10300) | −252 (tier 3 → 1904) |
+| 5% | +4024 (tier 3 → 6180) | −212 (tier 3 → 1944) |
+| 7% | +2259 (tier 3 → 4415) | −170 (tier 3 → 1986) |
+| 8% | +1707 (tier 3 → 3863) | −149 (tier 3 → 2007) |
 
 Growing alone cannot realistically fix this: diluting the cluster to 3% would mean a
-tier of 10,467 words — more than twice the entire current bank.
+tier of 10,300 words — more than twice the entire current bank.
 Growth still moves it: every word added anywhere else in the tier lowers this share,
 and words chosen for ending-diversity raise the distinct-endings count at the same
 time. The two problems have one fix. The table above is only saying that reaching a
@@ -93,20 +93,20 @@ of these to be a false positive. Review by eye before moving anything.
 
 `bypass` (~2) · `cycle` (~2) · `early` (~2) · `fifty` (~2) · `hardly` (~2) · `hustle` (~2) · `hydrant` (~2) · `mercy` (~2) · `only` (~2) · `onyx` (~2) · `razor` (~2) · `skinny` (~2) · `supply` (~2) · `talon` (~2) · `theory` (~2) · `tumble` (~2) · `typhoon` (~2)
 
-## Tier 2 — 2037 words (two syllables)
+## Tier 2 — 2035 words (two syllables)
 
 ### Composition
 
 | Word class | Count | Share |
 | --- | --- | --- |
-| bare root | 1566 | 76.9% |
+| bare root | 1565 | 76.9% |
 | adjective | 148 | 7.3% |
 | inflected verb | 139 | 6.8% |
 | abstract noun | 107 | 5.3% |
-| derived verb | 65 | 3.2% |
+| derived verb | 64 | 3.1% |
 | adverb | 12 | 0.6% |
 
-**Endings:** 578 distinct (284 per 1,000 words) · top ten cover 18.2% · 286 endings used exactly once.
+**Endings:** 578 distinct (284 per 1,000 words) · top ten cover 18.2% · 287 endings used exactly once.
 
 Most crowded: `-ing` 86 · `-ter` 62 · `-ent` 38 · `-ess` 36 · `-der` 32 · `-her` 27 · `-ous` 25 · `-ure` 24
 
@@ -153,22 +153,22 @@ of these to be a false positive. Review by eye before moving anything.
 
 …and 174 more.
 
-## Tier 3 — 2175 words (three or more)
+## Tier 3 — 2156 words (three or more)
 
 ### Composition
 
 | Word class | Count | Share |
 | --- | --- | --- |
-| bare root | 1031 | 47.4% |
-| abstract noun | 642 | 29.5% |
-| adjective | 289 | 13.3% |
-| derived verb | 169 | 7.8% |
+| bare root | 1026 | 47.6% |
+| abstract noun | 634 | 29.4% |
+| adjective | 289 | 13.4% |
+| derived verb | 163 | 7.6% |
 | inflected verb | 41 | 1.9% |
 | adverb | 3 | 0.1% |
 
-**Endings:** 459 distinct (211 per 1,000 words) · top ten cover 44.9% · 244 endings used exactly once.
+**Endings:** 457 distinct (212 per 1,000 words) · top ten cover 44.7% · 243 endings used exactly once.
 
-Most crowded: `-ion` 322 · `-ate` 125 · `-ity` 111 · `-ent` 100 · `-ive` 84 · `-ous` 61 · `-ine` 55 · `-ess` 49
+Most crowded: `-ion` 317 · `-ate` 122 · `-ity` 111 · `-ent` 100 · `-ive` 84 · `-ous` 61 · `-ine` 55 · `-ess` 46
 
 ### Rhyme families
 
@@ -177,12 +177,12 @@ repeatedly hands out the same ending.
 
 | Family | Count | Share | Cut to reach 3% | Or add to reach 3% | Sample |
 | --- | --- | --- | --- | --- | --- |
-| `-ation` | 175 | 8.0% | 114 | +3659 | aberration, abomination, acceleration, accommodation |
-| `-ive` | 84 | 3.9% | 20 | +625 | abrasive, addictive, adhesive, administrative |
+| `-ation` | 173 | 8.0% | 112 | +3611 | aberration, abomination, acceleration, accommodation |
+| `-ive` | 84 | 3.9% | 20 | +644 | abrasive, addictive, adhesive, administrative |
 | `-ity` | 60 | 2.8% | 0 | +0 | ability, absurdity, adversity, agility |
-| `-ment` | 51 | 2.3% | 0 | +0 | abandonment, accomplishment, alignment, amendment |
-| `-ization` | 47 | 2.2% | 0 | +0 | authorization, capitalization, characterization, civilization |
-| `-ness` | 38 | 1.7% | 0 | +0 | alertness, awareness, bitterness, brokenness |
+| `-ment` | 51 | 2.4% | 0 | +0 | abandonment, accomplishment, alignment, amendment |
+| `-ization` | 44 | 2.0% | 0 | +0 | authorization, capitalization, characterization, civilization |
+| `-ness` | 35 | 1.6% | 0 | +0 | alertness, awareness, bitterness, brokenness |
 | `-ement` | 26 | 1.2% | 0 | +0 | acknowledgement, advancement, advertisement, agreement |
 | `-ance` | 22 | 1.0% | 0 | +0 | abundance, allegiance, alliance, allowance |
 | `-ality` | 21 | 1.0% | 0 | +0 | abnormality, brutality, causality, criminality |
@@ -194,24 +194,24 @@ repeatedly hands out the same ending.
 
 Terminal four letters, to catch concentration the named list above misses.
 
-`-tion` 296 · `-ment` 77 · `-tive` 53 · `-lity` 44 · `-ness` 44 · `-ious` 37 · `-rate` 33
+`-tion` 291 · `-ment` 77 · `-tive` 53 · `-lity` 44 · `-ness` 41 · `-ious` 37
 
 ### Shared roots
 
-**157** words have a stem that is also in the banks. This is *not* a
+**153** words have a stem that is also in the banks. This is *not* a
 cut list — it measures how much of the tier is morphology rather than new
 vocabulary. Some pairs are genuine families a writer would use differently
 (`improve` / `improvement`); others are string coincidences the check cannot
 distinguish (`apart` / `apartment`, unrelated in origin). Read it as a texture
 signal, not a verdict.
 
-`accountability` ← `account` · `allegation` ← `allege` · `alteration` ← `alter` · `amendment` ← `amend` · `apartment` ← `apart` · `archive` ← `arch` · `argument` ← `argue` · `assassination` ← `assassin` · `assignment` ← `assign` · `atonement` ← `atone` · `attachment` ← `attach` · `attainment` ← `attain` · `authority` ← `author` · `authorization` ← `author` · `awareness` ← `aware` · `balance` ← `bale` · `bitterness` ← `bitter` · `bombardment` ← `bombard` · `brokenness` ← `broken` · `brutality` ← `brute` · `capability` ← `cap` · `capitalization` ← `capital` · `captivation` ← `captive` · `carelessness` ← `careless` · `characterization` ← `character` · `coalition` ← `coal` · `collective` ← `collect` · `combative` ← `combat` · `commandment` ← `command` · `commodity` ← `commode` · `competition` ← `compete` · `complement` ← `comply` · `complexity` ← `complex` · `complication` ← `comply` · `composition` ← `compose` · `concealment` ← `conceal` · `condemnation` ← `condemn` · `confidence` ← `confide` · `declaration` ← `declare` · `digitization` ← `digit`
+`accountability` ← `account` · `allegation` ← `allege` · `alteration` ← `alter` · `amendment` ← `amend` · `apartment` ← `apart` · `archive` ← `arch` · `argument` ← `argue` · `assassination` ← `assassin` · `assignment` ← `assign` · `atonement` ← `atone` · `attachment` ← `attach` · `attainment` ← `attain` · `authority` ← `author` · `authorization` ← `author` · `awareness` ← `aware` · `balance` ← `bale` · `bitterness` ← `bitter` · `bombardment` ← `bombard` · `brokenness` ← `broken` · `brutality` ← `brute` · `capability` ← `cap` · `capitalization` ← `capital` · `carelessness` ← `careless` · `characterization` ← `character` · `coalition` ← `coal` · `collective` ← `collect` · `combative` ← `combat` · `commandment` ← `command` · `commodity` ← `commode` · `competition` ← `compete` · `complement` ← `comply` · `complexity` ← `complex` · `complication` ← `comply` · `composition` ← `compose` · `concealment` ← `conceal` · `condemnation` ← `condemn` · `confidence` ← `confide` · `declaration` ← `declare` · `digitization` ← `digit` · `divinity` ← `divine`
 
-…and 117 more.
+…and 113 more.
 
 ### Syllable-band drift
 
-**~242** words look outside the three or more band for this tier.
+**~241** words look outside the three or more band for this tier.
 
 Estimated, not counted — the syllable heuristic misreads internal silent `e`
 (`safety`, `useful`) and vowel hiatus (`stoic`), so expect roughly one in five
@@ -219,5 +219,5 @@ of these to be a false positive. Review by eye before moving anything.
 
 `abide` (~2) · `abode` (~2) · `acquire` (~2) · `advice` (~2) · `affluence` (~2) · `airborne` (~2) · `airwave` (~2) · `alike` (~2) · `allege` (~2) · `alliance` (~2) · `allude` (~2) · `allure` (~2) · `alone` (~2) · `antique` (~2) · `arcade` (~2) · `arcane` (~2) · `archive` (~2) · `aside` (~2) · `assume` (~2) · `athlete` (~2) · `atone` (~2) · `attune` (~2) · `avenue` (~2) · `aware` (~2) · `backbone` (~2) · `baggage` (~2) · `balance` (~2) · `ballgame` (~2) · `barcode` (~2) · `bedside` (~2) · `betrayal` (~2) · `beware` (~2) · `birthplace` (~2) · `blockage` (~2) · `bloodline` (~2) · `bondage` (~2) · `boutique` (~2) · `brainwave` (~2) · `brigade` (~2) · `broadside` (~2)
 
-…and 202 more.
+…and 201 more.
 

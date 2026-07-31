@@ -26,33 +26,19 @@ writer will pick up. Removing them costs no vocabulary.
 
 `strew` 1.6 · `splay` 2.1 · `plunk` 2.1 · `laze` 2.2 · `flunk` 2.2 · `scald` 2.2 · `croon` 2.2 · `thresh` 2.2 · `strop` 2.2 · `clunk` 2.2 · `writhe` 2.2 · `mope` 2.2 · `plod` 2.3
 
-## Tier 2 — 2037 words
+## Tier 2 — 2035 words
 
-- **2** below 1.5 (effectively not in use)
+- **0** below 1.5 (effectively not in use)
 - **40** between 1.5 and 2.3 (rare; review by ear)
-
-### Not in use
-
-These are the clear faults — strings a suffix rule can build that no
-writer will pick up. Removing them costs no vocabulary.
-
-`slowburn` 1.1 · `braven` 1.2
 
 ### Rare — review by ear
 
 `turnback` 1.6 · `waylay` 1.6 · `starfall` 1.7 · `cufflink` 1.7 · `dreadlock` 1.7 · `deadfall` 1.7 · `carjack` 1.8 · `rashness` 1.8 · `chainlink` 1.8 · `deepness` 1.9 · `hubcap` 1.9 · `flashbulb` 1.9 · `setpoint` 1.9 · `slapshot` 1.9 · `anthill` 2.0 · `stolid` 2.0 · `backstab` 2.0 · `dropoff` 2.0 · `unctuous` 2.0 · `burnish` 2.0 · `chillout` 2.1 · `outplay` 2.1 · `sunstroke` 2.1 · `bookend` 2.1 · `deadbolt` 2.1 · `portend` 2.1 · `oxbow` 2.2 · `highpoint` 2.2 · `dumbstruck` 2.2 · `matchstick` 2.2 · `woodblock` 2.2 · `wrathful` 2.2 · `moonbeam` 2.2 · `graven` 2.2 · `affray` 2.2 · `blacktop` 2.2 · `blacken` 2.2 · `kickstand` 2.2 · `resound` 2.3 · `lampshade` 2.3
 
-## Tier 3 — 2175 words
+## Tier 3 — 2156 words
 
-- **19** below 1.5 (effectively not in use)
+- **0** below 1.5 (effectively not in use)
 - **98** between 1.5 and 2.3 (rare; review by ear)
-
-### Not in use
-
-These are the clear faults — strings a suffix rule can build that no
-writer will pick up. Removing them costs no vocabulary.
-
-`groundlessness` 0.0 · `immenseness` 0.0 · `monumentalize` 0.0 · `officialize` 0.0 · `predomination` 0.0 · `territorialization` 0.0 · `alliterate` 1.1 · `spiritualize` 1.2 · `immortalization` 1.3 · `kettledrum` 1.3 · `captivation` 1.3 · `overbear` 1.4 · `exhilarate` 1.4 · `endlessness` 1.4 · `castanet` 1.4 · `ambulate` 1.4 · `paygrade` 1.4 · `sideburn` 1.5 · `idolization` 1.5
 
 ### Rare — review by ear
 
