@@ -224,8 +224,12 @@ function App() {
     reader.onload = () => {
       let parsed = null;
       try { parsed = JSON.parse(reader.result); } catch {}
+      // This is the last thing a writer reads before their work is overwritten, so the
+      // counts have to agree with themselves — "Restore 1 sessions" reads as a bug in
+      // the very dialog asking to be trusted with everything they have written.
+      const count = (n, word) => `${n ?? 0} ${word}${(n ?? 0) === 1 ? '' : 's'}`;
       const summary = parsed
-        ? `Restore ${parsed.history?.length ?? 0} sessions, ${parsed.vault?.length ?? 0} vault words, and ${parsed.customWords?.length ?? 0} personal words? Existing local data will be replaced.`
+        ? `Restore ${count(parsed.history?.length, 'session')}, ${count(parsed.vault?.length, 'vault word')}, and ${count(parsed.customWords?.length, 'personal word')}? Existing local data will be replaced.`
         : 'Restore this backup? Existing local data will be replaced.';
       if (!confirm(summary)) { e.target.value = ''; return; }
 

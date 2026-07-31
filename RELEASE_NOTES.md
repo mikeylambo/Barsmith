@@ -1,3 +1,59 @@
+# Barsmith 5.7.1 — half the device checklist now runs itself
+
+The README has carried a 14-item checklist for a real phone since 5.2.0. Running it
+against 5.7.0 turned up something about the checklist itself: seven of those fourteen
+are not really about hardware at all. They are assertions about the built app that
+happened to be written as instructions for a human, and a check that is only ever run by
+hand is a check that eventually stops being run.
+
+## `npm run device-checklist`
+
+Items **2, 9, 10, 11, 12, 13** and the render half of **14** now run against the exact
+production build and print PASS/FAIL with their evidence:
+
+```
+PASS   9. Background/return during a timed session
+        countdown read ⏱ 4:59 before a +6min clock jump on a 5min sprint; session auto-ended: true
+PASS  13. Today's session rolls at local midnight
+        23:50 showed "Sprint", 00:10 next day showed "Endurance"
+```
+
+7/7 pass. The remaining seven — install to home screen, camera and mic permission, the
+recording round-trip, the facing toggle, BPM by ear, keyboard-open scrolling, safe-area
+spacing — are printed at the end as an explicit hardware list. Skipping them silently
+would be worse than not running at all, because a green run that quietly covered half of
+what it claims is a green run nobody should trust.
+
+Two items are honest about covering less than the manual check does, and say so in their
+own output rather than in a footnote:
+
+- **Item 2** verifies the precache *contract* — every asset the built HTML references is
+  in Cache Storage and served with the network down — because Playwright's offline mode
+  fails subresources below the service worker, so an end-to-end offline boot is not
+  observable in a container. Airplane Mode on a phone still proves something this cannot.
+- **Item 12** checks what the manifest declares, not how the icon looks inside Android's
+  circular mask.
+
+## What the run found
+
+One real defect, in the dialog with the least room for one:
+
+> Restore **1 sessions**, 0 vault words, and 0 personal words? Existing local data will
+> be replaced.
+
+This is the last thing a writer reads before every session they have ever saved is
+overwritten. A count that disagrees with its own noun reads as a bug in the very dialog
+asking to be trusted with all of it. Fixed, and the checklist now asserts the counts
+agree rather than merely printing them for eyeballing.
+
+## Verification
+
+- Automated tests: `126 passed`
+- Device checklist, automated half: `7/7 passed`
+- Production build: passed · `npm audit`: `0 vulnerabilities`
+
+---
+
 # Barsmith 5.7.0 — the word bank pass
 
 5.6.0 asked whether the banks were any good. This answers it, with measurements

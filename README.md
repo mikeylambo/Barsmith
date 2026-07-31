@@ -173,6 +173,7 @@ This package was installed, tested, validated, built, and dependency-audited.
 - Production build: passed
 - `npm audit`: `0 vulnerabilities`
 - `package-lock.json`: included for reproducible Vercel/local builds
+- Device checklist, automated half: `7/7 passed` against the production build
 
 The automated suite covers:
 
@@ -211,6 +212,28 @@ The automated suite covers:
 ## Final real-device checks
 
 Browser automation cannot substitute for hardware-specific media/audio behavior. Before replacing production, run one preview deployment through this on both an iPhone (Safari) and an Android phone (Chrome) where possible — mark each box, note the device/OS version next to any failure, and don't ship until every box is checked on at least one real iOS device and one real Android device.
+
+Seven of these fourteen are really assertions about the built app rather than about
+hardware, and a check that is only ever run by hand is one that eventually stops being
+run. Those seven — **2, 9, 10, 11, 12, 13, 14 (render half)** — are automated against the
+production build:
+
+```bash
+npm run build
+npm run preview &          # serves dist on :4173
+npm run device-checklist   # CHECKLIST_BASE / CHECKLIST_CHROME override the defaults
+```
+
+It prints PASS/FAIL with the evidence for each, then lists the remaining seven as an
+explicit hardware list rather than skipping them silently. Two caveats it states rather
+than hides: item 2 verifies the precache *contract* (every asset the built HTML
+references is in Cache Storage and served with the network down) because Playwright's
+offline mode fails subresources below the service worker, so an end-to-end offline boot
+still needs a phone in Airplane Mode; and item 12 checks what the manifest declares, not
+how the icon looks inside Android's circular mask.
+
+The hardware-only items are **1, 3, 4, 5, 6, 7, 8**, plus the share sheet itself in 14 —
+the iOS user-gesture rule only bites on a real device.
 
 1. **Install.** Open the preview URL in Safari on iPhone → Share → Add to Home Screen. Launch from the home screen icon (not the Safari tab) and confirm it opens full-screen with no browser chrome, correct icon, and correct name ("Barsmith").
 2. **Offline load.** With the app already opened once while online, turn on Airplane Mode, fully close the app, and relaunch from the home screen icon. Confirm the app shell loads and a session can be started and written in. Confirm the dictionary panel shows a network-error state (not a blank/broken one) when a word is locked while offline. Turn Airplane Mode back off.
