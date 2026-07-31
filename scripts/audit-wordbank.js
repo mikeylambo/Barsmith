@@ -220,26 +220,43 @@ say();
 {
   const e1 = endingStats(tiers[1]);
   const e3 = endingStats(tiers[3]);
+  const e2 = endingStats(tiers[2]);
   say('### What that table says');
   say();
   say(`Tier 3 holds ${tiers[3].length} words and can end **${e3.distinct}** different ways.`);
-  say(`Tier 1 holds ${tiers[1].length} — half again fewer — and can end **${e1.distinct}** ways.`);
+  say(`Tier 1 holds ${tiers[1].length} and can end **${e1.distinct}** ways; tier 2, **${e2.distinct}**.`);
   say();
-  say('**The hardest tier is the biggest and rhymes the narrowest.** Its top ten endings');
-  say(`cover ${pct(e3.top10Share * tiers[3].length, tiers[3].length)} of it, against ${pct(e1.top10Share * tiers[1].length, tiers[1].length)} for tier 1.`);
-  say();
-  say('The composition column explains why. Tier 1 is almost entirely bare concrete roots —');
-  say('Germanic monosyllables, each ending its own way. Tier 3 inverted that: it is mostly');
-  say('Latinate abstractions, and Latinate abstractions all end alike. The tiers were meant');
-  say('to be a ramp in *length*; they became a ramp in *abstraction* as well, which nothing');
-  say('in the design asked for.');
-  say();
-  say('So the gap to fill is specific, and it is an addition rather than a subtraction:');
-  say('**concrete multisyllabic roots** — three or more syllables, but a thing or an action');
-  say('rather than a concept. `carburetor`, `alabaster`, `porcupine`, `metropolis`,');
-  say('`kerosene`, `avalanche`, `jackhammer`. Words like that are rare in tier 3 today, they');
-  say('are what rap actually reaches for, and each one lands on an ending the tier is short');
-  say('of — so they widen the rhyme surface and lower the `-tion` share at the same time.');
+
+  // The narrative is derived, not asserted. This audit was written while tier 3 was the
+  // narrowest-rhyming bank despite being the biggest; additions have been closing that,
+  // so the report has to be able to say when it is fixed rather than repeating a claim
+  // that has stopped being true.
+  const worst = [1, 2, 3].reduce((a, b) => (endingStats(tiers[a]).distinct <= endingStats(tiers[b]).distinct ? a : b));
+  if (worst === 3) {
+    say('**The hardest tier is the biggest and rhymes the narrowest.** Its top ten endings');
+    say(`cover ${pct(e3.top10Share * tiers[3].length, tiers[3].length)} of it, against ${pct(e1.top10Share * tiers[1].length, tiers[1].length)} for tier 1.`);
+    say();
+    say('The composition column explains why. Tier 1 is almost entirely bare concrete roots —');
+    say('Germanic monosyllables, each ending its own way. Tier 3 inverted that: it is mostly');
+    say('Latinate abstractions, and Latinate abstractions all end alike. The tiers were meant');
+    say('to be a ramp in *length*; they became a ramp in *abstraction* as well, which nothing');
+    say('in the design asked for.');
+    say();
+    say('So the gap to fill is specific, and it is an addition rather than a subtraction:');
+    say('**concrete multisyllabic roots** — three or more syllables, but a thing or an action');
+    say('rather than a concept. `carburetor`, `alabaster`, `porcupine`, `metropolis`,');
+    say('`kerosene`, `avalanche`, `jackhammer`. Each lands on an ending the tier is short of,');
+    say('so they widen the rhyme surface and lower the `-tion` share at the same time.');
+  } else {
+    say('Tier 3 no longer rhymes narrower than the tiers below it — the condition this audit');
+    say('was written to measure. It got there by addition rather than subtraction: concrete');
+    say('multisyllabic roots, a thing or an action rather than a concept, each landing on an');
+    say('ending the tier was short of.');
+    say();
+    say('The abstraction is still there — the tables below show where — but it is now diluted');
+    say('rather than dominant. Keep placing new words by the same two tests: does it carry a');
+    say('second meaning a punchline can turn on, and does it end somewhere the tier is thin?');
+  }
   say();
 }
 

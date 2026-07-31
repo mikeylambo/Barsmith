@@ -9,28 +9,21 @@ Re-run after any word pass to see the numbers move.
 | --- | --- | --- | --- | --- | --- |
 | 1 | 1223 | 97.1% | 0.0% | 368 | 11.9% |
 | 2 | 1436 | 71.9% | 5.4% | 455 | 20.3% |
-| 3 | 1683 | 36.7% | 36.6% | 293 | 56.1% |
+| 3 | 2175 | 47.4% | 29.5% | 459 | 44.9% |
 
 ### What that table says
 
-Tier 3 holds 1683 words and can end **293** different ways.
-Tier 1 holds 1223 — half again fewer — and can end **368** ways.
+Tier 3 holds 2175 words and can end **459** different ways.
+Tier 1 holds 1223 and can end **368** ways; tier 2, **455**.
 
-**The hardest tier is the biggest and rhymes the narrowest.** Its top ten endings
-cover 56.1% of it, against 11.9% for tier 1.
+Tier 3 no longer rhymes narrower than the tiers below it — the condition this audit
+was written to measure. It got there by addition rather than subtraction: concrete
+multisyllabic roots, a thing or an action rather than a concept, each landing on an
+ending the tier was short of.
 
-The composition column explains why. Tier 1 is almost entirely bare concrete roots —
-Germanic monosyllables, each ending its own way. Tier 3 inverted that: it is mostly
-Latinate abstractions, and Latinate abstractions all end alike. The tiers were meant
-to be a ramp in *length*; they became a ramp in *abstraction* as well, which nothing
-in the design asked for.
-
-So the gap to fill is specific, and it is an addition rather than a subtraction:
-**concrete multisyllabic roots** — three or more syllables, but a thing or an action
-rather than a concept. `carburetor`, `alabaster`, `porcupine`, `metropolis`,
-`kerosene`, `avalanche`, `jackhammer`. Words like that are rare in tier 3 today, they
-are what rap actually reaches for, and each one lands on an ending the tier is short
-of — so they widen the rhyme surface and lower the `-tion` share at the same time.
+The abstraction is still there — the tables below show where — but it is now diluted
+rather than dominant. Keep placing new words by the same two tests: does it carry a
+second meaning a punchline can turn on, and does it end somewhere the tier is thin?
 
 ## Where the concentration sits
 
@@ -41,27 +34,27 @@ and plain `-tion` are one rhyme, not four.
 
 | Cluster | Count | Share of tier 3 |
 | --- | --- | --- |
-| shun (-tion/-sion) | 314 | 18.7% |
-| ity (-ity/-ality) | 111 | 6.6% |
-| iv (-ive) | 85 | 5.1% |
-| ment (-ment) | 71 | 4.2% |
-| ance (-ance/-ence) | 41 | 2.4% |
-| ness (-ness) | 41 | 2.4% |
-| ical/ally | 13 | 0.8% |
-| ism/ist | 4 | 0.2% |
+| shun (-tion/-sion) | 314 | 14.4% |
+| ity (-ity/-ality) | 111 | 5.1% |
+| iv (-ive) | 87 | 4.0% |
+| ment (-ment) | 77 | 3.5% |
+| ance (-ance/-ence) | 42 | 1.9% |
+| ness (-ness) | 41 | 1.9% |
+| ical/ally | 13 | 0.6% |
+| ism/ist | 5 | 0.2% |
 
-The **shun (-tion/-sion)** cluster alone is 314 words — 18.7% of the tier.
+The **shun (-tion/-sion)** cluster alone is 314 words — 14.4% of the tier.
 Every one rhymes with every other, so the hardest level hands out a free rhyme
-roughly one prompt in 5.
+roughly one prompt in 7.
 
 Two ways to bring that share down:
 
 | Target share | Grow: add this many unrelated words | Cut: remove this many family members |
 | --- | --- | --- |
-| 3% | +8784 (tier 3 → 10467) | −272 (tier 3 → 1411) |
-| 5% | +4597 (tier 3 → 6280) | −242 (tier 3 → 1441) |
-| 7% | +2803 (tier 3 → 4486) | −211 (tier 3 → 1472) |
-| 8% | +2242 (tier 3 → 3925) | −195 (tier 3 → 1488) |
+| 3% | +8292 (tier 3 → 10467) | −257 (tier 3 → 1918) |
+| 5% | +4105 (tier 3 → 6280) | −217 (tier 3 → 1958) |
+| 7% | +2311 (tier 3 → 4486) | −174 (tier 3 → 2001) |
+| 8% | +1750 (tier 3 → 3925) | −153 (tier 3 → 2022) |
 
 Growing alone cannot realistically fix this: diluting the cluster to 3% would mean a
 tier of 10,467 words — more than twice the entire current bank.
@@ -160,22 +153,22 @@ of these to be a false positive. Review by eye before moving anything.
 
 …and 174 more.
 
-## Tier 3 — 1683 words (three or more)
+## Tier 3 — 2175 words (three or more)
 
 ### Composition
 
 | Word class | Count | Share |
 | --- | --- | --- |
-| bare root | 618 | 36.7% |
-| abstract noun | 616 | 36.6% |
-| adjective | 247 | 14.7% |
-| derived verb | 160 | 9.5% |
-| inflected verb | 41 | 2.4% |
-| adverb | 1 | 0.1% |
+| bare root | 1031 | 47.4% |
+| abstract noun | 642 | 29.5% |
+| adjective | 289 | 13.3% |
+| derived verb | 169 | 7.8% |
+| inflected verb | 41 | 1.9% |
+| adverb | 3 | 0.1% |
 
-**Endings:** 293 distinct (174 per 1,000 words) · top ten cover 56.1% · 164 endings used exactly once.
+**Endings:** 459 distinct (211 per 1,000 words) · top ten cover 44.9% · 244 endings used exactly once.
 
-Most crowded: `-ion` 319 · `-ate` 120 · `-ity` 111 · `-ent` 93 · `-ive` 82 · `-ous` 61 · `-ess` 49 · `-ine` 46
+Most crowded: `-ion` 322 · `-ate` 125 · `-ity` 111 · `-ent` 100 · `-ive` 84 · `-ous` 61 · `-ine` 55 · `-ess` 49
 
 ### Rhyme families
 
@@ -184,28 +177,28 @@ repeatedly hands out the same ending.
 
 | Family | Count | Share | Cut to reach 3% | Or add to reach 3% | Sample |
 | --- | --- | --- | --- | --- | --- |
-| `-ation` | 175 | 10.4% | 129 | +4151 | aberration, abomination, acceleration, accommodation |
-| `-ive` | 82 | 4.9% | 33 | +1051 | abrasive, addictive, adhesive, administrative |
-| `-ity` | 60 | 3.6% | 10 | +317 | ability, absurdity, adversity, agility |
-| `-ization` | 47 | 2.8% | 0 | +0 | authorization, capitalization, characterization, civilization |
-| `-ment` | 45 | 2.7% | 0 | +0 | abandonment, accomplishment, alignment, amendment |
-| `-ness` | 38 | 2.3% | 0 | +0 | alertness, awareness, bitterness, brokenness |
-| `-ement` | 26 | 1.5% | 0 | +0 | acknowledgement, advancement, advertisement, agreement |
-| `-ality` | 21 | 1.2% | 0 | +0 | abnormality, brutality, causality, criminality |
-| `-ance` | 21 | 1.2% | 0 | +0 | abundance, allegiance, alliance, allowance |
-| `-tion` | 20 | 1.2% | 0 | +0 | benediction, combustion, contradiction, conviction |
-| `-ence` | 19 | 1.1% | 0 | +0 | affluence, ambivalence, confidence, consequence |
-| `-ification` | 17 | 1.0% | 0 | +0 | amplification, clarification, classification, electrification |
+| `-ation` | 175 | 8.0% | 114 | +3659 | aberration, abomination, acceleration, accommodation |
+| `-ive` | 84 | 3.9% | 20 | +625 | abrasive, addictive, adhesive, administrative |
+| `-ity` | 60 | 2.8% | 0 | +0 | ability, absurdity, adversity, agility |
+| `-ment` | 51 | 2.3% | 0 | +0 | abandonment, accomplishment, alignment, amendment |
+| `-ization` | 47 | 2.2% | 0 | +0 | authorization, capitalization, characterization, civilization |
+| `-ness` | 38 | 1.7% | 0 | +0 | alertness, awareness, bitterness, brokenness |
+| `-ement` | 26 | 1.2% | 0 | +0 | acknowledgement, advancement, advertisement, agreement |
+| `-ance` | 22 | 1.0% | 0 | +0 | abundance, allegiance, alliance, allowance |
+| `-ality` | 21 | 1.0% | 0 | +0 | abnormality, brutality, causality, criminality |
+| `-tion` | 20 | 0.9% | 0 | +0 | benediction, combustion, contradiction, conviction |
+| `-ence` | 19 | 0.9% | 0 | +0 | affluence, ambivalence, confidence, consequence |
+| `-ification` | 17 | 0.8% | 0 | +0 | amplification, clarification, classification, electrification |
 
 ### Other shared endings
 
 Terminal four letters, to catch concentration the named list above misses.
 
-`-tion` 296 · `-ment` 71 · `-tive` 51 · `-lity` 44 · `-ness` 44 · `-ious` 37 · `-rate` 31 · `-sive` 28
+`-tion` 296 · `-ment` 77 · `-tive` 53 · `-lity` 44 · `-ness` 44 · `-ious` 37 · `-rate` 33
 
 ### Shared roots
 
-**151** words have a stem that is also in the banks. This is *not* a
+**153** words have a stem that is also in the banks. This is *not* a
 cut list — it measures how much of the tier is morphology rather than new
 vocabulary. Some pairs are genuine families a writer would use differently
 (`improve` / `improvement`); others are string coincidences the check cannot
@@ -214,7 +207,7 @@ signal, not a verdict.
 
 `accountability` ← `account` · `allegation` ← `allege` · `alteration` ← `alter` · `amendment` ← `amend` · `apartment` ← `apart` · `archive` ← `arch` · `argument` ← `argue` · `assassination` ← `assassin` · `assignment` ← `assign` · `atonement` ← `atone` · `attachment` ← `attach` · `attainment` ← `attain` · `authority` ← `author` · `authorization` ← `author` · `awareness` ← `aware` · `balance` ← `bale` · `bitterness` ← `bitter` · `bombardment` ← `bombard` · `brokenness` ← `broken` · `brutality` ← `brute` · `capability` ← `cap` · `capitalization` ← `capital` · `captivation` ← `captive` · `carelessness` ← `careless` · `characterization` ← `character` · `coalition` ← `coal` · `collective` ← `collect` · `combative` ← `combat` · `commandment` ← `command` · `commodity` ← `commode` · `competition` ← `compete` · `complement` ← `comply` · `complexity` ← `complex` · `complication` ← `comply` · `composition` ← `compose` · `concealment` ← `conceal` · `condemnation` ← `condemn` · `confidence` ← `confide` · `declaration` ← `declare` · `divinity` ← `divine`
 
-…and 111 more.
+…and 113 more.
 
 ### Syllable-band drift
 

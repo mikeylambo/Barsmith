@@ -92,9 +92,10 @@ bar-heavy, punchline-driven writer the app is for:
   `piece`, `deck`, `pawn`, `charge`. Words carrying only one sense give a writer nothing
   to turn.
 - **A distinct ending.** Rhyme-tail diversity, not word count, is the measure of a tier's
-  usefulness — see `npm run audit-wordbank`. Tier 3's weakness is that it is the biggest
-  bank and ends the fewest different ways, because it filled up with Latinate
-  abstractions that all end alike and each mean exactly one thing.
+  usefulness — see `npm run audit-wordbank`. Tier 3 used to be the biggest bank that ended
+  the fewest different ways, because it had filled up with Latinate abstractions that all
+  end alike and each mean exactly one thing. It now leads on endings (459) rather than
+  trailing, reached by adding concrete multisyllabic roots rather than cutting anything.
 
 `npm run audit-wordbank` is the diagnostic counterpart to the validator: the validator
 says a bank is well-*formed*, the audit says whether it is *good*. It writes
@@ -156,7 +157,7 @@ python3 scripts/make-brand-assets.py
 
 This package was installed, tested, validated, built, and dependency-audited.
 
-- Word bank: Tier 1 `1,223`, Tier 2 `1,436`, Tier 3 `1,683`
+- Word bank: Tier 1 `1,223`, Tier 2 `1,436`, Tier 3 `2,175`
 - Cross-tier duplicates: `0`
 - Automated tests: `124 passed`
 - Production build: passed
