@@ -164,6 +164,24 @@ function App() {
     return () => clearTimeout(t);
   }, []);
 
+  // ── Warm the reference payloads while nobody is waiting ──
+  // Together they are about half a megabyte, deliberately kept out of the main bundle so
+  // the idle screen paints fast. But the moment they are actually needed — a writer taps
+  // a word mid-round to see what it rhymes with — is the worst possible moment to start
+  // a download. So fetch them once the app is up and idle. The service worker caches
+  // them, making this a first-visit cost only, and failure is silent because both call
+  // sites already handle an unloaded payload.
+  useEffect(() => {
+    const warm = () => {
+      import('./services/rhyme').then(m => m.loadRhymeIndex()).catch(() => {});
+      import('./services/definitions').then(m => m.loadDefinitions()).catch(() => {});
+    };
+    const idle = window.requestIdleCallback;
+    if (idle) { const h = idle(warm, { timeout: 4000 }); return () => window.cancelIdleCallback?.(h); }
+    const t = setTimeout(warm, 2000);
+    return () => clearTimeout(t);
+  }, []);
+
   useEffect(() => { saveVault(vault); }, [vault]);
   useEffect(() => { saveHistory(sessionHistory); }, [sessionHistory]);
   useEffect(() => { saveSessionLimit(sessionLimit); }, [sessionLimit]);

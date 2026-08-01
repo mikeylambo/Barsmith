@@ -15,6 +15,7 @@
 // hit moves the entry to the back, so the oldest *least recently used* entry is always
 // at the front. Cap at 300 — plenty for even a very long multi-hour session.
 import { loadRhymeIndex, findRhymes } from './rhyme';
+import { loadDefinitions, lookupDefinition } from './definitions';
 
 let DICT_CACHE_MAX = 300;
 const dictCache = new Map();
@@ -65,10 +66,15 @@ export async function fetchDictData(rawWord, signal) {
   // Rhymes are local and synchronous once the index is warm, so they are resolved before
   // the network is even asked. A dictionary outage costs the definition, not the rhymes.
   let local = null;
+  let localDefs = null;
   try {
     await loadRhymeIndex();
     local = findRhymes(w);
   } catch { /* payload unavailable; fall through with no local data */ }
+  try {
+    await loadDefinitions();
+    localDefs = lookupDefinition(w);
+  } catch { /* same */ }
 
   const [dictPayload, syns, ants, meansLike] = await Promise.all([
     fetchWithAbort(`https://api.dictionaryapi.dev/api/v2/entries/en/${enc}`, signal),
@@ -81,7 +87,7 @@ export async function fetchDictData(rawWord, signal) {
   // network. Now the rhymes survive it, so it only means "no definition" — and the
   // result is still worth caching and showing.
   const offline = [dictPayload, syns, ants, meansLike].every(v => v === null);
-  if (offline && !local?.found) throw new Error('Network error');
+  if (offline && !local?.found && !localDefs) throw new Error('Network error');
 
   let defs = [], foundSyn = [], foundAnt = [];
   dictPayload?.[0]?.meanings?.forEach(m => {
@@ -107,8 +113,13 @@ export async function fetchDictData(rawWord, signal) {
     : local.assonance.length ? { label: 'Assonance', words: local.assonance }
     : null;
 
+  // The network entry wins when there is one — dictionaryapi.dev carries more senses and
+  // fresher usage than a 2006 WordNet dump. The local copy is what makes the panel work
+  // without it, not a preferred source.
+  const definitions = defs.length ? defs.slice(0, 3) : (localDefs || []);
+
   const final = {
-    definitions: defs.slice(0, 3),
+    definitions,
     rhymes: (best?.words || []).map(r => r.word).slice(0, 14),
     rhymeLabel: best?.label || 'Rhymes',
     synonyms: clean(foundSyn).slice(0, 12),
@@ -117,7 +128,12 @@ export async function fetchDictData(rawWord, signal) {
     phonemes: local?.found ? local.phonemes : null,
   };
   if (!final.definitions.length) {
-    final.definitions.push({ pos: '', text: offline ? 'No connection — definition unavailable. Rhymes are on-device.' : 'Definition not found.' });
+    final.definitions = [{
+      pos: '',
+      text: offline
+        ? 'No connection, and this word is outside the offline dictionary. Rhymes are still on-device.'
+        : 'Definition not found.',
+    }];
   }
 
   cacheSet(w, final);

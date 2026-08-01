@@ -1,3 +1,94 @@
+# Barsmith 5.10.0 — phrases, offline definitions, and a vault that tells you something
+
+5.9.0 put rhymes on-device. This finishes the reference: the last network dependency is
+gone, the engine now does the thing no rhyme API does, and the vault stopped being a list
+of words with nothing to say about them.
+
+## Phrases — where "nothing rhymes with orange" stops being true
+
+`findPhraseRhymes` cuts the query's stressed tail at every syllable boundary and looks for
+a word ending in the back half and a word ending in the front:
+
+```
+orange       for plunge · for sponge · or plunge · your sponge · four plunge
+laboratory   elaborate story · elaborate glory
+cinema       in eczema · been enema · skin eczema · win maxima
+purple       burp hull · chirp skull · antwerp dull
+wasabi       job see · job free · bob three · mob see
+```
+
+This is the move the writers Barsmith is for actually make, and no rhyme API offers it,
+because it is a search over pairs rather than a lookup.
+
+Generated output is held to a higher bar than looked-up output. Nobody sees an obscure
+dictionary entry unless they type it; a phrase puts two of them side by side and presents
+the result as a suggestion. Unfiltered, the first version returned:
+
+```
+cinema   aluminium a · aluminium the · molybdenum a
+wasabi   job be · job he · job me · job we
+purple   burp hull · burp skull · burp dull · burp null
+```
+
+Three filters, each pinned by a test: both halves must be **the size of the slot they
+fill** (a four-syllable word cannot answer a one-syllable front), the back half **cannot
+be a function word** (it is where the rhyme lands, so it has to be something a listener
+registers — they stay allowed at the front, where *for plunge* is a perfectly good half
+of a bar), and no **one front word** may take more than three slots, because "burp hull,
+burp skull, burp dull, burp null" is one idea, not four.
+
+## Definitions work with no connection
+
+`scripts/build-definitions.py` writes a WordNet gloss payload for the word banks — the
+only place the Tap-to-Lock panel ever opens from. 5,361 of 5,414 prompts defined, 204KB
+gzipped.
+
+**Two senses wherever they exist**, and that is the point rather than a detail: the app's
+whole thesis about which words earn a place is that a punchline turns on a word's *other*
+meaning. A panel showing only the first sense hides the half that makes the bar. 4,231
+words carry a second one.
+
+The network entry still wins when there is one — dictionaryapi.dev has more senses and
+fresher usage than a WordNet dump. The local copy is what makes the panel work without it,
+not a preferred source. Outside the banks, a personal word still falls back to the network
+and says so plainly when there isn't one.
+
+## The vault says something now
+
+Every row carries its own shape, computed on-device:
+
+```
+LABORATORY   4 syl · 60+ multi
+NATION       2 syl · 60+ perfect
+SILVER       2 syl · 1 perfect
+ORANGE       2 syl · slant only
+```
+
+A writer scanning saved words can see which are rich and which are dead ends without
+opening any of them. Counts at the result cap read `60+` rather than `60`, because
+`nation` has hundreds and saying otherwise would be a small lie in a place there is no
+reason to tell one.
+
+## Warmed before they are wanted
+
+Both payloads — 289KB of pronunciations, 204KB of definitions — stay out of the main
+bundle so the idle screen paints fast, and are then fetched on `requestIdleCallback` once
+the app is up. The moment they are actually needed, a writer tapping a word mid-round, is
+the worst possible moment to begin a download. The service worker caches both, so it is a
+first-visit cost only.
+
+## Verification
+
+- Automated tests: `165 passed` (11 new, against the real payloads)
+- Verified in the browser **with the network down**: phrase rhymes, the definition panel
+  showing both senses of `drill`, and vault rows all working
+- Production build passed · `npm audit`: `0 vulnerabilities`
+
+Definitions are Princeton WordNet (notice in `src/data/DEFINITION-LICENSE`);
+pronunciations are the CMU Pronouncing Dictionary (`src/data/PRONUNCIATION-LICENSE`).
+
+---
+
 # Barsmith 5.9.0 — the rhyme reference, offline
 
 Barsmith has called itself "a writing gym, rhyme reference, and idea-capture tool" since

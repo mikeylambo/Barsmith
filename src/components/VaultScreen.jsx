@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DictionaryModal from './DictionaryModal.jsx';
+import { loadRhymeIndex, findRhymes, RESULT_CAP } from '../services/rhyme';
 
 export default function VaultScreen({
   resetToIdle, vault, startVaultDrill, startBlocked, vaultSortMode, setVaultSortMode, sortedVault, toggleVault,
@@ -8,6 +9,33 @@ export default function VaultScreen({
   handleExportData, importFileRef, handleImportFile, importMsg,
 }) {
   const [activeWord, setActiveWord] = useState(null);
+
+  // Results are capped, so a bare "60" reads as an exact count of something that is
+  // really "at least 60". `nation` has hundreds of perfect rhymes; saying 60 undersells
+  // it and saying it precisely would be a lie either way.
+  const count = (n) => (n >= RESULT_CAP ? `${RESULT_CAP}+` : `${n}`);
+
+  // The vault was a list of words with nothing to say about them until you tapped one.
+  // The rhyme engine is already on-device and answers in about 4ms, so every row can
+  // carry its own shape: how many syllables, and how much there is to rhyme with. A
+  // writer scanning for something to build on can see which of their saved words are
+  // rich and which are dead ends without opening any of them.
+  const [shape, setShape] = useState(null);
+  useEffect(() => {
+    let live = true;
+    loadRhymeIndex().then(() => {
+      if (!live) return;
+      const out = {};
+      for (const { word } of vault) {
+        try {
+          const r = findRhymes(word);
+          if (r.found) out[word] = { syllables: r.syllables, perfect: r.perfect.length, multi: r.multi.length };
+        } catch { /* leave the row bare rather than failing the screen */ }
+      }
+      setShape(out);
+    }).catch(() => {});
+    return () => { live = false; };
+  }, [vault]);
 
   const addCustomWord = () => {
     const w = customWordInput.trim().toLowerCase();
@@ -84,8 +112,16 @@ export default function VaultScreen({
         <div className="flex flex-col gap-2">
           {sortedVault.map(item=>(
             <div key={item.word} className="flex justify-between items-center bg-[#0f0f0f] border border-white/5 px-5 py-4 rounded-xl">
-              <button onClick={()=>{setActiveWord(item.word);fetchDictData(item.word);}} className="flex-1 text-left hover:text-white transition-colors">
+              <button onClick={()=>{setActiveWord(item.word);fetchDictData(item.word);}} className="flex-1 min-w-0 text-left hover:text-white transition-colors">
                 <span className="text-base font-black text-gray-200 uppercase">{item.word}</span>
+                {shape?.[item.word] && (
+                  <span className="block text-[10px] text-gray-600 font-bold uppercase tracking-widest mt-0.5">
+                    {shape[item.word].syllables} syl
+                    {shape[item.word].perfect > 0 && <> · {count(shape[item.word].perfect)} perfect</>}
+                    {shape[item.word].multi > 0 && <> · {count(shape[item.word].multi)} multi</>}
+                    {shape[item.word].perfect === 0 && shape[item.word].multi === 0 && <> · slant only</>}
+                  </span>
+                )}
               </button>
               <button onClick={()=>toggleVault(item.word)} aria-label={`Remove ${item.word} from Vault`} className="text-2xl text-yellow-500 hover:scale-110 transition-transform">★</button>
             </div>

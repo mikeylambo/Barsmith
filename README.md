@@ -123,6 +123,33 @@ build **fails** if any bank word has no pronunciation, because Tap-to-Lock sends
 prompt straight to the engine and a missing entry is a dead panel on a word Barsmith
 itself chose.
 
+### Phrases, and the rest of the reference
+
+Three things sit on top of the engine:
+
+- **Phrase rhymes.** `findPhraseRhymes` cuts the query's stressed tail at each syllable
+  boundary and looks for a word ending in the back half and a word ending in the front:
+  `orange` → *for plunge*, `laboratory` → *elaborate story*. This is the move that makes
+  "nothing rhymes with orange" a punchline rather than a fact, and no rhyme API offers it
+  because it is a search over pairs rather than a lookup. Generated output is held to a
+  higher bar than looked-up output — nobody sees an obscure entry unless they type it,
+  but a phrase puts two of them side by side and calls it a suggestion — so both halves
+  must clear a frequency floor, fit the slot they fill, and the back half cannot be a
+  function word. Unfiltered, `cinema` returned *aluminium a*.
+- **Offline definitions.** `python3 scripts/build-definitions.py` writes a WordNet gloss
+  payload for the banks, which is the only place the panel opens from. **Two senses where
+  they exist**, because the app's own thesis is that a punchline turns on a word's other
+  meaning — a panel showing only the first sense hides the half that makes the bar. The
+  network entry still wins when there is one; the local copy is what makes the panel work
+  without it. WordNet is Princeton's; notice in `src/data/DEFINITION-LICENSE`.
+- **Vault rows carry their own shape** — syllables, and how much there is to rhyme with —
+  so a writer scanning saved words can see which are rich and which are dead ends without
+  opening any of them. `orange` reads *2 syl · slant only*.
+
+Both payloads are warmed on `requestIdleCallback` after first paint. They are kept out of
+the main bundle so the idle screen stays fast, but the moment they are needed — a writer
+taps a word mid-round — is the worst moment to start a download.
+
 ## The word banks
 
 Three tiers, graded by syllabic weight — tier 1 is ~97% single-syllable, tier 2 ~84%
@@ -239,7 +266,7 @@ This package was installed, tested, validated, built, and dependency-audited.
 
 - Word bank: Tier 1 `1,223`, Tier 2 `2,035`, Tier 3 `2,156`
 - Cross-tier duplicates: `0`
-- Automated tests: `154 passed`
+- Automated tests: `165 passed`
 - Production build: passed
 - `npm audit`: `0 vulnerabilities`
 - `package-lock.json`: included for reproducible Vercel/local builds

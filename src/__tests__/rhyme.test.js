@@ -10,7 +10,8 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, it, expect, beforeAll } from 'vitest';
-import { _setIndexFromText, _resetIndex, findRhymes, hasPronunciation, syllableCount } from '../services/rhyme.js';
+import { _setIndexFromText, _resetIndex, findRhymes, findPhraseRhymes, hasPronunciation, syllableCount } from '../services/rhyme.js';
+import { _setDefinitionsFromText, _resetDefinitions, lookupDefinition } from '../services/definitions.js';
 
 const DATA = join(process.cwd(), 'src', 'data');
 const has = (result, group, word) => result[group].some(r => r.word === word);
@@ -212,5 +213,112 @@ describe('index lifecycle', () => {
     expect(hasPronunciation('nation')).toBe(false);
     _setIndexFromText(readFileSync(join(DATA, 'pronunciations.txt'), 'utf8'));
     expect(findRhymes('nation').found).toBe(true);
+  });
+});
+
+// Phrase rhymes are the reason "nothing rhymes with orange" is a punchline rather than a
+// fact, and they are generated rather than looked up — which makes them the one part of
+// the engine that can invent something embarrassing. Most of these pin a filter that
+// exists because the unfiltered output was bad.
+describe('phrase rhymes', () => {
+  const phrases = (w) => findPhraseRhymes(w).map(p => p.phrase);
+
+  it('splits a multi-syllable tail across two words', () => {
+    const p = phrases('orange');
+    expect(p.length).toBeGreaterThan(0);
+    // Every phrase is exactly two words, and the second carries the rhyme.
+    expect(p.every(x => x.split(' ').length === 2)).toBe(true);
+    expect(p.some(x => /\b(plunge|sponge|lunge)$/.test(x))).toBe(true);
+  });
+
+  it('finds the long ones, which is where it earns its keep', () => {
+    expect(phrases('laboratory')).toContain('elaborate story');
+  });
+
+  it('will not put a function word where the rhyme lands', () => {
+    // Unfiltered, `wasabi` returned "job be / job he / job me" and `cinema` returned
+    // "aluminium a / aluminium the" — phrases only in that they contain a space.
+    for (const word of ['wasabi', 'cinema', 'orange', 'purple', 'hostile']) {
+      for (const phrase of phrases(word)) {
+        const last = phrase.split(' ')[1];
+        expect(['a', 'the', 'be', 'he', 'me', 'we', 'of', 'to', 'de', 'la', 'el'],
+          `${word} -> "${phrase}"`).not.toContain(last);
+      }
+    }
+  });
+
+  it('keeps both halves the size of the slot they fill', () => {
+    // Matching on word endings alone let a four-syllable word answer a one-syllable
+    // front: `cinema` came back as "aluminium a" and "molybdenum the".
+    for (const word of ['cinema', 'wasabi', 'purple']) {
+      for (const p of findPhraseRhymes(word)) {
+        expect(syllableCount(p.head), `${word} -> ${p.phrase}`).toBeLessThanOrEqual(3);
+      }
+    }
+  });
+
+  it('does not repeat one front word down the whole list', () => {
+    // "burp hull, burp skull, burp dull, burp null" is one idea, not four.
+    for (const word of ['purple', 'hostile', 'wasabi']) {
+      const heads = findPhraseRhymes(word).map(p => p.head);
+      const worst = Math.max(0, ...Object.values(heads.reduce((a, h) => ({ ...a, [h]: (a[h] || 0) + 1 }), {})));
+      expect(worst, `${word} leaned on one front word`).toBeLessThanOrEqual(3);
+    }
+  });
+
+  it('never suggests a phrase containing the query itself', () => {
+    for (const word of ['orange', 'cinema', 'purple', 'laboratory']) {
+      expect(findPhraseRhymes(word).some(p => p.head === word || p.tail === word)).toBe(false);
+    }
+  });
+
+  it('returns nothing rather than nonsense when the tail will not split', () => {
+    // A one-syllable stressed tail cannot be shared between two words.
+    expect(findPhraseRhymes('month')).toEqual([]);
+    expect(findPhraseRhymes('time')).toEqual([]);
+    expect(findPhraseRhymes('zzzqqxvy')).toEqual([]);
+  });
+});
+
+describe('offline definitions', () => {
+  beforeAll(() => {
+    _setDefinitionsFromText(readFileSync(join(DATA, 'definitions.txt'), 'utf8'));
+  });
+
+  it('defines the words the panel actually opens on', () => {
+    const bank = [];
+    for (const tier of ['tier-1', 'tier-2', 'tier-3']) {
+      bank.push(...JSON.parse(readFileSync(join(DATA, `${tier}.json`), 'utf8')));
+    }
+    const undefined_ = bank.filter(w => !lookupDefinition(w));
+    // Not every word is in WordNet — coined compounds like `cashback` are not — but a
+    // panel that mostly says "no definition" offline is not worth the payload.
+    expect(undefined_.length / bank.length).toBeLessThan(0.02);
+  });
+
+  it('carries a second sense wherever one exists, which is the whole point', () => {
+    // A punchline turns on a word's other meaning; a panel showing only the first sense
+    // hides the half that makes the bar.
+    const two = ['clip', 'charge', 'iron', 'pitch'].filter(w => (lookupDefinition(w) || []).length > 1);
+    expect(two.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('returns a shape the panel can render without knowing the source', () => {
+    const d = lookupDefinition('hammer');
+    expect(Array.isArray(d)).toBe(true);
+    expect(typeof d[0].pos).toBe('string');
+    expect(d[0].text.length).toBeGreaterThan(5);
+  });
+
+  it('is scoped to the banks, and says nothing rather than guessing outside them', () => {
+    // `anvil` has a perfectly good WordNet entry and is deliberately absent: the payload
+    // covers the words the panel opens on, and quintupling it to cover the rest would
+    // serve a case that does not arise. Outside the banks the network still answers.
+    expect(lookupDefinition('anvil')).toBe(null);
+    expect(lookupDefinition('zzzqqxvy')).toBe(null);
+    expect(lookupDefinition('')).toBe(null);
+    _resetDefinitions();
+    expect(lookupDefinition('hammer')).toBe(null);
+    _setDefinitionsFromText(readFileSync(join(DATA, 'definitions.txt'), 'utf8'));
   });
 });

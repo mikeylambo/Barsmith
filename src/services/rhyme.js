@@ -323,7 +323,7 @@ function compareRimes(a, b) {
   return { depth, score };
 }
 
-const RESULT_CAP = 60;
+export const RESULT_CAP = 60;
 
 // A depth-1 match — the final syllable reproduced exactly — always scores above 1.0,
 // so this threshold's real job is deciding which *depth-0* candidates are close enough
@@ -429,6 +429,130 @@ export function findRhymes(rawWord) {
     slant: slant.sort(byScore).slice(0, RESULT_CAP),
     assonance: assonance.sort(byScore).slice(0, RESULT_CAP),
   };
+}
+
+// ── Phrase rhymes ────────────────────────────────────────────────────────────
+//
+// `orange` / `door hinge`. This is the move the writers Barsmith is for actually make,
+// and the reason "nothing rhymes with orange" is a punchline rather than a fact. No
+// rhyme API offers it, because it is not a lookup — it is a search over pairs.
+//
+// The construction: take the query's stressed tail, cut it at every syllable boundary,
+// and look for a word ending in the back half and a word ending in the front half. Both
+// halves are matched on their *ends* rather than whole, so `door hinge` works even
+// though `door` is not literally "AO R" — it ends that way, and in a bar the front word
+// carries whatever precedes it.
+
+/** Phonemes from the primary-stressed vowel to the end, stress stripped. */
+function stressedTail(rimes) {
+  const depth = stressedFromEnd(rimes);
+  return rimes.slice(rimes.length - depth);
+}
+
+/**
+ * Words that cannot carry the back half of a phrase rhyme.
+ *
+ * The back word is where the rhyme lands, so it has to be something a listener registers.
+ * Without this, `wasabi` returns "job be / job he / job me" and `cinema` returns
+ * "aluminium a / aluminium the" — grammatically phrases, rhythmically nothing. They stay
+ * allowed at the *front*, where they are doing the job function words do: "for plunge"
+ * is a perfectly good half of a bar.
+ */
+const FUNCTION_WORDS = new Set(('a an the of to and in is it be he we me she they you i at on or for as but by do so no '
+  + 'my up if us am are was were has had have will can its his her him them then than that this these those with from '
+  + 'not all any may more most such some what when which who why how there here into out off over under been being does '
+  + 'did would could should shall must our your their who whom whose about after before '
+  // Prefixes and foreign articles CMU carries as headwords. They clear any frequency
+  // floor because they are common inside names, and read as typos in a bar.
+  + 'de la le el et al da na ka pre re un bi ex non pro co sub anti semi').split(' '));
+
+/** Frequency bucket a word must clear to appear in a generated phrase (0-9 scale). */
+const PHRASE_FREQ_FLOOR = 3;
+
+/** Phrases sharing a front word, past this many, stop adding anything. */
+const PER_FRONT_CAP = 3;
+
+/**
+ * Two-word phrases whose combined ending reproduces the query's stressed tail.
+ *
+ * Cheap because both halves are index lookups, not scans: the back half is an exact tail
+ * key, and the front half is matched against the same index at a shallower depth.
+ *
+ * @returns {Array<{phrase: string, head: string, tail: string, score: number}>}
+ */
+export function findPhraseRhymes(rawWord, limit = 40) {
+  const word = String(rawWord || '').trim().toLowerCase();
+  if (!index) throw new Error('rhyme index not loaded — await loadRhymeIndex() first');
+  const id = index.byWord.get(word);
+  if (id === undefined) return [];
+
+  const tail = stressedTail(index.rimesOf[id].rimes);
+  // A one-syllable tail cannot be split across two words, and past four the phrase stops
+  // reading as a phrase.
+  if (tail.length < 2 || tail.length > 4) return [];
+
+  const out = [];
+  const seen = new Set();
+
+  for (let cut = 1; cut < tail.length; cut++) {
+    const front = tail.slice(0, cut);
+    const back = tail.slice(cut);
+
+    const backIds = index.byTail[back.length]?.get(tailKey(back, back.length)) || [];
+    const frontIds = index.byTail[front.length]?.get(tailKey(front, front.length)) || [];
+    if (!backIds.length || !frontIds.length) continue;
+
+    // Both halves have to be roughly the size of the slot they fill. Matching purely on
+    // word endings otherwise lets a four-syllable word answer a one-syllable front:
+    // `cinema` came back as "aluminium a" and "molybdenum the", which are phrases only
+    // in the sense that they contain a space.
+    const fits = (wid, slot) => index.rimesOf[wid].rimes.length <= slot.length + 1;
+    const bySize = (a, b) => (index.rimesOf[a].rimes.length - index.rimesOf[b].rimes.length)
+      || (index.freqs[b] - index.freqs[a]);
+
+    // A generated phrase is held to a higher bar than a looked-up word: nobody sees an
+    // obscure entry unless they type it, but a phrase puts two of them side by side and
+    // presents the result as a suggestion. `gul`, `de` and `pre` are in the payload
+    // legitimately and have no business in a bar.
+    const common = (wid) => index.freqs[wid] >= PHRASE_FREQ_FLOOR;
+
+    const fronts = frontIds
+      .filter(fid => fid !== id && fits(fid, front) && common(fid))
+      .sort(bySize).slice(0, 8);
+    const backs = backIds
+      .filter(bid => bid !== id && fits(bid, back) && common(bid) && !FUNCTION_WORDS.has(index.words[bid]))
+      .sort(bySize).slice(0, 8);
+
+    for (const fid of fronts) {
+      for (const bid of backs) {
+        const phrase = `${index.words[fid]} ${index.words[bid]}`;
+        if (seen.has(phrase)) continue;
+        seen.add(phrase);
+        // Rank by how ordinary both words are and how cleanly each is its own half —
+        // a phrase built from two common, exactly-sized words reads as language.
+        const tightness = (index.rimesOf[fid].rimes.length === front.length ? 1 : 0)
+          + (index.rimesOf[bid].rimes.length === back.length ? 1 : 0);
+        out.push({
+          phrase,
+          head: index.words[fid],
+          tail: index.words[bid],
+          score: tightness * 10 + index.freqs[fid] + index.freqs[bid],
+        });
+      }
+    }
+  }
+
+  // Without a cap the list is one front word conjugated — "burp hull, burp skull, burp
+  // dull, burp null" — which reads as one idea, not twelve.
+  const perFront = new Map();
+  return out
+    .sort((a, b) => b.score - a.score || a.phrase.localeCompare(b.phrase))
+    .filter(p => {
+      const n = (perFront.get(p.head) || 0) + 1;
+      perFront.set(p.head, n);
+      return n <= PER_FRONT_CAP;
+    })
+    .slice(0, limit);
 }
 
 /** Is this word in the payload at all? Used to decide whether to offer a lookup. */

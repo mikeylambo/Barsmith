@@ -1,0 +1,9 @@
+Barsmith's offline definitions are derived from Princeton University's WordNet.
+Its licence requires this notice to travel with any redistribution, which includes
+the built app. See scripts/build-definitions.py for how the shipped payload is
+derived from it.
+
+────────────────────────────────────────────────────────────────────────────
+
+WordNet 3.0 Copyright 2006 by Princeton University. All rights reserved.
+See https://wordnet.princeton.edu/license-and-commercial-use
