@@ -17,6 +17,8 @@ export const STORAGE_KEYS = {
   totals:       'barsmithTotals',       // likewise — see loadTotals
   daily:        'barsmithDaily',        // today's prescribed session — see services/daily.js
   draft:        'barsmithDraft',
+  analyticsOff: 'barsmithAnalyticsOff',  // opt-out flag — see services/analytics.js
+  firstOpen:    'barsmithFirstOpen',     // install date, for cohort bucketing only
 };
 
 function safeGet(key, fallback) {
@@ -38,6 +40,25 @@ function safeSet(key, value) {
 }
 
 export const loadPrefs = () => safeGet(STORAGE_KEYS.prefs, {});
+
+/** Analytics opt-out. Absent means opted in, which is the disclosed default. */
+export const loadAnalyticsOptOut = () => safeGet(STORAGE_KEYS.analyticsOff, false) === true;
+export const saveAnalyticsOptOut = (off) => safeSet(STORAGE_KEYS.analyticsOff, off === true);
+
+/**
+ * The day this device first opened Barsmith, as a local date string.
+ *
+ * Stored rather than derived because retention is the whole question and there is no
+ * other way to ask it: "came back on day 7" needs a day 0. Only ever leaves the device
+ * bucketed — `1-7`, `31-90` — never as a date.
+ */
+export function firstOpenDay() {
+  const existing = safeGet(STORAGE_KEYS.firstOpen, null);
+  if (existing) return existing;
+  const today = new Date().toDateString();
+  safeSet(STORAGE_KEYS.firstOpen, today);
+  return today;
+}
 export const savePrefs = (prefs) => safeSet(STORAGE_KEYS.prefs, prefs);
 
 export const loadVault = () => {

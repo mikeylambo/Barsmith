@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import DictionaryModal from './DictionaryModal.jsx';
 import { loadRhymeIndex, findRhymes, RESULT_CAP } from '../services/rhyme';
+import { loadAnalyticsOptOut, saveAnalyticsOptOut } from '../services/storage';
 
 export default function VaultScreen({
   resetToIdle, vault, startVaultDrill, startBlocked, vaultSortMode, setVaultSortMode, sortedVault, toggleVault,
@@ -9,6 +10,7 @@ export default function VaultScreen({
   handleExportData, importFileRef, handleImportFile, importMsg,
 }) {
   const [activeWord, setActiveWord] = useState(null);
+  const [analyticsOff, setAnalyticsOff] = useState(() => loadAnalyticsOptOut());
 
   // Results are capped, so a bare "60" reads as an exact count of something that is
   // really "at least 60". `nation` has hundreds of perfect rhymes; saying 60 undersells
@@ -100,6 +102,36 @@ export default function VaultScreen({
           </div>
           {importMsg && <p className="text-[10px] text-gray-500 mt-3 uppercase tracking-widest font-bold">{importMsg}</p>}
           <p className="text-[10px] text-gray-700 mt-3">Saves your vault, history, custom words, and streak to a file you control.</p>
+        </div>
+
+        {/* Privacy. Placed next to Backup &amp; Restore on purpose: this is the screen where
+            a writer is already thinking about where their work lives, and burying the
+            switch somewhere else would make the disclosure technically true and
+            practically useless. */}
+        <div className="bg-[#0f0f0f] border border-white/5 rounded-2xl p-5 mb-5">
+          <p className="text-[10px] text-gray-600 font-black uppercase tracking-widest mb-3">Privacy</p>
+          <p className="text-xs text-gray-400 leading-relaxed mb-4">
+            <span className="text-white font-bold">Your bars never leave this device.</span>{' '}
+            Rhymes, syllables and definitions are all worked out here, offline. Barsmith sends
+            anonymous counts — that a session happened, roughly how long, roughly how many
+            bars — so it can tell which parts are worth keeping. No account, no cookies,
+            nothing that ties any of it back to you.
+          </p>
+          <p className="text-[10px] text-gray-600 leading-relaxed mb-4">
+            One exception, so you know: tapping a word for its <em>synonyms</em> sends that
+            single word to a public dictionary API. Just the word, never your writing — and
+            only when you tap.
+          </p>
+          <button
+            onClick={() => { const next = !analyticsOff; setAnalyticsOff(next); saveAnalyticsOptOut(next); }}
+            aria-pressed={!analyticsOff}
+            className={`w-full py-3 rounded-xl border text-xs font-black uppercase tracking-widest transition-all active:scale-95 ${analyticsOff ? 'bg-[#0a0a0a] border-white/8 text-gray-500 hover:text-gray-300' : 'bg-white/6 border-white/10 text-gray-200 hover:bg-white/10'}`}
+          >
+            {analyticsOff ? 'Anonymous counts: off' : 'Anonymous counts: on'}
+          </button>
+          <p className="text-[10px] text-gray-700 mt-3">
+            {analyticsOff ? 'Nothing is being sent. Tap to help improve Barsmith.' : 'Tap to turn this off. Everything else works exactly the same.'}
+          </p>
         </div>
 
         {vault.length === 0 && (

@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { haptic } from '../services/haptic';
 import { useFocusTrap } from '../hooks/useFocusTrap';
-import { loadRhymeIndex, findRhymes, findPhraseRhymes } from '../services/rhyme';
+import { loadRhymeIndex, findRhymes } from '../services/rhyme';
+import { EVENTS, track } from '../services/analytics';
 
 // ─────────────────────────────────────────────
 // RHYME SEARCH PANEL  (standalone tab)
@@ -62,7 +63,15 @@ export default
       try {
         await loadRhymeIndex();
         if (requestIdRef.current !== myId) return;
-        setResults({ ...findRhymes(w), phrases: findPhraseRhymes(w) });
+        const found = findRhymes(w);
+        setResults(found);
+        // The searched word itself is never sent — only whether the engine had an answer,
+        // which is the only part that says anything about the engine.
+        track(EVENTS.RHYME_SEARCH, {
+          found: found.found,
+          syllables: found.syllables || 0,
+          had_perfect: (found.perfect?.length || 0) > 0,
+        });
       } catch {
         if (requestIdRef.current !== myId) return;
         setResults({ error: true });
@@ -179,24 +188,10 @@ export default
                   they are hearing a different accent than CMU transcribed. */}
               <p className="text-[10px] text-gray-700 font-mono mb-1">{results.phonemes}</p>
               <p className="text-[10px] text-gray-600 mb-6 uppercase tracking-widest font-bold">Tap to copy · ☆ to save</p>
-              {results.phrases?.length > 0 && (
-                <div className="mb-7">
-                  <p className="text-[10px] font-black uppercase tracking-widest mb-1 text-pink-400">
-                    Phrases <span className="text-gray-700">{results.phrases.length}</span>
-                  </p>
-                  <p className="text-[10px] text-gray-600 mb-3 leading-relaxed">
-                    Two words that land the whole tail together. This is where the words that
-                    &ldquo;have no rhyme&rdquo; get one.
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {results.phrases.map(p => <Chip key={p.phrase} w={p.phrase} />)}
-                  </div>
-                </div>
-              )}
               {GROUPS.map(([key, label, color, hint]) => (
                 <RhymeGroup key={key} label={label} color={color} hint={hint} words={results[key]} />
               ))}
-              {GROUPS.every(([key]) => !results[key]?.length) && !results.phrases?.length && (
+              {GROUPS.every(([key]) => !results[key]?.length) && (
                 <p className="text-gray-600 text-center py-8">Nothing rhymes with “{results.word}”. That is rarer than it sounds — and worth a bar.</p>
               )}
             </>

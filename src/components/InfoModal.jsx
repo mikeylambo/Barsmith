@@ -16,6 +16,7 @@ const STEPS = [
   ['08','Your Words',  'Add personal vocabulary in the Vault — names, slang, places. They surface in your sessions. The tool becomes yours.'],
   ['09','Vault Drill', "Your saved words become a custom session. Drill vocabulary you've claimed — words you know are yours."],
   ['10','Record',      'Capture yourself while you write. Review the footage, clip the best moments, study your own flow.'],
+  ['11','Your Work Stays Here', 'Your bars live on this device and are never sent anywhere. Rhymes, syllables and definitions are worked out here too, so the whole reference runs offline. Barsmith sends anonymous counts — that a session happened, roughly how long — to tell which parts earn their place. Full detail and an off switch in Vault → Privacy.'],
 ];
 
 export default function InfoModal({ onClose }) {

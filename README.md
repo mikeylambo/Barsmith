@@ -20,8 +20,8 @@ npm run preview   # preview the production build
 
 ## Getting your bars out
 
-Barsmith stores everything locally and sends nothing anywhere, which makes export
-the only way work leaves the app. There are three, and they are not interchangeable:
+Barsmith stores everything you write on your own device and never sends any of it
+anywhere, which makes export the only way work leaves the app. There are three, and they are not interchangeable:
 
 - **A bar as an image** — the *Share* action on any individual bar, in Summary or
   History, renders a 1080×1080 bar card and hands it to the OS share sheet (or saves it,
@@ -123,19 +123,15 @@ build **fails** if any bank word has no pronunciation, because Tap-to-Lock sends
 prompt straight to the engine and a missing entry is a dead panel on a word Barsmith
 itself chose.
 
-### Phrases, and the rest of the reference
+### The rest of the reference
 
-Three things sit on top of the engine:
+Two things sit on top of the engine.
 
-- **Phrase rhymes.** `findPhraseRhymes` cuts the query's stressed tail at each syllable
-  boundary and looks for a word ending in the back half and a word ending in the front:
-  `orange` → *for plunge*, `laboratory` → *elaborate story*. This is the move that makes
-  "nothing rhymes with orange" a punchline rather than a fact, and no rhyme API offers it
-  because it is a search over pairs rather than a lookup. Generated output is held to a
-  higher bar than looked-up output — nobody sees an obscure entry unless they type it,
-  but a phrase puts two of them side by side and calls it a suggestion — so both halves
-  must clear a frequency floor, fit the slot they fill, and the back half cannot be a
-  function word. Unfiltered, `cinema` returned *aluminium a*.
+Phrase rhymes were built and then removed. `orange` → *for plunge* works, and
+`laboratory` → *elaborate story* is genuinely good, but the same construction opens the
+door to a lot that is not — and a reference whose suggestions have to be sifted is worse
+than one that offers fewer. Single words only, for readability's sake.
+
 - **Offline definitions.** `python3 scripts/build-definitions.py` writes a WordNet gloss
   payload for the banks, which is the only place the panel opens from. **Two senses where
   they exist**, because the app's own thesis is that a punchline turns on a word's other
@@ -248,6 +244,40 @@ already is, and:
 `services/progress.js` holds the arithmetic and takes `today` as an argument, so the
 calendar logic is tested against fixed dates rather than the clock.
 
+## Analytics
+
+Barsmith shipped its retention features — the training log, the daily prescription, the
+week strip — with no way to tell whether any of them work. `services/analytics.js` is
+that way, and it is deliberately the narrowest version of it.
+
+**Nothing a writer produces is ever sent.** Not a bar, not a vault word, not a search
+query. What goes out is bucketed counts: that a session happened, roughly how long,
+roughly how many bars, and whether it came from the daily card or from setting the dials
+by hand — which is the one comparison that answers whether the prescription earns its
+place.
+
+Three rules the module exists to enforce, each with a test:
+
+- **Never content, structurally.** `track()` accepts a fixed set of event names, and every
+  property value is filtered against `/^[a-z0-9+_-]{1,24}$/`. There is no shape of call
+  that carries free text — a bar fails the filter on its spaces before its length.
+- **Bucketed, never exact.** "12 bars" is a fact about a person; "6-15 bars" is a fact
+  about a population, and the second answers every question worth asking. The install date
+  is stored on-device so retention is measurable at all, and only ever leaves as a range.
+- **Off means off.** The opt-out is read at call time rather than cached, so the toggle
+  stops the very next event instead of the next reload. Do Not Track is honoured without
+  asking.
+
+The provider sits behind a seam like `services/share.js`. Vercel Web Analytics is the
+default — the app already deploys there, it is cookieless, and the script comes from the
+deployment's own origin — but replacing it is one file. Nothing runs on localhost or in
+development.
+
+The switch is in **Vault → Privacy**, next to Backup & Restore rather than buried, and
+the How To carries the disclosure. Defaulting on is a real change to what the app
+promised, and the honest version of the promise is the one now in the copy: your writing
+never leaves the device.
+
 ## Brand assets
 
 `public/og-image.png`, `public/icon-512.png`, and `public/icon-maskable-512.png` are
@@ -264,9 +294,9 @@ python3 scripts/make-brand-assets.py
 
 This package was installed, tested, validated, built, and dependency-audited.
 
-- Word bank: Tier 1 `1,223`, Tier 2 `2,035`, Tier 3 `2,156`
+- Word bank: Tier 1 `1,623`, Tier 2 `2,435`, Tier 3 `2,556` (`6,614` total)
 - Cross-tier duplicates: `0`
-- Automated tests: `165 passed`
+- Automated tests: `170 passed`
 - Production build: passed
 - `npm audit`: `0 vulnerabilities`
 - `package-lock.json`: included for reproducible Vercel/local builds

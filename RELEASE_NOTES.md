@@ -1,3 +1,99 @@
+# Barsmith 5.11.0 — 1,200 more words, chosen by measurement, and a way to tell if any of this works
+
+## The bank grows by arithmetic instead of taste
+
+Every earlier expansion was hand-authored: I thought of words, then checked them. That
+finds the obvious ones and misses everything nobody happened to think of. The
+pronunciation payload already holds 41,257 words, and after removing inflections, proper
+nouns, rarities and anything over four syllables, **14,632** of them were plain candidates
+no one had ever looked at.
+
+Two things exist now that did not last time the bank grew, and together they turn the job
+from taste into measurement. The **rhyme engine** can say whether a word lands on an
+ending its tier is short of — rhyme-tail diversity being the measure the audit already
+uses. **WordNet** can count senses, and better, can answer whether a word is concrete: its
+noun tree splits at the top into `physical_entity` and `abstraction`, so "can you picture
+it" is a question the data answers rather than one a suffix rule guesses at.
+
+`scripts/propose-words.py` scores every candidate on those, plus a frequency *band* —
+because too rare is unusable and too common is a word a writer would have reached for
+unprompted. The result:
+
+| Tier | Words | Distinct endings | Top-10 endings cover |
+| --- | --- | --- | --- |
+| 1 | 1,223 → **1,623** | 368 → **449** | 11.9% → **10.0%** |
+| 2 | 2,035 → **2,435** | 578 → **667** | 18.2% → **16.6%** |
+| 3 | 2,156 → **2,556** | 457 → **517** | 44.7% → **40.9%** |
+
+**5,414 → 6,614 words**, and every quality measure improved rather than diluting. Tier 3's
+abstract-noun share fell 29.4% → 25.5%. New words include `roach`, `pierce`, `weld`,
+`fluke`, `groin`, `jinx`, `transplant`, `charcoal`, `mouthpiece`, `ballast`, `deluge`,
+`nucleus`, `pinnacle`, `honeycomb`, `thoroughbred`, `welterweight`, `turntable`.
+
+The first two attempts were wrong in instructive ways. Ranking by sense count and raw
+frequency put `was`, `then`, `have` and `want` at the very top — grammatical furniture
+scores brilliantly on both. And Webster's Second lists `adam`, `arthur`, `mecca`,
+`kremlin` and `merlin` as lowercase headwords, so the filter that keeps surnames out of
+the pronunciation payload waved all of them through; WordNet preserving lemma
+capitalisation is what finally caught them.
+
+One incidental result: **`anvil` — the brand's own icon — is now a prompt word.** It was
+not before. A test that assumed otherwise is how we found out.
+
+## Phrase rhymes are gone
+
+They worked, and `laboratory` → *elaborate story* was genuinely good. But the same
+construction that produces that also produces *for plunge*, and a reference whose
+suggestions have to be sifted is worse than one that offers fewer. Single words only.
+
+## Analytics — and an honest change to the promise
+
+Barsmith shipped its retention features — the training log, the daily prescription, the
+week strip — with no way to tell whether any of them work. This is that way, and it is
+deliberately the narrowest version of it.
+
+**Nothing you write is ever sent.** Not a bar, not a vault word, not a search. What goes
+out is bucketed counts: that a session happened, roughly how long, roughly how many bars,
+and whether it came from the daily card or from setting the dials by hand — which is the
+one comparison that answers whether the prescription earns its place.
+
+Three rules, each with a test:
+
+- **Never content, structurally.** Every property value is filtered against
+  `/^[a-z0-9+_-]{1,24}$/`, so there is no shape of call that carries free text — a bar
+  fails on its spaces before its length. The event name list is fixed; an unknown one is
+  dropped.
+- **Bucketed, never exact.** "12 bars" is a fact about a person; "6-15 bars" is a fact
+  about a population, and only the second is anyone's business. The install date is kept
+  on-device so retention is measurable at all, and only ever leaves as a range.
+- **Off means off.** The opt-out is read at call time rather than cached, so the toggle
+  stops the very next event instead of the next reload. Do Not Track is honoured without
+  being asked.
+
+The provider sits behind a seam like `services/share.js` — Vercel Web Analytics by
+default, cookieless, served from the deployment's own origin, and off entirely on
+localhost.
+
+This does change what the app promised. The old line was "stores everything locally and
+sends nothing anywhere"; the honest version is now in the copy, and it is the one that
+matters: **your bars never leave the device.** The switch lives in **Vault → Privacy**
+next to Backup & Restore rather than buried three menus deep, and the How To carries the
+disclosure as its own step.
+
+Verifying that in a browser turned up an inaccuracy in the first draft of the copy, which
+claimed no vault word is ever sent. Tapping a word for its synonyms still calls a public
+dictionary API with that one word — true before this release and unchanged by it, but the
+privacy panel had no business implying otherwise. It now names the exception directly.
+
+## Verification
+
+- Automated tests: `170 passed` (12 new, all on the analytics guarantees)
+- Word bank: `6,614` words, `0` cross-tier duplicates, every one pronounceable and `6,561`
+  defined offline
+- Production build passed · `npm audit`: `0 vulnerabilities`
+
+---
+
 # Barsmith 5.10.0 — phrases, offline definitions, and a vault that tells you something
 
 5.9.0 put rhymes on-device. This finishes the reference: the last network dependency is
