@@ -1,23 +1,42 @@
 import { useState, useEffect, useRef } from 'react';
 import { haptic } from '../services/haptic';
 import { useFocusTrap } from '../hooks/useFocusTrap';
+import { loadRhymeIndex, findRhymes } from '../services/rhyme';
+import { EVENTS, track } from '../services/analytics';
 
 // ─────────────────────────────────────────────
 // RHYME SEARCH PANEL  (standalone tab)
+//
+// Runs entirely on-device. This used to be three Datamuse calls, which meant the one
+// feature a writer reaches for most was the only part of an offline-first app that
+// needed a network — and it came back as a flat list of perfect and "near" rhymes.
+//
+// The local engine groups by what kind of rhyme a word actually is, because that is the
+// distinction the writers this is for work in. Perfect rhymes are the beginner's tool;
+// multis are the craft.
 // ─────────────────────────────────────────────
+
+const GROUPS = [
+  ['perfect',   'Perfect',   'text-green-400',  'The stressed tail lands whole.'],
+  ['multi',     'Multis',    'text-orange-400', 'Two or more syllables agree — the hardest to find, the best to use.'],
+  ['slant',     'Slant',     'text-blue-400',   'The vowel holds, the consonants bend.'],
+  ['assonance', 'Assonance', 'text-purple-400', 'The vowel run matches. Consonants are yours.'],
+  ['homophones','Homophones','text-gray-400',   'Same sound, different word.'],
+];
 export default
   function RhymeSearch({ onClose, vault = [], toggleVault }) {
     const [query, setQuery]       = useState('');
     const [results, setResults]   = useState(null);
     const [loading, setLoading]   = useState(false);
     const [copied, setCopied]     = useState('');
+    const [ready, setReady]       = useState(false);
+    const [loadError, setLoadError] = useState(false);
     const inputRef                = useRef(null);
-    const abortRef                = useRef(null);
     const requestIdRef            = useRef(0);
     const panelRef                = useRef(null);
     useFocusTrap(panelRef);
 
-    useEffect(() => { inputRef.current?.focus(); return () => { requestIdRef.current += 1; abortRef.current?.abort(); }; }, []);
+    useEffect(() => { inputRef.current?.focus(); return () => { requestIdRef.current += 1; }; }, []);
 
     // RC4 FIX 7: Escape closes the panel
     useEffect(() => {
@@ -26,54 +45,34 @@ export default
       return () => window.removeEventListener('keydown', handler);
     }, [onClose]);
 
+    // The payload is ~290KB gzipped, so it is fetched the first time the panel opens
+    // rather than at app start. Precached by the service worker, so this is a one-time
+    // cost and every later search — online or off — is instant.
+    useEffect(() => {
+      let live = true;
+      loadRhymeIndex().then(() => { if (live) setReady(true); })
+        .catch(() => { if (live) setLoadError(true); });
+      return () => { live = false; };
+    }, []);
+
     const search = async (word) => {
       const w = word.trim().toLowerCase();
-      const enc = encodeURIComponent(w);
       if (!w) return;
-      if (abortRef.current) abortRef.current.abort();
-      abortRef.current = new AbortController();
-      const myId = ++requestIdRef.current; // identifies this specific search
+      const myId = ++requestIdRef.current;
       setLoading(true); setResults(null);
       try {
-        const sig = abortRef.current.signal;
-        // Real network failures should surface as failures — only a literal AbortError
-        // means "superseded by a newer search", and that case is discarded below via
-        // the id check rather than masquerading as an empty result set.
-        const safe = (p) => fetch(p, { signal: sig }).then(r => {
-          if (!r.ok) throw new Error('http_' + r.status);
-          return r.json();
-        });
-        const [perfect, near, broader] = await Promise.all([
-          safe(`https://api.datamuse.com/words?rel_rhy=${enc}&md=s&max=40`),
-          safe(`https://api.datamuse.com/words?rel_nry=${enc}&md=s&max=40`),
-          safe(`https://api.datamuse.com/words?sl=${enc}&md=s&max=20`),
-        ]);
-        // A newer search may have started while this one was in flight — discard stale results.
+        await loadRhymeIndex();
         if (requestIdRef.current !== myId) return;
-        // RC4 FIX 8: De-duplicate across tiers so the same word can't appear in
-        // multiple sections. Priority: perfect > near > broader.
-        const perfectSet = new Set(perfect.map(x => x.word));
-        const nearDeduped = near.filter(x => !perfectSet.has(x.word));
-        const nearSet = new Set(nearDeduped.map(x => x.word));
-        const broaderDeduped = broader.filter(x => !perfectSet.has(x.word) && !nearSet.has(x.word));
-
-        // bucket by syllable count
-        const bucket = (arr) => {
-          const groups = {};
-          const seen = new Set();
-          arr.filter(x => typeof x.word === 'string' && x.word !== w).forEach(x => {
-            const normalized = x.word.trim().toLowerCase();
-            if (!normalized || seen.has(normalized)) return;
-            seen.add(normalized);
-            const s = x.numSyllables || '?';
-            if (!groups[s]) groups[s] = [];
-            groups[s].push(normalized);
-          });
-          return groups;
-        };
-        setResults({ perfect: bucket(perfect), near: bucket(nearDeduped), broader: bucket(broaderDeduped), word: w });
-      } catch (e) {
-        if (e.name === 'AbortError') return; // a newer search superseded this one and owns the UI
+        const found = findRhymes(w);
+        setResults(found);
+        // The searched word itself is never sent — only whether the engine had an answer,
+        // which is the only part that says anything about the engine.
+        track(EVENTS.RHYME_SEARCH, {
+          found: found.found,
+          syllables: found.syllables || 0,
+          had_perfect: (found.perfect?.length || 0) > 0,
+        });
+      } catch {
         if (requestIdRef.current !== myId) return;
         setResults({ error: true });
       } finally {
@@ -87,30 +86,37 @@ export default
       haptic(12);
     };
 
-    const SyllableGroup = ({ label, groups, color }) => {
-      if (!groups || !Object.keys(groups).length) return null;
-      const sorted = Object.keys(groups).sort((a, b) => { const na = Number(a), nb = Number(b); return Number.isNaN(na) ? 1 : Number.isNaN(nb) ? -1 : na - nb; });
+    const Chip = ({ w }) => {
+      const inVault = vault.some(v => v.word === w);
       return (
-        <div className="mb-6">
-          <p className={`text-[10px] font-black uppercase tracking-widest mb-3 ${color}`}>{label}</p>
-          {sorted.map(s => (
-            <div key={s} className="mb-3">
-              <p className="text-[9px] text-gray-600 font-black uppercase tracking-widest mb-1.5">{s} syl.</p>
+        <div className={`rhyme-chip flex items-stretch rounded-full border border-white/8 overflow-hidden ${copied === w ? 'bg-white' : 'bg-white/5'}`}>
+          <button onClick={() => copy(w)} className={`max-w-[70vw] break-words px-3 py-1.5 text-sm font-bold leading-tight ${copied === w ? 'text-black' : 'text-gray-200'}`}>
+            {w}
+          </button>
+          <span className="w-px self-stretch bg-white/8" />
+          <button onClick={() => toggleVault?.(w)} aria-label={inVault ? `Remove ${w} from Vault` : `Save ${w} to Vault`} className={`px-2 py-1.5 text-sm leading-none flex items-center transition-colors ${copied === w ? 'text-black' : inVault ? 'text-yellow-400' : 'text-gray-600 hover:text-yellow-400'}`}>
+            {inVault ? '★' : '☆'}
+          </button>
+        </div>
+      );
+    };
+
+    // Within a kind, words are still grouped by syllable count — a writer looking to
+    // close a four-syllable line does not want to read past every one-syllable option.
+    const RhymeGroup = ({ label, color, hint, words }) => {
+      if (!words?.length) return null;
+      const bySyllables = {};
+      for (const r of words) (bySyllables[r.syllables] ||= []).push(r.word);
+      const counts = Object.keys(bySyllables).sort((a, b) => Number(a) - Number(b));
+      return (
+        <div className="mb-7">
+          <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${color}`}>{label} <span className="text-gray-700">{words.length}</span></p>
+          <p className="text-[10px] text-gray-600 mb-3 leading-relaxed">{hint}</p>
+          {counts.map(n => (
+            <div key={n} className="mb-3">
+              <p className="text-[9px] text-gray-600 font-black uppercase tracking-widest mb-1.5">{n} syl.</p>
               <div className="flex flex-wrap gap-1.5">
-                {groups[s].map(w => {
-                  const inVault = vault.some(v => v.word === w);
-                  return (
-                    <div key={w} className={`rhyme-chip flex items-stretch rounded-full border border-white/8 overflow-hidden ${copied === w ? 'bg-white' : 'bg-white/5'}`}>
-                      <button onClick={() => copy(w)} className={`max-w-[70vw] break-words px-3 py-1.5 text-sm font-bold leading-tight ${copied === w ? 'text-black' : 'text-gray-200'}`}>
-                        {w}
-                      </button>
-                      <span className="w-px self-stretch bg-white/8" />
-                      <button onClick={() => toggleVault?.(w)} aria-label={inVault ? `Remove ${w} from Vault` : `Save ${w} to Vault`} className={`px-2 py-1.5 text-sm leading-none flex items-center transition-colors ${copied === w ? 'text-black' : inVault ? 'text-yellow-400' : 'text-gray-600 hover:text-yellow-400'}`}>
-                        {inVault ? '★' : '☆'}
-                      </button>
-                    </div>
-                  );
-                })}
+                {bySyllables[n].map(w => <Chip key={w} w={w} />)}
               </div>
             </div>
           ))}
@@ -151,7 +157,11 @@ export default
             <div className="text-center py-20 text-gray-600">
               <p className="text-5xl mb-4 opacity-30">◎</p>
               <p className="font-black uppercase tracking-widest text-sm">Type any word</p>
-              <p className="text-xs mt-2 text-gray-700">Results grouped by syllable count</p>
+              <p className="text-xs mt-2 text-gray-700">
+                {loadError ? 'Rhyme data unavailable — reload to try again.'
+                  : ready ? 'Perfect, multis, slant and assonance — all on-device'
+                  : 'Loading the rhyme dictionary…'}
+              </p>
             </div>
           )}
           {loading && (
@@ -159,19 +169,30 @@ export default
               <div className="w-10 h-10 border-4 border-white/10 border-t-white rounded-full animate-spin" />
             </div>
           )}
-          {results?.error && <p className="text-gray-500 text-center py-12">Network error. Check connection.</p>}
-          {results && !results.error && (
+          {results?.error && <p className="text-gray-500 text-center py-12">Rhyme data failed to load. Reload the app to try again.</p>}
+          {results && !results.error && !results.found && (
+            <p className="text-gray-500 text-center py-12">
+              No pronunciation for “{results.word}”. Try a different spelling — the dictionary covers single words only.
+            </p>
+          )}
+          {results && !results.error && results.found && (
             <>
-              <div className="mb-2 flex items-center gap-3">
+              <div className="mb-1 flex items-baseline gap-3 flex-wrap">
                 <h2 className="text-2xl font-black uppercase tracking-tighter">{results.word}</h2>
-                <p className="text-gray-600 text-xs font-bold uppercase tracking-widest">rhyme map</p>
+                <p className="text-gray-600 text-xs font-bold uppercase tracking-widest">
+                  {results.syllables} syl · rhymes on the last {results.stressedSyllablesFromEnd}
+                </p>
               </div>
-              <p className="text-[10px] text-gray-600 mb-6 uppercase tracking-widest font-bold">Tap any word to copy</p>
-              <SyllableGroup label="Perfect Rhymes"   groups={results.perfect}  color="text-green-400" />
-              <SyllableGroup label="Near Rhymes"      groups={results.near}     color="text-blue-400" />
-              <SyllableGroup label="Similar Sound"    groups={results.broader}  color="text-purple-400" />
-              {!Object.keys(results.perfect).length && !Object.keys(results.near).length && !Object.keys(results.broader).length && (
-                <p className="text-gray-600 text-center py-8">No rhymes found for "{results.word}"</p>
+              {/* Showing the pronunciation is not decoration: when a result looks wrong,
+                  this is what tells a writer whether the engine misheard the word or
+                  they are hearing a different accent than CMU transcribed. */}
+              <p className="text-[10px] text-gray-700 font-mono mb-1">{results.phonemes}</p>
+              <p className="text-[10px] text-gray-600 mb-6 uppercase tracking-widest font-bold">Tap to copy · ☆ to save</p>
+              {GROUPS.map(([key, label, color, hint]) => (
+                <RhymeGroup key={key} label={label} color={color} hint={hint} words={results[key]} />
+              ))}
+              {GROUPS.every(([key]) => !results[key]?.length) && (
+                <p className="text-gray-600 text-center py-8">Nothing rhymes with “{results.word}”. That is rarer than it sounds — and worth a bar.</p>
               )}
             </>
           )}

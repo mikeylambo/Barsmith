@@ -12,6 +12,7 @@ import {
   loadDaily, saveDaily,
   exportAllData, importAllData,
   loadDraft, clearDraft,
+  firstOpenDay,
 } from './services/storage';
 import { seedTotals, addSessionToTotals } from './services/progress';
 import { dailySession, isCompletedToday, markCompleted, programmeWeek } from './services/daily';
@@ -20,6 +21,8 @@ import { downloadText, dateStamp } from './services/download';
 // export can never disagree about note shape.
 import { flattenNotes, historyToText } from './services/export-text';
 import { normalizeTier } from './services/wordbank';
+import { EVENTS, BUCKETS, track, setAnalyticsProvider } from './services/analytics';
+import { createVercelProvider } from './services/analytics-vercel';
 import { useSessionEngine } from './hooks/useSessionEngine';
 
 import Splash from './components/Splash.jsx';
@@ -164,6 +167,44 @@ function App() {
     return () => clearTimeout(t);
   }, []);
 
+  // ── Analytics ──
+  // The retention features shipped with no way to tell whether they work. This is that
+  // way, and it is deliberately the narrowest version of it: counts of things happening,
+  // bucketed, with nothing a writer typed ever leaving the device.
+  //
+  // `app_open` carries the two numbers the whole question turns on — how long this
+  // device has had Barsmith, and how much it has been used — because "did they come
+  // back" is unanswerable without both.
+  useEffect(() => {
+    setAnalyticsProvider(createVercelProvider());
+    const first = new Date(firstOpenDay());
+    const days = Math.max(0, Math.round((Date.now() - first.getTime()) / 86_400_000));
+    track(EVENTS.APP_OPEN, {
+      days_since_first: BUCKETS.days(days),
+      lifetime_sessions: BUCKETS.sessions(totals?.sessions || 0),
+      streak: BUCKETS.streak(streak),
+      installed: window.matchMedia?.('(display-mode: standalone)')?.matches || false,
+    });
+  }, []);
+
+  // ── Warm the reference payloads while nobody is waiting ──
+  // Together they are about half a megabyte, deliberately kept out of the main bundle so
+  // the idle screen paints fast. But the moment they are actually needed — a writer taps
+  // a word mid-round to see what it rhymes with — is the worst possible moment to start
+  // a download. So fetch them once the app is up and idle. The service worker caches
+  // them, making this a first-visit cost only, and failure is silent because both call
+  // sites already handle an unloaded payload.
+  useEffect(() => {
+    const warm = () => {
+      import('./services/rhyme').then(m => m.loadRhymeIndex()).catch(() => {});
+      import('./services/definitions').then(m => m.loadDefinitions()).catch(() => {});
+    };
+    const idle = window.requestIdleCallback;
+    if (idle) { const h = idle(warm, { timeout: 4000 }); return () => window.cancelIdleCallback?.(h); }
+    const t = setTimeout(warm, 2000);
+    return () => clearTimeout(t);
+  }, []);
+
   useEffect(() => { saveVault(vault); }, [vault]);
   useEffect(() => { saveHistory(sessionHistory); }, [sessionHistory]);
   useEffect(() => { saveSessionLimit(sessionLimit); }, [sessionLimit]);
@@ -194,10 +235,25 @@ function App() {
       setSessionHistory(prev => [rec, ...prev].slice(0, 100));
       setPracticeDays(loadPracticeDays());
       recordTotals(rec);
-      if (fromDailyRef.current) {
+      const wasDaily = fromDailyRef.current;
+      if (wasDaily) {
         fromDailyRef.current = false;
         setDaily(prev => { const next = markCompleted(prev); saveDaily(next); return next; });
       }
+      // How much got written is the only measure of whether a session was any good, and
+      // it is the number the daily prescription has to justify itself against. Bucketed:
+      // "6-15 bars" says everything about a population that "12" does, without saying
+      // anything about a person.
+      const bars = flattenNotes(rec.notes).filter(([, , t]) => t?.trim()).length;
+      track(EVENTS.SESSION_END, {
+        source: wasDaily ? 'daily' : rec.source === 'recovered' ? 'recovered' : 'freeform',
+        bars: BUCKETS.bars(bars),
+        minutes: BUCKETS.minutes(Math.round((rec.duration || 0) / 60)),
+        tier: rec.tier || 0,
+        words: rec.wordCount || 1,
+        wrote: bars > 0,
+      });
+      if (wasDaily) track(EVENTS.DAILY_COMPLETE, { day: todaysPlan.key, tier: todaysPlan.tier });
     },
   });
 
@@ -208,6 +264,7 @@ function App() {
   const [importMsg, setImportMsg] = useState('');
   const handleExportData = () => {
     downloadText(`barsmith-backup-${dateStamp()}.json`, exportAllData(), 'application/json');
+    track(EVENTS.EXPORT, { kind: 'backup' });
     haptic(12);
   };
   // The JSON backup above is for restoring Barsmith; this one is for actually using the
@@ -215,6 +272,7 @@ function App() {
   // in the app.
   const handleExportBars = () => {
     downloadText(`barsmith-bars-${dateStamp()}.txt`, historyToText(sessionHistory));
+    track(EVENTS.EXPORT, { kind: 'bars' });
     haptic(12);
   };
   const handleImportFile = (e) => {
@@ -291,7 +349,14 @@ function App() {
     }
   };
   const resetToIdle = () => { engine.resetToIdle(); setNavScreen('idle'); };
-  const startSession = () => { if (!recoveredDraft) engine.startSession(); };
+  const startSession = () => {
+    if (recoveredDraft) return;
+    // The counterpart to the daily event, and the comparison the whole exercise exists
+    // to make: does a writer who takes the prescription come back more than one who sets
+    // their own dials?
+    track(EVENTS.SESSION_START, { source: 'freeform', tier: selectedTier, words: wordCount });
+    engine.startSession();
+  };
   const startVaultDrill = () => { if (!recoveredDraft) engine.startVaultDrill(); };
 
   // Starting the prescription writes seven pieces of settings state. React batches
@@ -313,6 +378,7 @@ function App() {
     setSessionLimit(p.limitMinutes);
     setIsMetronomeOn(false);
     setPendingDailyStart(true);
+    track(EVENTS.SESSION_START, { source: 'daily', day: p.key, tier: p.tier });
   };
   useEffect(() => {
     if (!pendingDailyStart) return;

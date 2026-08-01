@@ -1,6 +1,7 @@
 # Barsmith
 
 A writing gym, rhyme reference, and idea-capture tool for serious hip-hop writers.
+Everything runs on-device, including the rhyme dictionary.
 
 ## Requirements
 
@@ -19,8 +20,8 @@ npm run preview   # preview the production build
 
 ## Getting your bars out
 
-Barsmith stores everything locally and sends nothing anywhere, which makes export
-the only way work leaves the app. There are three, and they are not interchangeable:
+Barsmith stores everything you write on your own device and never sends any of it
+anywhere, which makes export the only way work leaves the app. There are three, and they are not interchangeable:
 
 - **A bar as an image** — the *Share* action on any individual bar, in Summary or
   History, renders a 1080×1080 bar card and hands it to the OS share sheet (or saves it,
@@ -78,6 +79,72 @@ Note the wiring in `App.jsx`: applying a prescription writes seven pieces of set
 state, which React batches, so `engine.startSession()` cannot run in the same handler or
 it would start against the *previous* settings. A pending flag defers the start by one
 render.
+
+## The rhyme engine
+
+`services/rhyme.js` answers every rhyme query on-device, from a 41,257-word pronunciation
+payload built by `python3 scripts/build-rhyme-data.py`. Rhymes used to come from three
+Datamuse calls, which meant the feature a writer reaches for most was the only part of an
+offline-first app that needed a network.
+
+It also answers a different question than a rhyme API does. A flat list of perfect rhymes
+is a beginner's tool; the writers this is for work in *multis*. So results are grouped by
+what kind of rhyme they are:
+
+| Group | What it means | Example |
+| --- | --- | --- |
+| Perfect | the stressed tail lands whole | `nation` / `station` |
+| Multi | 2+ syllables agree, offset from the stress | `sacrament` / `detriment` |
+| Slant | the vowel holds, the consonants bend | `silver` / `pilfer` |
+| Assonance | the vowel run matches, consonants free | `hostile` / `gospel` |
+
+The unit of comparison is the **rime** — a vowel plus every consonant up to the next
+vowel. Comparing rime-by-rime from the end sidesteps the alignment problem a raw phoneme
+walk has, where `cat` and `cast` fall out of step on the coda and score as unrelated.
+
+Four judgements in there were each wrong first, and each is pinned by a test:
+
+- **A candidate is matched against the query's stress, not its own.** Keying every word by
+  where its own primary stress falls meant `time` and `lifetime` never met.
+- **The final consonant is weighted hardest.** Averaging coda positions evenly made
+  `orange` rhyme with `government` on the strength of a shared `N`.
+- **Secondary stress is a wildcard.** CMU writes both `lifetime`'s full `AY2` and
+  `company`'s reduced `IY2` the same way; insisting on an answer breaks one to fix the
+  other.
+- **A run of unstressed schwas is not assonance.** Schwa is the most common vowel in
+  English, so before this `cinema` returned `london` and `services`.
+
+The payload is fetched on first use rather than at start-up — 289KB gzipped against the
+app's 99KB — and precached by the service worker, so it is there offline from the second
+visit on. Queries run in about 4ms. Pronunciations are the CMU Pronouncing Dictionary
+(BSD-2-clause; notice in `src/data/PRONUNCIATION-LICENSE`), with 92 compounds and Latinate
+forms derived by rule and 59 loanwords hand-authored in `pronunciation-extra.json` — the
+build **fails** if any bank word has no pronunciation, because Tap-to-Lock sends the
+prompt straight to the engine and a missing entry is a dead panel on a word Barsmith
+itself chose.
+
+### The rest of the reference
+
+Two things sit on top of the engine.
+
+Phrase rhymes were built and then removed. `orange` → *for plunge* works, and
+`laboratory` → *elaborate story* is genuinely good, but the same construction opens the
+door to a lot that is not — and a reference whose suggestions have to be sifted is worse
+than one that offers fewer. Single words only, for readability's sake.
+
+- **Offline definitions.** `python3 scripts/build-definitions.py` writes a WordNet gloss
+  payload for the banks, which is the only place the panel opens from. **Two senses where
+  they exist**, because the app's own thesis is that a punchline turns on a word's other
+  meaning — a panel showing only the first sense hides the half that makes the bar. The
+  network entry still wins when there is one; the local copy is what makes the panel work
+  without it. WordNet is Princeton's; notice in `src/data/DEFINITION-LICENSE`.
+- **Vault rows carry their own shape** — syllables, and how much there is to rhyme with —
+  so a writer scanning saved words can see which are rich and which are dead ends without
+  opening any of them. `orange` reads *2 syl · slant only*.
+
+Both payloads are warmed on `requestIdleCallback` after first paint. They are kept out of
+the main bundle so the idle screen stays fast, but the moment they are needed — a writer
+taps a word mid-round — is the worst moment to start a download.
 
 ## The word banks
 
@@ -177,6 +244,40 @@ already is, and:
 `services/progress.js` holds the arithmetic and takes `today` as an argument, so the
 calendar logic is tested against fixed dates rather than the clock.
 
+## Analytics
+
+Barsmith shipped its retention features — the training log, the daily prescription, the
+week strip — with no way to tell whether any of them work. `services/analytics.js` is
+that way, and it is deliberately the narrowest version of it.
+
+**Nothing a writer produces is ever sent.** Not a bar, not a vault word, not a search
+query. What goes out is bucketed counts: that a session happened, roughly how long,
+roughly how many bars, and whether it came from the daily card or from setting the dials
+by hand — which is the one comparison that answers whether the prescription earns its
+place.
+
+Three rules the module exists to enforce, each with a test:
+
+- **Never content, structurally.** `track()` accepts a fixed set of event names, and every
+  property value is filtered against `/^[a-z0-9+_-]{1,24}$/`. There is no shape of call
+  that carries free text — a bar fails the filter on its spaces before its length.
+- **Bucketed, never exact.** "12 bars" is a fact about a person; "6-15 bars" is a fact
+  about a population, and the second answers every question worth asking. The install date
+  is stored on-device so retention is measurable at all, and only ever leaves as a range.
+- **Off means off.** The opt-out is read at call time rather than cached, so the toggle
+  stops the very next event instead of the next reload. Do Not Track is honoured without
+  asking.
+
+The provider sits behind a seam like `services/share.js`. Vercel Web Analytics is the
+default — the app already deploys there, it is cookieless, and the script comes from the
+deployment's own origin — but replacing it is one file. Nothing runs on localhost or in
+development.
+
+The switch is in **Vault → Privacy**, next to Backup & Restore rather than buried, and
+the How To carries the disclosure. Defaulting on is a real change to what the app
+promised, and the honest version of the promise is the one now in the copy: your writing
+never leaves the device.
+
 ## Brand assets
 
 `public/og-image.png`, `public/icon-512.png`, and `public/icon-maskable-512.png` are
@@ -193,9 +294,9 @@ python3 scripts/make-brand-assets.py
 
 This package was installed, tested, validated, built, and dependency-audited.
 
-- Word bank: Tier 1 `1,223`, Tier 2 `2,035`, Tier 3 `2,156`
+- Word bank: Tier 1 `1,623`, Tier 2 `2,435`, Tier 3 `2,556` (`6,614` total)
 - Cross-tier duplicates: `0`
-- Automated tests: `132 passed`
+- Automated tests: `170 passed`
 - Production build: passed
 - `npm audit`: `0 vulnerabilities`
 - `package-lock.json`: included for reproducible Vercel/local builds

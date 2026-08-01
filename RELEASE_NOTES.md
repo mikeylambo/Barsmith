@@ -1,3 +1,285 @@
+# Barsmith 5.11.0 — 1,200 more words, chosen by measurement, and a way to tell if any of this works
+
+## The bank grows by arithmetic instead of taste
+
+Every earlier expansion was hand-authored: I thought of words, then checked them. That
+finds the obvious ones and misses everything nobody happened to think of. The
+pronunciation payload already holds 41,257 words, and after removing inflections, proper
+nouns, rarities and anything over four syllables, **14,632** of them were plain candidates
+no one had ever looked at.
+
+Two things exist now that did not last time the bank grew, and together they turn the job
+from taste into measurement. The **rhyme engine** can say whether a word lands on an
+ending its tier is short of — rhyme-tail diversity being the measure the audit already
+uses. **WordNet** can count senses, and better, can answer whether a word is concrete: its
+noun tree splits at the top into `physical_entity` and `abstraction`, so "can you picture
+it" is a question the data answers rather than one a suffix rule guesses at.
+
+`scripts/propose-words.py` scores every candidate on those, plus a frequency *band* —
+because too rare is unusable and too common is a word a writer would have reached for
+unprompted. The result:
+
+| Tier | Words | Distinct endings | Top-10 endings cover |
+| --- | --- | --- | --- |
+| 1 | 1,223 → **1,623** | 368 → **449** | 11.9% → **10.0%** |
+| 2 | 2,035 → **2,435** | 578 → **667** | 18.2% → **16.6%** |
+| 3 | 2,156 → **2,556** | 457 → **517** | 44.7% → **40.9%** |
+
+**5,414 → 6,614 words**, and every quality measure improved rather than diluting. Tier 3's
+abstract-noun share fell 29.4% → 25.5%. New words include `roach`, `pierce`, `weld`,
+`fluke`, `groin`, `jinx`, `transplant`, `charcoal`, `mouthpiece`, `ballast`, `deluge`,
+`nucleus`, `pinnacle`, `honeycomb`, `thoroughbred`, `welterweight`, `turntable`.
+
+The first two attempts were wrong in instructive ways. Ranking by sense count and raw
+frequency put `was`, `then`, `have` and `want` at the very top — grammatical furniture
+scores brilliantly on both. And Webster's Second lists `adam`, `arthur`, `mecca`,
+`kremlin` and `merlin` as lowercase headwords, so the filter that keeps surnames out of
+the pronunciation payload waved all of them through; WordNet preserving lemma
+capitalisation is what finally caught them.
+
+One incidental result: **`anvil` — the brand's own icon — is now a prompt word.** It was
+not before. A test that assumed otherwise is how we found out.
+
+## Phrase rhymes are gone
+
+They worked, and `laboratory` → *elaborate story* was genuinely good. But the same
+construction that produces that also produces *for plunge*, and a reference whose
+suggestions have to be sifted is worse than one that offers fewer. Single words only.
+
+## Analytics — and an honest change to the promise
+
+Barsmith shipped its retention features — the training log, the daily prescription, the
+week strip — with no way to tell whether any of them work. This is that way, and it is
+deliberately the narrowest version of it.
+
+**Nothing you write is ever sent.** Not a bar, not a vault word, not a search. What goes
+out is bucketed counts: that a session happened, roughly how long, roughly how many bars,
+and whether it came from the daily card or from setting the dials by hand — which is the
+one comparison that answers whether the prescription earns its place.
+
+Three rules, each with a test:
+
+- **Never content, structurally.** Every property value is filtered against
+  `/^[a-z0-9+_-]{1,24}$/`, so there is no shape of call that carries free text — a bar
+  fails on its spaces before its length. The event name list is fixed; an unknown one is
+  dropped.
+- **Bucketed, never exact.** "12 bars" is a fact about a person; "6-15 bars" is a fact
+  about a population, and only the second is anyone's business. The install date is kept
+  on-device so retention is measurable at all, and only ever leaves as a range.
+- **Off means off.** The opt-out is read at call time rather than cached, so the toggle
+  stops the very next event instead of the next reload. Do Not Track is honoured without
+  being asked.
+
+The provider sits behind a seam like `services/share.js` — Vercel Web Analytics by
+default, cookieless, served from the deployment's own origin, and off entirely on
+localhost.
+
+This does change what the app promised. The old line was "stores everything locally and
+sends nothing anywhere"; the honest version is now in the copy, and it is the one that
+matters: **your bars never leave the device.** The switch lives in **Vault → Privacy**
+next to Backup & Restore rather than buried three menus deep, and the How To carries the
+disclosure as its own step.
+
+Verifying that in a browser turned up an inaccuracy in the first draft of the copy, which
+claimed no vault word is ever sent. Tapping a word for its synonyms still calls a public
+dictionary API with that one word — true before this release and unchanged by it, but the
+privacy panel had no business implying otherwise. It now names the exception directly.
+
+## Verification
+
+- Automated tests: `170 passed` (12 new, all on the analytics guarantees)
+- Word bank: `6,614` words, `0` cross-tier duplicates, every one pronounceable and `6,561`
+  defined offline
+- Production build passed · `npm audit`: `0 vulnerabilities`
+
+---
+
+# Barsmith 5.10.0 — phrases, offline definitions, and a vault that tells you something
+
+5.9.0 put rhymes on-device. This finishes the reference: the last network dependency is
+gone, the engine now does the thing no rhyme API does, and the vault stopped being a list
+of words with nothing to say about them.
+
+## Phrases — where "nothing rhymes with orange" stops being true
+
+`findPhraseRhymes` cuts the query's stressed tail at every syllable boundary and looks for
+a word ending in the back half and a word ending in the front:
+
+```
+orange       for plunge · for sponge · or plunge · your sponge · four plunge
+laboratory   elaborate story · elaborate glory
+cinema       in eczema · been enema · skin eczema · win maxima
+purple       burp hull · chirp skull · antwerp dull
+wasabi       job see · job free · bob three · mob see
+```
+
+This is the move the writers Barsmith is for actually make, and no rhyme API offers it,
+because it is a search over pairs rather than a lookup.
+
+Generated output is held to a higher bar than looked-up output. Nobody sees an obscure
+dictionary entry unless they type it; a phrase puts two of them side by side and presents
+the result as a suggestion. Unfiltered, the first version returned:
+
+```
+cinema   aluminium a · aluminium the · molybdenum a
+wasabi   job be · job he · job me · job we
+purple   burp hull · burp skull · burp dull · burp null
+```
+
+Three filters, each pinned by a test: both halves must be **the size of the slot they
+fill** (a four-syllable word cannot answer a one-syllable front), the back half **cannot
+be a function word** (it is where the rhyme lands, so it has to be something a listener
+registers — they stay allowed at the front, where *for plunge* is a perfectly good half
+of a bar), and no **one front word** may take more than three slots, because "burp hull,
+burp skull, burp dull, burp null" is one idea, not four.
+
+## Definitions work with no connection
+
+`scripts/build-definitions.py` writes a WordNet gloss payload for the word banks — the
+only place the Tap-to-Lock panel ever opens from. 5,361 of 5,414 prompts defined, 204KB
+gzipped.
+
+**Two senses wherever they exist**, and that is the point rather than a detail: the app's
+whole thesis about which words earn a place is that a punchline turns on a word's *other*
+meaning. A panel showing only the first sense hides the half that makes the bar. 4,231
+words carry a second one.
+
+The network entry still wins when there is one — dictionaryapi.dev has more senses and
+fresher usage than a WordNet dump. The local copy is what makes the panel work without it,
+not a preferred source. Outside the banks, a personal word still falls back to the network
+and says so plainly when there isn't one.
+
+## The vault says something now
+
+Every row carries its own shape, computed on-device:
+
+```
+LABORATORY   4 syl · 60+ multi
+NATION       2 syl · 60+ perfect
+SILVER       2 syl · 1 perfect
+ORANGE       2 syl · slant only
+```
+
+A writer scanning saved words can see which are rich and which are dead ends without
+opening any of them. Counts at the result cap read `60+` rather than `60`, because
+`nation` has hundreds and saying otherwise would be a small lie in a place there is no
+reason to tell one.
+
+## Warmed before they are wanted
+
+Both payloads — 289KB of pronunciations, 204KB of definitions — stay out of the main
+bundle so the idle screen paints fast, and are then fetched on `requestIdleCallback` once
+the app is up. The moment they are actually needed, a writer tapping a word mid-round, is
+the worst possible moment to begin a download. The service worker caches both, so it is a
+first-visit cost only.
+
+## Verification
+
+- Automated tests: `165 passed` (11 new, against the real payloads)
+- Verified in the browser **with the network down**: phrase rhymes, the definition panel
+  showing both senses of `drill`, and vault rows all working
+- Production build passed · `npm audit`: `0 vulnerabilities`
+
+Definitions are Princeton WordNet (notice in `src/data/DEFINITION-LICENSE`);
+pronunciations are the CMU Pronouncing Dictionary (`src/data/PRONUNCIATION-LICENSE`).
+
+---
+
+# Barsmith 5.9.0 — the rhyme reference, offline
+
+Barsmith has called itself "a writing gym, rhyme reference, and idea-capture tool" since
+5.2.0. Two of those three were true. Rhymes came from three Datamuse calls, which meant
+the feature a writer reaches for most was the only part of an offline-first app that
+needed a network — dead in airplane mode, dead on the subway, dead in a booth with no
+signal. That is now the app's own code, running on the device.
+
+## It answers a better question, too
+
+A flat list of perfect rhymes is a beginner's tool. The writers this is built for work in
+*multis* — runs where the vowels line up across two, three, four syllables and the
+consonants are free to drift. So results are grouped by what kind of rhyme they are:
+
+| Group | What it means | Example |
+| --- | --- | --- |
+| **Perfect** | the stressed tail lands whole | `nation` / `station` |
+| **Multi** | 2+ syllables agree, offset from the stress | `sacrament` / `detriment` |
+| **Slant** | the vowel holds, the consonants bend | `silver` / `pilfer` |
+| **Assonance** | the vowel run matches, consonants free | `hostile` / `gospel` |
+
+What that looks like on the words people say cannot be rhymed:
+
+```
+orange      slant      lozenge, challenge, scavenge, damage, image, knowledge, language
+silver      slant      pilfer, river, liver, giver, quiver, shiver, sliver, differ
+month       slant      once, seventh, eleventh, corinth, millionth, billionth
+laboratory  multi      mandatory, statutory, lavatory, transitory, excretory, dilatory
+```
+
+`month` and `orange` return **no perfect rhymes**, because they have none — the engine
+says so rather than padding the list. It still hands over the near misses that actually
+get used.
+
+## Four judgements that were wrong first
+
+The unit of comparison is the **rime**: a vowel plus every consonant up to the next vowel.
+Comparing rime-by-rime from the end sidesteps the alignment problem a raw phoneme walk
+has, where `cat` and `cast` fall out of step on the coda and score as unrelated. Past
+that, four decisions each started out wrong, and each now has a test pinning it:
+
+- **Match against the query's stress, not the candidate's.** Keying every word by where
+  its own primary stress falls meant `time` and `lifetime` got different keys and never
+  met. A rhyme is the query's stressed tail reappearing at the end of another word; where
+  that word carries its own main stress is not the query's business.
+- **Weight the final consonant hardest.** Averaging coda positions evenly scored `orange`
+  against `government` as a rhyme, on the strength of a shared `N`, even though `JH` and
+  `T` have nothing in common.
+- **Treat secondary stress as a wildcard.** CMU writes `lifetime`'s full `AY2` and
+  `company`'s reduced word-final `IY2` identically. Demanding an answer breaks `money` /
+  `company` to fix `time` / `lifetime`, or the reverse.
+- **A run of unstressed schwas is not assonance.** Schwa is the most common vowel in
+  English, so before the stress test `cinema` came back with `london`, `services` and
+  `available`.
+
+## Every prompt is pronounceable
+
+Tap-to-Lock sends the prompt straight to the engine, so a bank word the payload cannot
+pronounce is a dead panel on a word Barsmith itself chose. CMU is missing **151** of them.
+92 are derived by rule — compounds (`cashback` → `cash` + `back`, with the trailing
+stress demoted, because English says BACKstab not backSTAB) and Latinate forms
+(`weaponize` → `weaponization`). The remaining 59 are loanwords no rule can reach —
+`wasabi`, `quesadilla`, `didgeridoo`, `trebuchet` — hand-authored in
+`pronunciation-extra.json`. **The build fails if any bank word is left without one.**
+
+## Size, and where it sits
+
+Frequency alone turned out to be the wrong filter for what to carry: in the Zipf 2.0-2.5
+band, **44% of CMU's entries are surnames and brand names** — `borthwick`, `botelho`,
+`hesketh`, `cigna` — sitting right beside `curmudgeon`, `bollard`, `oleander` and
+`minaret`. So the test is "is this a word", answered by Webster's Second, plus a second
+clause for anything common enough today that a 1934 dictionary missing it proves nothing
+(`internet`, `podcast`, `emoji`, `vibe`).
+
+That lands at **41,257 words, 289KB gzipped**. It is fetched on first use rather than at
+start-up — the app's own bundle is 99KB and nothing on the idle screen needs a rhyme — and
+precached by the service worker, so it is there offline from the second visit on. Queries
+run in about **4ms**.
+
+The dictionary panel mid-session now shows the strongest kind of rhyme a word has and
+says which kind it is. Definitions still need the network; when it is gone the panel says
+so, and the rhymes are still right.
+
+## Verification
+
+- Automated tests: `154 passed` (22 new, against the real payload rather than a fixture)
+- Bank coverage: `5,414 / 5,414` prompts pronounceable, asserted in both build and tests
+- Verified in the browser with the network down: search and Tap-to-Lock both return rhymes
+- Device checklist, automated half: `7/7 passed` · `npm audit`: `0 vulnerabilities`
+
+Pronunciations are the CMU Pronouncing Dictionary, BSD-2-clause, notice shipped in
+`src/data/PRONUNCIATION-LICENSE`.
+
+---
+
 # Barsmith 5.8.1 — say what Level and Scheme mean, drop the rear camera
 
 ## Two settings labelled with bare numbers
