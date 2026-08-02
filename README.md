@@ -340,6 +340,22 @@ The automated suite covers:
 - every hashed asset, and every manifest icon, appearing in the generated
   service-worker precache
 
+## Beta testing
+
+`docs/BETA-TESTING.md` is the tester-facing guide — written to be pasted into a DM or a
+group chat rather than read as documentation. It covers the iOS install (which has to be
+Safari, and has to be launched from the icon), the backup warning that matters most
+(work lives on one device and nothing else has a copy), a suggested arc rather than a
+script, and the specific questions worth answering.
+
+Two things in it are deliberate. It says plainly that *"forgot about it after day 3"* is
+the most useful thing a tester can report, because that is the answer people withhold to
+be polite and it is the one the whole retention thesis turns on. And it lists the known
+rough edges up front, so nobody spends their goodwill reporting a gap that is already on
+the list.
+
+Fill in the reporting channel before sending it — there is a marked placeholder.
+
 ## Final real-device checks
 
 Browser automation cannot substitute for hardware-specific media/audio behavior. Before replacing production, run one preview deployment through this on both an iPhone (Safari) and an Android phone (Chrome) where possible — mark each box, note the device/OS version next to any failure, and don't ship until every box is checked on at least one real iOS device and one real Android device.
