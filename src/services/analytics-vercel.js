@@ -14,6 +14,8 @@
 // would pollute the numbers the whole exercise exists to produce.
 // ─────────────────────────────────────────────
 
+import { analyticsEnabled } from './analytics';
+
 const SCRIPT = '/_vercel/insights/script.js';
 
 let ready = false;
@@ -42,6 +44,12 @@ export function createVercelProvider() {
   const host = window.location.hostname;
   const isLocal = host === 'localhost' || host === '127.0.0.1' || host.endsWith('.local');
   if (isLocal || import.meta.env?.DEV) return () => {};
+
+  // Checked HERE and not only in track(). Vercel's script records a pageview the moment
+  // it loads, so injecting it and relying on the per-event gate downstream would count
+  // someone who has opted out — the one thing the opt-out exists to prevent. Injection
+  // is itself an act of tracking, so it needs the same permission every event does.
+  if (!analyticsEnabled()) return () => {};
 
   // The queue stub Vercel's script expects to find already present.
   window.va = window.va || function (...args) { (window.vaq = window.vaq || []).push(args); };
