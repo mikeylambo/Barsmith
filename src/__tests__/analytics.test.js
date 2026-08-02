@@ -109,6 +109,29 @@ describe('off means off', () => {
   });
 });
 
+describe('the provider itself asks permission before loading', () => {
+  it('injects no script at all when opted out', async () => {
+    // Vercel's script records a pageview the moment it loads, so gating only the
+    // per-event send would still count someone who opted out — injection is itself an
+    // act of tracking. Found by noticing the script tag was unconditional.
+    saveAnalyticsOptOut(true);
+    const before = document.querySelectorAll('script[src*="insights"]').length;
+    const { createVercelProvider } = await import('../services/analytics-vercel.js');
+    const send = createVercelProvider();
+    send('app_open', {});
+    expect(document.querySelectorAll('script[src*="insights"]').length).toBe(before);
+  });
+
+  it('injects nothing on localhost either, opted in or not', async () => {
+    saveAnalyticsOptOut(false);
+    const before = document.querySelectorAll('script[src*="insights"]').length;
+    const { createVercelProvider } = await import('../services/analytics-vercel.js');
+    createVercelProvider()('app_open', {});
+    // jsdom serves from localhost, which is the same guard real local dev relies on.
+    expect(document.querySelectorAll('script[src*="insights"]').length).toBe(before);
+  });
+});
+
 describe('install date', () => {
   it('is recorded once and then held steady', () => {
     const first = firstOpenDay();
