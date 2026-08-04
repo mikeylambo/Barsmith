@@ -85,7 +85,7 @@ export default function SettingsScreen({ resetToIdle, hapticsOn, setHapticsOn })
         </div>
 
         <p className="text-[10px] text-gray-700 text-center leading-relaxed">
-          Your work lives in the Vault — back it up there.
+          Your work lives on this device — back it up from Saved Words.
         </p>
       </div>
     </div>

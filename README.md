@@ -29,8 +29,8 @@ anywhere, which makes export the only way work leaves the app. There are three, 
 - **Bars as text** (`.txt`) — Summary offers *Copy All Bars* and *Export .txt* for the
   session you just finished; History offers *Export All Bars* for the whole archive and
   *Copy All* per session. This is the one you open in a notes app, a lyric doc, or a DAW.
-- **Backup** (`.json`) — from the Vault screen. Restores Barsmith itself (history, vault,
-  personal words, preferences) on this or another device. Nothing else reads it.
+- **Backup** (`.json`) — from the Saved Words screen. Restores Barsmith itself (history, saved
+  words, your own words, preferences) on this or another device. Nothing else reads it.
 
 ### Bar cards
 
@@ -138,9 +138,8 @@ than one that offers fewer. Single words only, for readability's sake.
   meaning — a panel showing only the first sense hides the half that makes the bar. The
   network entry still wins when there is one; the local copy is what makes the panel work
   without it. WordNet is Princeton's; notice in `src/data/DEFINITION-LICENSE`.
-- **Vault rows carry their own shape** — syllables, and how much there is to rhyme with —
-  so a writer scanning saved words can see which are rich and which are dead ends without
-  opening any of them. `orange` reads *2 syl · slant only*.
+- **Saved Words rows** carried a syllable count and rhyme census for a while. Removed:
+  it was engine output dressed as a feature, interesting to build and noise to read.
 
 Both payloads are warmed on `requestIdleCallback` after first paint. They are kept out of
 the main bundle so the idle screen stays fast, but the moment they are needed — a writer
@@ -220,7 +219,7 @@ a writer does not need prompting for.
 ## The training log
 
 `ProgressScreen` is the evidence behind the "writing gym" claim: bars written, time
-trained, a 52-week consistency grid, weekly volume, vocabulary breadth, and personal
+trained, five weeks of practice at a glance, weekly volume, vocabulary breadth, and personal
 bests. Everything is computed on-device from data already stored.
 
 The consistency grid covers a full year because practice days are retained for 400 — a

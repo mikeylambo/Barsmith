@@ -68,7 +68,7 @@ export default function IdleScreen({
             <span className="text-gray-500">◷</span> History
           </button>
           <button onClick={() => setAppState('vault')} className="bg-white/5 border border-white/8 px-3 py-2.5 rounded-full text-xs font-bold text-gray-300 hover:text-white hover:bg-white/10 flex items-center justify-center gap-1.5 transition-all active:scale-95">
-            <span className="text-yellow-500">★</span> Vault {vault.length}
+            <span className="text-yellow-500">★</span> Saved {vault.length}
           </button>
         </div>
       </div>

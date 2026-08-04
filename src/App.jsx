@@ -467,7 +467,7 @@ function App() {
       {navState === 'progress' && (
         <ProgressScreen
           resetToIdle={resetToIdle} totals={totals} sessionHistory={sessionHistory}
-          practiceDays={practiceDays} vault={vault} streak={streak} dailyCount={daily.count}
+          practiceDays={practiceDays} vault={vault} streak={streak}
         />
       )}
 

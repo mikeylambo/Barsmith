@@ -38,7 +38,7 @@ can't recover it, because I never had it.
 
 So once you've written something you'd be annoyed to lose:
 
-> **Vault → Export Backup** → save the `.json` somewhere (Files, Drive, email it to
+> **Saved Words → Export Backup** → save the `.json` somewhere (Files, Drive, email it to
 > yourself). *Restore Backup* on the same screen brings it all back.
 
 Do this once a week. Takes five seconds. I'd rather nag you now than apologise later.
@@ -63,13 +63,13 @@ Monday's Foundations, Friday's Sprint, Sunday's Endurance. Just tap it and go.
 decisions before you can write.
 
 **Days 10+ — check Progress.** Tap the flame, or the Progress button. Bars written,
-time trained, vocabulary breadth, a year-long consistency grid. Tell me whether any of
+time trained, vocabulary breadth, five weeks of practice at a glance. Tell me whether any of
 it makes you want to keep the streak alive, or whether it's just numbers.
 
 **At some point, try:**
 - **Rhyme Search** (the ◎ button) — type any word, including one you think has no
   rhyme. `orange`, `silver`, `month`, `purple`. It runs entirely on your phone.
-- **Your Words** — Vault → add your own vocabulary. Names, slang, places. They start
+- **Your Words** — Saved Words → add your own vocabulary. Names, slang, places. They start
   showing up in your sessions.
 - **Airplane mode.** Turn it on and open the app. Everything except word *definitions*
   should still work — rhymes, sessions, the lot.
@@ -123,7 +123,7 @@ Generic feedback doesn't help much. These do:
 
 ## 6. What gets sent
 
-**Nothing you write.** Not a bar, not a vault word, not a rhyme search. Ever.
+**Nothing you write.** Not a bar, not a saved word, not a rhyme search. Ever.
 
 Barsmith does send anonymous counts — that a session happened, roughly how long,
 roughly how many bars, whether it came from the daily card. No account, no cookies,

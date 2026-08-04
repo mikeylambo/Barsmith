@@ -20,7 +20,7 @@ export default function VaultScreen({
       <div className="w-full mt-6 max-w-2xl">
         <div className="flex items-center gap-4 mb-6">
           <button onClick={resetToIdle} aria-label="Back to home" className="w-10 h-10 shrink-0 bg-white/5 rounded-full flex items-center justify-center border border-white/5 hover:bg-white/10 transition-all">←</button>
-          <h2 className="text-3xl font-black tracking-tighter uppercase">Vault</h2>
+          <h2 className="text-3xl font-black tracking-tighter uppercase">Saved Words</h2>
         </div>
         {vault.length > 0 && (
           <button disabled={startBlocked} onClick={startVaultDrill} className={`w-full mb-5 py-4 rounded-2xl border text-sm font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${startBlocked ? 'bg-yellow-500/5 border-yellow-500/20 text-yellow-400 cursor-not-allowed' : 'bg-white/4 border-white/8 text-white hover:bg-white/8 active:scale-95'}`}>
@@ -71,15 +71,15 @@ export default function VaultScreen({
             <input type="file" accept="application/json" ref={importFileRef} onChange={handleImportFile} className="hidden" />
           </div>
           {importMsg && <p className="text-[10px] text-gray-500 mt-3 uppercase tracking-widest font-bold">{importMsg}</p>}
-          <p className="text-[10px] text-gray-700 mt-3">Saves your vault, history, custom words, and streak to a file you control.</p>
+          <p className="text-[10px] text-gray-700 mt-3">Saves your saved words, history, own words, and streak to a file you control.</p>
         </div>
 
 
         {vault.length === 0 && (
           <div className="text-center py-16 text-gray-700">
             <p className="text-4xl mb-4 opacity-40">☆</p>
-            <p className="font-black uppercase tracking-widest text-sm">Vault is empty</p>
-            <p className="text-xs mt-2 text-gray-700">Star words during sessions to save them here.</p>
+            <p className="font-black uppercase tracking-widest text-sm">Nothing saved yet</p>
+            <p className="text-xs mt-2 text-gray-700">Star a word during a session to keep it here.</p>
           </div>
         )}
         <div className="flex flex-col gap-2">

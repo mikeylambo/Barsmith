@@ -41,14 +41,12 @@ function Section({ title, aside, children }) {
 }
 
 export default function ProgressScreen({
-  resetToIdle, totals, sessionHistory, practiceDays, vault, streak, dailyCount,
+  resetToIdle, totals, sessionHistory, practiceDays, vault, streak,
 }) {
   const p = useMemo(
     () => computeProgress({ totals, history: sessionHistory, practiceDays, vault }),
     [totals, sessionHistory, practiceDays, vault],
   );
-
-  const peakWeek = Math.max(1, ...p.weeks.map(w => w.bars));
 
   // Five weeks. Ten fitted, but seventy bars across a phone are hairlines — legible as a
   // texture, useless as "did I train on Thursday". The full 52 weeks are still computed
@@ -127,37 +125,6 @@ export default function ProgressScreen({
                   <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest mb-1">Longest streak</p>
                   <p className="text-white font-black text-lg tabular-nums">{p.longestStreak} {p.longestStreak === 1 ? 'day' : 'days'}</p>
                 </div>
-                {/* Distinct from the streak on purpose: a writer can practise every day for
-                    a month on freeform sessions and never complete a prescribed one. This
-                    is the number that says whether they follow the programme. */}
-                <div className="flex-1">
-                  <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest mb-1">Programme</p>
-                  <p className="text-white font-black text-lg tabular-nums">{dailyCount || 0}</p>
-                </div>
-              </div>
-            </Section>
-
-            <Section
-              title="Volume"
-              aside={<span className="text-[10px] font-black uppercase tracking-widest text-gray-600">Bars · 12 weeks</span>}
-            >
-              <div className="flex items-end gap-1.5 h-32">
-                {p.weeks.map((w, i) => (
-                  <div key={i} className="flex-1 flex flex-col justify-end items-center h-full group">
-                    <span className="text-[9px] font-black text-gray-600 tabular-nums mb-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {w.bars || ''}
-                    </span>
-                    <div
-                      className={`w-full rounded-sm ${w.bars ? 'bg-white/80' : 'bg-white/[0.06]'}`}
-                      style={{ height: `${w.bars ? Math.max(4, (w.bars / peakWeek) * 100) : 3}%` }}
-                      title={`Week of ${w.start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} — ${w.bars} ${w.bars === 1 ? 'bar' : 'bars'}`}
-                    />
-                  </div>
-                ))}
-              </div>
-              <div className="flex justify-between mt-3 text-[9px] font-black uppercase tracking-widest text-gray-700">
-                <span>{p.weeks[0]?.start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                <span>This week</span>
               </div>
             </Section>
 
