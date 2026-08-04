@@ -1,3 +1,59 @@
+# Barsmith 5.13.0 — recordings you can actually watch
+
+Four things from a real iPhone, three of them about media.
+
+## The recording was a .webm
+
+Fixed, and the fix is a one-line reorder that matters more than it looks. The codec
+preference asked for WebM first and MP4 last. Safari has since gained WebM recording, so
+iOS happily produced a `.webm` — **a file Photos cannot open, cannot preview, and will
+not accept into the camera roll.** A recording nobody can watch is not a recording.
+
+MP4 is now asked for first. Every browser that records at all can do H.264 in MP4; WebM
+stays as the fallback for the ones that cannot.
+
+## It went to Files, not Photos
+
+A plain download link always lands in Files on iOS. The share sheet is the only route
+Apple gives a web app to Photos, and it is the same seam the bar card already uses — so
+*Save Recording* now goes through it. Tap it, then *Save Video*.
+
+## No way to check the take
+
+There is now a **player on the Summary screen**. Watch it back before deciding whether to
+keep it. Previously the only way to see a take was to export it, which on a phone means
+leaving the app — so nobody checked whether the framing or the audio were any good until
+the session was already over.
+
+## Saving a card opened the file browser first
+
+This one was a real bug with a non-obvious cause. iOS decides which actions to promote
+from **what the share payload contains**: files alone reads as *"share this image"* and
+puts Save Image near the front, while adding a `text` caption makes it a generic share
+and promotes *Save to Files* instead.
+
+Barsmith was attaching the bar's own words as a caption. Removing it is the whole fix —
+the share sheet now opens on the image actions. Pinned by a test, for both images and
+video, because nothing in a browser would have caught it.
+
+## Metronome volume
+
+A click you cannot turn down is one you turn off. **Settings → Metronome**, 0 to 100%,
+persisted. Silent still keeps the bar grid running, so words change on the beat while you
+work over your own instrumental — which is the case that prompted it.
+
+## Verification
+
+- Automated tests: `170 passed` (2 new, on the share payload)
+- Confirmed the recorder asks for MP4 before WebM, and that both `shareImage` and
+  `shareFile` hand `navigator.share` a files-only payload
+
+Everything else on the device pass came back clean: permission denial, front camera, BPM
+and metronome, keyboard-open scrolling, safe-area in portrait and landscape, the share
+sheet itself, and an Airplane-mode cold boot.
+
+---
+
 # Barsmith 5.12.0 — the beta build
 
 Thirteen notes from a real phone, and one thing runs through most of them: the app was

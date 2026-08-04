@@ -3,6 +3,8 @@ import { BeatScheduler } from '../services/audio-clock';
 import { getNextWords as getNextWordsService } from '../services/wordbank';
 import { fetchDictData as fetchDictDataService } from '../services/dictionary';
 import { haptic } from '../services/haptic';
+import { shareFile } from '../services/share';
+import { dateStamp } from '../services/download';
 import { saveDraft, clearDraft, recordPracticeDay } from '../services/storage';
 
 /**
@@ -18,6 +20,7 @@ export function useSessionEngine({
   selectedTier, wordCount, intervalMs, isMetronomeOn,
   bpmMode, bpm, barsPerWord, customWords, sessionLimit,
   beatAudioSrc, audioPlayerRef, vault, recoveredDraft,
+  metronomeVolume = 1,
   onSessionComplete,
 }) {
   const [appState, setAppState] = useState('idle'); // idle | active | vault-drill | summary
@@ -169,7 +172,17 @@ export function useSessionEngine({
   }, [appState]);
 
   // ── Audio ──
+  // Read from a ref so a volume change lands on the very next click rather than after
+  // the session loop happens to re-create its interval.
+  const metronomeVolumeRef = useRef(metronomeVolume);
+  useEffect(() => {
+    metronomeVolumeRef.current = metronomeVolume;
+    if (beatSchedulerRef.current) beatSchedulerRef.current.volume = metronomeVolume;
+  }, [metronomeVolume]);
+
   const playTick = (freq = 800, vol = 0.45, dur = 0.08) => {
+    if (metronomeVolumeRef.current <= 0) return;
+    vol *= metronomeVolumeRef.current;
     const ctx = audioCtxRef.current;
     if (!ctx) return;
     if (ctx.state === 'suspended') ctx.resume();
@@ -227,6 +240,7 @@ export function useSessionEngine({
       setIsResumeCountIn(resuming);
 
       if (!beatSchedulerRef.current) beatSchedulerRef.current = new BeatScheduler(ctx, {});
+      beatSchedulerRef.current.volume = metronomeVolumeRef.current;
       beatSchedulerRef.current.callbacks = {
         onBeat: ({ beatIndexInBar }) => {
           setCurrentBeat(beatIndexInBar);
@@ -313,7 +327,13 @@ export function useSessionEngine({
         audio: true,
       });
       cameraStreamRef.current = stream;
-      const mimeType = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm', 'video/mp4']
+      // MP4 first, and this order is load-bearing rather than a preference. Safari
+      // gained WebM recording, so asking for WebM first meant iOS happily produced a
+      // .webm — a file Photos cannot open, cannot preview, and will not accept into the
+      // camera roll. A recording nobody can watch is not a recording. Every browser that
+      // records at all can do H.264 in MP4; WebM stays as the fallback for the ones that
+      // cannot.
+      const mimeType = ['video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm']
         .find(t => MediaRecorder.isTypeSupported(t)) || '';
       // Fix: read the browser's resolved type from rec.mimeType after construction,
       // and update again on each data chunk, so the Blob extension matches the actual
@@ -347,12 +367,18 @@ export function useSessionEngine({
     cameraStreamRef.current = null;
     if (_cameraPreviewRef.current) _cameraPreviewRef.current.srcObject = null;
   };
+  /**
+   * Hand the recording to the OS share sheet, or download it where that is unavailable.
+   *
+   * A plain download link puts the file in Files on iOS, which is the wrong place: the
+   * writer wants to watch it back, and Photos is where video lives. The share sheet is
+   * the only route there, and it is the same seam the bar card uses — so this must not
+   * await anything before calling it, or Safari drops the user gesture.
+   */
   const downloadRecording = () => {
-    if (!recordingBlob) return;
+    if (!recordingBlob) return 'failed';
     const ext = recordingBlob.type.includes('mp4') ? 'mp4' : 'webm';
-    const url = URL.createObjectURL(recordingBlob), a = document.createElement('a');
-    a.href = url; a.download = `barsmith-${Date.now()}.${ext}`; a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    return shareFile(recordingBlob, `barsmith-${dateStamp()}.${ext}`, 'video/mp4');
   };
 
   // ── Session start / stop ──

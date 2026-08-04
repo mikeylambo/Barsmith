@@ -60,6 +60,11 @@ function App() {
   const [bpmMode, setBpmMode] = useState(_prefs.bpmMode || false);
   const [barsPerWord, setBarsPerWord] = useState(_prefs.barsPerWord || 2);
   const [sessionLimit, setSessionLimit] = useState(() => loadSessionLimit());
+  // 0 silences the click without turning the grid off, which is what a writer running a
+  // tempo session over their own beat actually wants.
+  const [metronomeVolume, setMetronomeVolume] = useState(
+    typeof _prefs.metronomeVolume === 'number' ? _prefs.metronomeVolume : 0.7,
+  );
 
   const fileInputRef = useRef(null);
   const audioPlayerRef = useRef(null);
@@ -211,8 +216,8 @@ function App() {
   useEffect(() => { saveSessionLimit(sessionLimit); }, [sessionLimit]);
   useEffect(() => { saveCustomWords(customWords); }, [customWords]);
   useEffect(() => {
-    savePrefs({ tier: selectedTier, interval: intervalMs, bpm, bpmMode, barsPerWord, wordCount, hapticsOn });
-  }, [selectedTier, intervalMs, bpm, bpmMode, barsPerWord, wordCount, hapticsOn]);
+    savePrefs({ tier: selectedTier, interval: intervalMs, bpm, bpmMode, barsPerWord, wordCount, hapticsOn, metronomeVolume });
+  }, [selectedTier, intervalMs, bpm, bpmMode, barsPerWord, wordCount, hapticsOn, metronomeVolume]);
 
   // Beat-URL cleanup runs whenever the beat changes (load/remove), NOT on unmount — the
   // engine owns its own true-unmount cleanup separately (see useSessionEngine), since
@@ -231,7 +236,7 @@ function App() {
   const engine = useSessionEngine({
     selectedTier, wordCount, intervalMs, isMetronomeOn,
     bpmMode, bpm, barsPerWord, customWords, sessionLimit,
-    beatAudioSrc, audioPlayerRef, vault, recoveredDraft,
+    beatAudioSrc, audioPlayerRef, vault, recoveredDraft, metronomeVolume,
     onSessionComplete: (rec) => {
       setSessionHistory(prev => [rec, ...prev].slice(0, 100));
       setPracticeDays(loadPracticeDays());
@@ -438,7 +443,7 @@ function App() {
         <SummaryScreen
           latestSession={latestSession} sessionDuration={engine.sessionDuration} totalWordsSeen={engine.totalWordsSeen}
           bpmMode={bpmMode} bpm={bpm} intervalMs={intervalMs}
-          recordingAvailable={engine.recordingAvailable} downloadRecording={engine.downloadRecording}
+          recordingAvailable={engine.recordingAvailable} recordingBlob={engine.recordingBlob} downloadRecording={engine.downloadRecording}
           frozenWords={engine.frozenWords} vault={vault} toggleVault={toggleVault}
           fetchDictData={engine.fetchDictData} dictData={engine.dictData} isLoadingDict={engine.isLoadingDict}
           fmtDur={fmtDur} flattenNotes={flattenNotes} copyNoteText={copyNoteText} copiedNoteKey={copiedNoteKey}
@@ -472,7 +477,10 @@ function App() {
       )}
 
       {navState === 'settings' && (
-        <SettingsScreen resetToIdle={resetToIdle} hapticsOn={hapticsOn} setHapticsOn={setHapticsOn} />
+        <SettingsScreen
+          resetToIdle={resetToIdle} hapticsOn={hapticsOn} setHapticsOn={setHapticsOn}
+          metronomeVolume={metronomeVolume} setMetronomeVolume={setMetronomeVolume}
+        />
       )}
 
       {/* RC4 FIX 5: Global recording indicator — always visible regardless of current screen.

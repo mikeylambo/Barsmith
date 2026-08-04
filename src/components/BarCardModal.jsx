@@ -53,7 +53,7 @@ export default function BarCardModal({ bar, word, onClose }) {
 
   const handleShare = async () => {
     if (!blobRef.current) return;
-    const result = await shareImage(blobRef.current, filename, { text: bar });
+    const result = await shareImage(blobRef.current, filename);
     if (result === 'downloaded') setOutcome('Saved to your device.');
     else if (result === 'failed') setOutcome('Could not share — try Save Image.');
     else setOutcome(''); // shared or cancelled: the OS already gave feedback

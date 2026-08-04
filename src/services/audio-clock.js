@@ -40,7 +40,16 @@ export class BeatScheduler {
     this.pendingOscillators = [];
   }
 
+  /**
+   * Master click volume, 0 to 1. Set from the writer's setting rather than baked in:
+   * a metronome you cannot turn down is one you turn off, and the count-in is worth
+   * keeping even when the ongoing click is not.
+   */
+  volume = 1;
+
   playTickAt(when, freq, vol, dur = 0.08) {
+    if (this.volume <= 0) return;
+    vol *= this.volume;
     const ctx = this.ctx;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
