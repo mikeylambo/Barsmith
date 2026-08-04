@@ -151,7 +151,7 @@ const browser = await chromium.launch(EXE ? { executablePath: EXE } : {});
     `${txt.suggestedFilename()} contains the written bar`);
 
   await page.getByRole('button', { name: 'New Session' }).click();
-  await page.getByRole('button', { name: /Vault/ }).click();
+  await page.getByRole('button', { name: /Saved/ }).click();
   const [json] = await Promise.all([
     page.waitForEvent('download', { timeout: 8000 }),
     page.getByRole('button', { name: /Export Backup/i }).click(),
@@ -164,7 +164,7 @@ const browser = await chromium.launch(EXE ? { executablePath: EXE } : {});
   await page.reload({ waitUntil: 'networkidle' });
   await page.evaluate(() => localStorage.setItem('barsmithHasSeenInfo', '1'));
   await page.reload({ waitUntil: 'networkidle' });
-  await page.getByRole('button', { name: /Vault/ }).click();
+  await page.getByRole('button', { name: /Saved/ }).click();
   await page.locator('input[type=file]').last().setInputFiles(backupPath);
   await page.waitForTimeout(1200);
   await page.getByRole('button', { name: 'Back to home' }).click();

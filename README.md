@@ -219,13 +219,22 @@ a writer does not need prompting for.
 ## The training log
 
 `ProgressScreen` is the evidence behind the "writing gym" claim: bars written, time
-trained, five weeks of practice at a glance, weekly volume, vocabulary breadth, and personal
-bests. Everything is computed on-device from data already stored.
+trained, five weeks of practice, vocabulary breadth, streaks, and personal bests.
+Everything is computed on-device from data already stored.
 
-The consistency grid covers a full year because practice days are retained for 400 — a
-shorter window would discard record a writer had already earned. Fifty-two columns
-cannot fit a phone at a legible cell size, so it scrolls horizontally and opens at the
-right-hand edge, since recent weeks are what someone opens it to see.
+Practice is drawn as a **level meter** — one bar per day, full height where work
+happened — rather than the year of squares it started as. Fifty-two squares is a GitHub
+contribution graph, and everyone who has seen a repository recognises it, which made a
+writing tool look like a side effect of how it was built. Five weeks rather than ten
+because seventy bars on a phone are hairlines: legible as a texture, useless for "did I
+train on Thursday". The full 52 weeks are still computed and still drive days-trained and
+the longest streak.
+
+Two panels were removed rather than fixed. **Programme** counted completed daily
+prescriptions as distinct from the streak, which counts any session — a real difference,
+and one nobody can infer from the word; the question it answered is now an analytics
+question. **Volume** was bars-per-week over twelve weeks: empty for a new writer's first
+month, and answering roughly what the level meter above it already showed.
 
 One thing here is load-bearing. **Cumulative figures come from `barsmithTotals`, never
 from `sessionHistory`.** History is capped at 100 sessions, so lifetime bars derived
