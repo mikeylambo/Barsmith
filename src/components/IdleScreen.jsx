@@ -39,6 +39,7 @@ export default function IdleScreen({
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-3">
             <button onClick={() => setShowInfo(true)} aria-label="How to Smith — help" className="w-8 h-8 rounded-full border border-white/15 text-white/40 text-xs font-bold hover:bg-white/8 hover:text-white transition-all flex items-center justify-center shrink-0">?</button>
+            <button onClick={() => setAppState('settings')} aria-label="Settings" className="w-8 h-8 rounded-full border border-white/15 text-white/40 text-sm hover:bg-white/8 hover:text-white transition-all flex items-center justify-center shrink-0">⚙</button>
             <h1 className="text-3xl md:text-5xl font-black tracking-tighter uppercase">
               <span className="text-white">BAR</span><span className="text-slate-600">SMITH</span>
             </h1>
@@ -144,10 +145,6 @@ export default function IdleScreen({
                 Camera not supported
               </div>
             )}
-            <button onClick={() => setHapticsOn(!hapticsOn)} aria-pressed={hapticsOn} className="w-full py-3 px-4 rounded-xl border border-white/8 bg-white/4 text-xs font-bold uppercase tracking-widest flex items-center justify-between text-gray-400 hover:text-gray-200 hover:bg-white/8 transition-all">
-              <span>Haptics</span>
-              <span className={hapticsOn ? 'text-white' : 'text-gray-700'}>{hapticsOn ? 'On' : 'Off'}</span>
-            </button>
           </div>
         </div>
 

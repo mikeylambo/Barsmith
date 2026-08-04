@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
+  <!-- user-scalable=no: this is an app surface, not a document. Pinch-zoom let the whole
+       UI be dragged out of frame mid-session, and nothing here is small enough to need it.
+       Text still scales with the OS accessibility setting, which is the accessible route. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
 
   <title>Barsmith — A Writing Gym for Serious Hip-Hop Writers</title>
   <meta name="description" content="A writing gym, rhyme reference, and idea-capture tool for serious hip-hop writers. Timed word drills on a real BPM grid, full rhyme maps, and a Bar Pad that keeps everything you write. Works offline and stores nothing off your device." />

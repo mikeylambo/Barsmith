@@ -128,7 +128,6 @@ export default
                   onChange={e => { noteLiveRef.current = e.target.value; setNote(e.target.value); }}
                   placeholder={`Write a bar with "${word}"…`}
                   rows={3}
-                  autoFocus
                   className="w-full bg-transparent px-4 py-3 text-gray-200 text-sm leading-relaxed placeholder-gray-700 font-medium"
                 />
                 {priorEntries.length > 0 && (

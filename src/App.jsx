@@ -34,6 +34,7 @@ import SummaryScreen from './components/SummaryScreen.jsx';
 import VaultScreen from './components/VaultScreen.jsx';
 import HistoryScreen from './components/HistoryScreen.jsx';
 import ProgressScreen from './components/ProgressScreen.jsx';
+import SettingsScreen from './components/SettingsScreen.jsx';
 import ActionBar from './components/ActionBar.jsx';
 
 function App() {
@@ -342,7 +343,7 @@ function App() {
   const [navScreen, setNavScreen] = useState('idle'); // idle | vault | history | progress
   const navState = engine.appState === 'idle' ? navScreen : engine.appState;
   const goTo = (screen) => {
-    if (screen === 'idle' || screen === 'vault' || screen === 'history' || screen === 'progress') {
+    if (screen === 'idle' || screen === 'vault' || screen === 'history' || screen === 'progress' || screen === 'settings') {
       setNavScreen(screen); engine.setAppState('idle');
     } else {
       engine.setAppState(screen);
@@ -468,6 +469,10 @@ function App() {
           resetToIdle={resetToIdle} totals={totals} sessionHistory={sessionHistory}
           practiceDays={practiceDays} vault={vault} streak={streak} dailyCount={daily.count}
         />
+      )}
+
+      {navState === 'settings' && (
+        <SettingsScreen resetToIdle={resetToIdle} hapticsOn={hapticsOn} setHapticsOn={setHapticsOn} />
       )}
 
       {/* RC4 FIX 5: Global recording indicator — always visible regardless of current screen.

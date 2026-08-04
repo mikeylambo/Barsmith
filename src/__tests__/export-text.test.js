@@ -87,7 +87,7 @@ describe('sessionToText', () => {
   });
 
   it('labels a vault drill and a recovered draft instead of a tier', () => {
-    expect(sessionToText(session({ source: 'vault' }))).toContain('Vault Drill');
+    expect(sessionToText(session({ source: 'vault' }))).toContain('Saved words');
     expect(sessionToText(session({ source: 'recovered' }))).toContain('Recovered draft');
   });
 

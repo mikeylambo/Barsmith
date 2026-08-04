@@ -273,7 +273,7 @@ default — the app already deploys there, it is cookieless, and the script come
 deployment's own origin — but replacing it is one file. Nothing runs on localhost or in
 development.
 
-The switch is in **Vault → Privacy**, next to Backup & Restore rather than buried, and
+The switch is on the **Settings** screen, reachable from the ⚙ in the home-screen header, and
 the How To carries the disclosure. Defaulting on is a real change to what the app
 promised, and the honest version of the promise is the one now in the copy: your writing
 never leaves the device.
@@ -468,7 +468,7 @@ public/
 - Sub-second text is persisted on `pagehide`/backgrounding before debounce can fire.
 - Session counts, frozen words, notes, and start time use synchronized live refs at finalization.
 - Timed sessions use an absolute deadline, so mobile timer throttling cannot extend a sprint.
-- New sessions and Vault Drills are blocked until recovered writing is saved or discarded.
+- New sessions and saved-word sessions are blocked until recovered writing is saved or discarded.
 - Dictionary requests use request IDs so a canceled lookup cannot clear a newer lookup's loading state.
 - Front-camera recording can be stopped from inside an active session.
 - Rhyme Search now URL-encodes input, cancels on unmount, removes duplicate entries, and avoids double haptics.
