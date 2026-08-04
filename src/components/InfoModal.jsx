@@ -1,22 +1,28 @@
 import { useEffect, useRef } from 'react';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 
-// The two settings that most need explaining are the two labelled with bare numbers —
-// a writer opening the app sees "Level: 1 2 3" and "Scheme: 1 2 3 4" with nothing
-// saying what either does. Both now lead here, and both carry a caption on the setup
-// screen itself.
+// The How To is the only place Barsmith gets to explain itself, and the first draft used
+// the room badly: eleven steps, several of them describing a control rather than a
+// reason to touch it, and a couple written for someone who already knew what the app was
+// ("practise to the actual time signature, not a vague timer" answers an objection
+// nobody has yet).
+//
+// Rewritten around what a writer needs in the order they need it. Two rules held
+// throughout: say what the thing is FOR, not what it does, and never explain a term the
+// screen itself does not use. Level and Scheme stay near the top because they are the
+// only controls labelled with bare numbers, and everything after them is optional.
 const STEPS = [
-  ['01','Session',     'Words rotate at your tempo. Rap over them. Build bars, find internal rhymes, discover new angles on familiar sounds.'],
-  ['02','Level',       'How heavy the words hit. Level 1 is single-syllable — short, concrete, fast to rhyme. Level 2 is two syllables. Level 3 is three or more, where you have to bend a phrase to make it land. Start at 1 to build speed, move up to build control. No level is the "real" one.'],
-  ['03','Scheme',      'How many words at once. 1 is a straight prompt. Set 2–4 and you get unrelated words drawn from across the levels at the same time — the work is bridging them into one punchline before the round ends. Harder than a bigger word, and where the craft lives.'],
-  ['04','Tap to Lock', 'Tap any word to freeze and pull its full rhyme family, syllable count, synonyms, and definition. Write a bar directly in the panel.'],
-  ['05','BPM Grid',    'Lock word changes to a real bar grid. Set BPM and bars-per-word — practice to the actual time signature, not a vague timer.'],
-  ['06','Session Timer','Set a 5–20 minute block. Session ends automatically with a summary. Serious writers work in timed sprints — this is that.'],
-  ['07','Rhyme Search','Type any word and get a full rhyme map bucketed by syllable count. Perfect, near, and phonetic matches. Tap to copy.'],
-  ['08','Your Words',  'Add personal vocabulary in the Vault — names, slang, places. They surface in your sessions. The tool becomes yours.'],
-  ['09','Vault Drill', "Your saved words become a custom session. Drill vocabulary you've claimed — words you know are yours."],
-  ['10','Record',      'Capture yourself while you write. Review the footage, clip the best moments, study your own flow.'],
-  ['11','Your Work Stays Here', 'Your bars live on this device and are never sent anywhere. Rhymes, syllables and definitions are worked out here too, so the whole reference runs offline. Barsmith sends anonymous counts — that a session happened, roughly how long — to tell which parts earn their place. Full detail and an off switch in Vault → Privacy.'],
+  ['01', 'The Session',  'A word lands. Build a bar around it before the next one arrives. That is the whole exercise — repeated until reaching for a rhyme stops being something you think about.'],
+  ['02', 'Level',        'How much word you get. 1 is single-syllable and quick to place. 2 is heavier. 3 is three syllables or more, where the bar has to bend to fit it. Start at 1 for speed, move up for control.'],
+  ['03', 'Scheme',       'How many words at once. Set 2 or more and they arrive together, unrelated, and the job is landing them all in one punchline. This is the hard version.'],
+  ['04', 'Tap a Word',   'Tap the word on screen to hold it there. You get everything it rhymes with, what it means, and somewhere to write — without losing the round.'],
+  ['05', 'Today',        'The card at the top has already picked a session for you. Different every day of the week. For when you have ten minutes and no appetite for choosing settings.'],
+  ['06', 'Rhymes',       'Search any word. Perfect rhymes, multis, slant, assonance — sorted by what kind they are, because they are not the same tool. Works with no signal.'],
+  ['07', 'Saved Words',  'Star a word to keep it. Saved words come back in your sessions, and you can run a session on nothing but those. Add your own too — names, slang, places.'],
+  ['08', 'Your Bars',    'Everything you write is kept. Take it out as text, or as an image built for posting. History has all of it.'],
+  ['09', 'Beat or Timer','Load an instrumental, run the metronome, or lock the words to a bar count at a set BPM. Or leave it silent and work off the clock.'],
+  ['10', 'Record',       'Capture yourself while you write, then watch it back. The bar you liked in your head is not always the one that landed.'],
+  ['11', 'It Stays Here','Your bars never leave this device — the rhymes and definitions are worked out on it too, so none of this needs a signal. Details and an off switch in Settings.'],
 ];
 
 export default function InfoModal({ onClose }) {

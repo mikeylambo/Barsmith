@@ -17,11 +17,11 @@ import { EVENTS, track } from '../services/analytics';
 // ─────────────────────────────────────────────
 
 const GROUPS = [
-  ['perfect',   'Perfect',   'text-green-400',  'The stressed tail lands whole.'],
-  ['multi',     'Multis',    'text-orange-400', 'Two or more syllables agree — the hardest to find, the best to use.'],
-  ['slant',     'Slant',     'text-blue-400',   'The vowel holds, the consonants bend.'],
-  ['assonance', 'Assonance', 'text-purple-400', 'The vowel run matches. Consonants are yours.'],
-  ['homophones','Homophones','text-gray-400',   'Same sound, different word.'],
+  ['perfect',    'Perfect',    'text-green-400'],
+  ['multi',      'Multis',     'text-orange-400'],
+  ['slant',      'Slant',      'text-blue-400'],
+  ['assonance',  'Assonance',  'text-purple-400'],
+  ['homophones', 'Homophones', 'text-gray-400'],
 ];
 export default
   function RhymeSearch({ onClose, vault = [], toggleVault }) {
@@ -103,15 +103,14 @@ export default
 
     // Within a kind, words are still grouped by syllable count — a writer looking to
     // close a four-syllable line does not want to read past every one-syllable option.
-    const RhymeGroup = ({ label, color, hint, words }) => {
+    const RhymeGroup = ({ label, color, words }) => {
       if (!words?.length) return null;
       const bySyllables = {};
       for (const r of words) (bySyllables[r.syllables] ||= []).push(r.word);
       const counts = Object.keys(bySyllables).sort((a, b) => Number(a) - Number(b));
       return (
         <div className="mb-7">
-          <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${color}`}>{label} <span className="text-gray-700">{words.length}</span></p>
-          <p className="text-[10px] text-gray-600 mb-3 leading-relaxed">{hint}</p>
+          <p className={`text-[10px] font-black uppercase tracking-widest mb-3 ${color}`}>{label} <span className="text-gray-700">{words.length}</span></p>
           {counts.map(n => (
             <div key={n} className="mb-3">
               <p className="text-[9px] text-gray-600 font-black uppercase tracking-widest mb-1.5">{n} syl.</p>
@@ -180,16 +179,12 @@ export default
               <div className="mb-1 flex items-baseline gap-3 flex-wrap">
                 <h2 className="text-2xl font-black uppercase tracking-tighter">{results.word}</h2>
                 <p className="text-gray-600 text-xs font-bold uppercase tracking-widest">
-                  {results.syllables} syl · rhymes on the last {results.stressedSyllablesFromEnd}
+                  {results.syllables} syl
                 </p>
               </div>
-              {/* Showing the pronunciation is not decoration: when a result looks wrong,
-                  this is what tells a writer whether the engine misheard the word or
-                  they are hearing a different accent than CMU transcribed. */}
-              <p className="text-[10px] text-gray-700 font-mono mb-1">{results.phonemes}</p>
               <p className="text-[10px] text-gray-600 mb-6 uppercase tracking-widest font-bold">Tap to copy · ☆ to save</p>
-              {GROUPS.map(([key, label, color, hint]) => (
-                <RhymeGroup key={key} label={label} color={color} hint={hint} words={results[key]} />
+              {GROUPS.map(([key, label, color]) => (
+                <RhymeGroup key={key} label={label} color={color} words={results[key]} />
               ))}
               {GROUPS.every(([key]) => !results[key]?.length) && (
                 <p className="text-gray-600 text-center py-8">Nothing rhymes with “{results.word}”. That is rarer than it sounds — and worth a bar.</p>

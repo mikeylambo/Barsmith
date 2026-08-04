@@ -11,7 +11,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   barsInSession, addSessionToTotals, seedTotals, longestStreak,
-  consistencyGrid, weeklyVolume, computeProgress,
+  consistencyGrid, computeProgress,
 } from '../services/progress.js';
 import { EMPTY_TOTALS } from '../services/storage.js';
 
@@ -163,40 +163,6 @@ describe('consistencyGrid', () => {
     const grid = consistencyGrid([], { today, weeks: 4 });
     expect(grid[0].date < grid[grid.length - 1].date).toBe(true);
     expect(grid[grid.length - 1].date >= today).toBe(true);
-  });
-});
-
-describe('weeklyVolume', () => {
-  const today = new Date(2026, 6, 30);
-  const at = (daysAgo, notes) => session({
-    id: daysAgo,
-    date: new Date(2026, 6, 30 - daysAgo).toISOString(),
-    notes,
-  });
-
-  it('buckets bars into the week they were written', () => {
-    const weeks = weeklyVolume([at(0, { a: { x: 'one' } }), at(1, { b: { y: 'two' } })], { today, weeks: 12 });
-    expect(weeks).toHaveLength(12);
-    expect(weeks[11].bars).toBe(2); // both land in the current week
-    expect(weeks[10].bars).toBe(0);
-  });
-
-  it('separates sessions that fall in different weeks', () => {
-    const weeks = weeklyVolume([at(0, { a: { x: 'one' } }), at(9, { b: { y: 'two' } })], { today, weeks: 12 });
-    expect(weeks[11].bars).toBe(1);
-    expect(weeks.slice(0, 11).reduce((n, w) => n + w.bars, 0)).toBe(1);
-  });
-
-  it('ignores sessions older than the window and unparseable dates', () => {
-    const weeks = weeklyVolume(
-      [at(400, { a: { x: 'ancient' } }), session({ date: 'nonsense', notes: { a: { x: 'bad' } } })],
-      { today, weeks: 12 },
-    );
-    expect(weeks.reduce((n, w) => n + w.bars, 0)).toBe(0);
-  });
-
-  it('returns empty buckets rather than throwing on no history', () => {
-    expect(weeklyVolume(undefined, { today }).every(w => w.bars === 0)).toBe(true);
   });
 });
 

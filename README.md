@@ -29,8 +29,8 @@ anywhere, which makes export the only way work leaves the app. There are three, 
 - **Bars as text** (`.txt`) — Summary offers *Copy All Bars* and *Export .txt* for the
   session you just finished; History offers *Export All Bars* for the whole archive and
   *Copy All* per session. This is the one you open in a notes app, a lyric doc, or a DAW.
-- **Backup** (`.json`) — from the Vault screen. Restores Barsmith itself (history, vault,
-  personal words, preferences) on this or another device. Nothing else reads it.
+- **Backup** (`.json`) — from the Saved Words screen. Restores Barsmith itself (history, saved
+  words, your own words, preferences) on this or another device. Nothing else reads it.
 
 ### Bar cards
 
@@ -138,9 +138,8 @@ than one that offers fewer. Single words only, for readability's sake.
   meaning — a panel showing only the first sense hides the half that makes the bar. The
   network entry still wins when there is one; the local copy is what makes the panel work
   without it. WordNet is Princeton's; notice in `src/data/DEFINITION-LICENSE`.
-- **Vault rows carry their own shape** — syllables, and how much there is to rhyme with —
-  so a writer scanning saved words can see which are rich and which are dead ends without
-  opening any of them. `orange` reads *2 syl · slant only*.
+- **Saved Words rows** carried a syllable count and rhyme census for a while. Removed:
+  it was engine output dressed as a feature, interesting to build and noise to read.
 
 Both payloads are warmed on `requestIdleCallback` after first paint. They are kept out of
 the main bundle so the idle screen stays fast, but the moment they are needed — a writer
@@ -220,13 +219,22 @@ a writer does not need prompting for.
 ## The training log
 
 `ProgressScreen` is the evidence behind the "writing gym" claim: bars written, time
-trained, a 52-week consistency grid, weekly volume, vocabulary breadth, and personal
-bests. Everything is computed on-device from data already stored.
+trained, five weeks of practice, vocabulary breadth, streaks, and personal bests.
+Everything is computed on-device from data already stored.
 
-The consistency grid covers a full year because practice days are retained for 400 — a
-shorter window would discard record a writer had already earned. Fifty-two columns
-cannot fit a phone at a legible cell size, so it scrolls horizontally and opens at the
-right-hand edge, since recent weeks are what someone opens it to see.
+Practice is drawn as a **level meter** — one bar per day, full height where work
+happened — rather than the year of squares it started as. Fifty-two squares is a GitHub
+contribution graph, and everyone who has seen a repository recognises it, which made a
+writing tool look like a side effect of how it was built. Five weeks rather than ten
+because seventy bars on a phone are hairlines: legible as a texture, useless for "did I
+train on Thursday". The full 52 weeks are still computed and still drive days-trained and
+the longest streak.
+
+Two panels were removed rather than fixed. **Programme** counted completed daily
+prescriptions as distinct from the streak, which counts any session — a real difference,
+and one nobody can infer from the word; the question it answered is now an analytics
+question. **Volume** was bars-per-week over twelve weeks: empty for a new writer's first
+month, and answering roughly what the level meter above it already showed.
 
 One thing here is load-bearing. **Cumulative figures come from `barsmithTotals`, never
 from `sessionHistory`.** History is capped at 100 sessions, so lifetime bars derived
@@ -273,7 +281,7 @@ default — the app already deploys there, it is cookieless, and the script come
 deployment's own origin — but replacing it is one file. Nothing runs on localhost or in
 development.
 
-The switch is in **Vault → Privacy**, next to Backup & Restore rather than buried, and
+The switch is on the **Settings** screen, reachable from the ⚙ in the home-screen header, and
 the How To carries the disclosure. Defaulting on is a real change to what the app
 promised, and the honest version of the promise is the one now in the copy: your writing
 never leaves the device.
@@ -468,7 +476,7 @@ public/
 - Sub-second text is persisted on `pagehide`/backgrounding before debounce can fire.
 - Session counts, frozen words, notes, and start time use synchronized live refs at finalization.
 - Timed sessions use an absolute deadline, so mobile timer throttling cannot extend a sprint.
-- New sessions and Vault Drills are blocked until recovered writing is saved or discarded.
+- New sessions and saved-word sessions are blocked until recovered writing is saved or discarded.
 - Dictionary requests use request IDs so a canceled lookup cannot clear a newer lookup's loading state.
 - Front-camera recording can be stopped from inside an active session.
 - Rhyme Search now URL-encodes input, cancels on unmount, removes duplicate entries, and avoids double haptics.

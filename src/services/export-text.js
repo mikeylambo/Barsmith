@@ -55,7 +55,7 @@ const fmtWhen = (iso) => {
 function sessionMeta(session) {
   const parts = [`${fmtDuration(session.duration)} session`];
   if (session.wordsSeen) parts.push(plural(session.wordsSeen, 'word'));
-  if (session.source === 'vault') parts.push('Vault Drill');
+  if (session.source === 'vault') parts.push('Saved words');
   else if (session.source === 'recovered') parts.push('Recovered draft');
   else if (session.tier) parts.push(`Level ${session.tier}`);
   if (session.pace) parts.push(session.pace);

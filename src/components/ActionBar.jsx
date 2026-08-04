@@ -8,7 +8,7 @@ export default function ActionBar({ appState, startSession, startBlocked, stopSe
         <button className="pointer-events-auto py-3 px-8 rounded-full text-[10px] font-black tracking-widest uppercase bg-[#0f0f0f] border border-white/10 text-gray-500 hover:text-white hover:bg-white/8 transition-all active:scale-95" onClick={()=>stopSession('global')}>End Session</button>
       )}
       {appState==='vault-drill' && (
-        <button className="pointer-events-auto py-3 px-8 rounded-full text-[10px] font-black tracking-widest uppercase bg-[#0f0f0f] border border-yellow-500/20 text-yellow-400 hover:bg-yellow-500/8 transition-all active:scale-95" onClick={stopVaultDrill}>End Drill</button>
+        <button className="pointer-events-auto py-3 px-8 rounded-full text-[10px] font-black tracking-widest uppercase bg-[#0f0f0f] border border-yellow-500/20 text-yellow-400 hover:bg-yellow-500/8 transition-all active:scale-95" onClick={stopVaultDrill}>End Session</button>
       )}
       {appState==='summary' && (
         <button className="pointer-events-auto w-full max-w-md py-5 rounded-2xl text-sm font-black tracking-widest uppercase bg-[#151515] border border-white/8 hover:bg-white/8 transition-all active:scale-95" onClick={resetToIdle}>New Session</button>

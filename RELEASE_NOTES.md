@@ -1,3 +1,96 @@
+# Barsmith 5.12.0 — the beta build
+
+Thirteen notes from a real phone, and one thing runs through most of them: the app was
+explaining itself to the writer instead of getting out of the way.
+
+## Things that were in the way
+
+**Pinch-zoom is off.** `maximum-scale=5` let the whole UI be dragged out of frame
+mid-session. This is an app surface, not a document, and nothing in it is small enough to
+need zooming — OS text scaling still applies, which is the accessible route anyway.
+
+**Tapping a word no longer opens the keyboard.** Locking a word is for *reading* what it
+rhymes with; `autoFocus` put a keyboard over that the instant it appeared.
+
+**The session view drops its settings readout.** `Scheme · Lvl 3 · 4w` restated dials the
+writer had set thirty seconds earlier and could not change from there. Only the
+saved-words counter survives, because that is progress through a queue rather than a
+restatement of a dial. **History rows** had the same disease, in the one place a writer
+looks back at what they *made* — they now show bars written.
+
+**The daily summary wraps instead of truncating.** A BPM session is five facts wide and
+`10 min` fell off the end as `10…` — the one that says how long this will take.
+
+## Things that gave away too much
+
+**Progress loses the year grid.** Fifty-two squares is a GitHub contribution graph, and
+everyone who has seen a repository recognises it, which made a writing tool look like a
+side effect of how it was built. Same data as a level meter: one bar per day across five
+weeks, full height where work happened. Five rather than ten because seventy bars on a
+phone are hairlines — legible as a texture, useless for *"did I train on Thursday"*.
+
+**Vocabulary drops the denominator.** `0 / 6,614` published the bank size and turned a
+growth number into a completion percentage against a total nobody needs to know.
+
+**Two panels are gone rather than fixed.** *Programme* counted completed daily
+prescriptions as distinct from the streak, which counts any session — a real difference,
+and one nobody can infer from the word, sitting third in a row where the other two
+explain themselves. The question it answered is now an analytics question, which is where
+it belongs rather than on a writer's screen. *Volume* was bars-per-week over twelve
+weeks: empty for a new writer's first month, and answering roughly what the level meter
+directly above it already showed.
+
+## Things that were named from the inside
+
+**Vault is now Saved Words**, and **End Drill is End Session**. "Vault" is a metaphor the
+app never explains; "drill" assumes a rapper, when the mechanic — practise the words you
+chose to keep — serves a songwriter or someone building vocabulary just as well. The
+rename runs through the nav chip, the empty state, the backup copy, the How To and the
+text exports. Storage keys keep their old names: renaming `barsmithVault` would break
+every existing install for a cosmetic gain.
+
+**Settings is its own screen**, reached from the ⚙ in the header. Privacy was tucked
+inside the Vault, which made a promise about what leaves the device findable only by
+someone already looking for it, on a screen named after something else. Haptics moved
+there too.
+
+**Saved Words rows drop the syllable and rhyme census.** Engine output dressed as a
+feature: interesting to build, noise to read.
+
+**Rhyme Search drops the stress analysis and the group descriptions.** Somebody looking
+for a word does not need to be taught what assonance is.
+
+## The How To, rewritten
+
+Eleven steps became eleven better ones under two rules: **say what a thing is for, not
+what it does**, and **never explain a term the screen itself does not use**.
+
+The old copy described controls — *"Set BPM and bars-per-word"* — and answered objections
+nobody had formed yet: *"practice to the actual time signature, not a vague timer."* The
+new one opens on the exercise:
+
+> **The Session** — A word lands. Build a bar around it before the next one arrives. That
+> is the whole exercise, repeated until reaching for a rhyme stops being something you
+> think about.
+
+Level and Scheme stay near the top because they are the only controls labelled with bare
+numbers. Everything after them is optional.
+
+## Verification
+
+- Automated tests: `168 passed`
+- Device checklist, automated half: `7/7 passed`
+- Every change confirmed in a browser at iPhone width, including that no screen says
+  "Vault" or "Drill" and that locking a word leaves focus on the word rather than a text
+  field
+
+Still hardware-only before this is called final: install to home screen, camera and mic
+permission, the recording round-trip, front-camera mirroring, BPM by ear, keyboard-open
+scrolling, safe-area spacing in portrait and landscape, an Airplane-mode cold boot, and
+the iOS share sheet.
+
+---
+
 # Barsmith 5.11.0 — 1,200 more words, chosen by measurement, and a way to tell if any of this works
 
 ## The bank grows by arithmetic instead of taste

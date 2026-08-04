@@ -136,37 +136,6 @@ export function consistencyGrid(practiceDays, { today = new Date(), weeks = 52 }
   return days;
 }
 
-/**
- * Bars written per week over the recent past, oldest first.
- *
- * This one is necessarily drawn from sessionHistory rather than totals, since totals
- * hold no per-date detail. That is fine here: the window is short enough that the
- * 100-session cap will not reach back into it for any realistic writer, and unlike a
- * lifetime total, a rolling chart is expected to move.
- */
-export function weeklyVolume(history, { today = new Date(), weeks = 12 } = {}) {
-  const buckets = Array.from({ length: weeks }, (_, i) => {
-    const end = shiftDays(today, -7 * (weeks - 1 - i));
-    return { start: shiftDays(end, -6), end, bars: 0, sessions: 0 };
-  });
-  const earliest = buckets[0].start;
-
-  for (const session of history || []) {
-    const date = new Date(session?.date);
-    if (Number.isNaN(date.getTime()) || date < earliest) continue;
-    // Walk from the newest bucket back; a session belongs to the first whose start
-    // it is on or after.
-    for (let i = buckets.length - 1; i >= 0; i--) {
-      if (date >= buckets[i].start) {
-        buckets[i].bars += barsInSession(session);
-        buckets[i].sessions += 1;
-        break;
-      }
-    }
-  }
-  return buckets;
-}
-
 /** Total words across all tiers — the denominator for vocabulary breadth. */
 export function wordBankSize(banks = globalWordBanks) {
   return Object.values(banks).reduce((n, bank) => n + (bank?.length || 0), 0);
@@ -204,6 +173,5 @@ export function computeProgress({ totals, history, practiceDays, vault, today = 
       bestSeconds: t.bestSeconds,
     },
     grid: consistencyGrid(practiceDays, { today }),
-    weeks: weeklyVolume(history, { today }),
   };
 }
