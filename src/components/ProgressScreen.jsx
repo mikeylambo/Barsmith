@@ -48,26 +48,13 @@ export default function ProgressScreen({
     [totals, sessionHistory, practiceDays, vault],
   );
 
-  // Open the year grid on the most recent weeks rather than a year ago.
-  const gridScrollRef = useRef(null);
-  useEffect(() => {
-    const el = gridScrollRef.current;
-    if (el) el.scrollLeft = el.scrollWidth;
-  }, [p.grid.length]);
-
   const peakWeek = Math.max(1, ...p.weeks.map(w => w.bars));
-  const monthLabel = (d) => d.toLocaleDateString('en-US', { month: 'short' });
 
-  // Month labels above the grid, placed on the column where each month first appears.
-  const columns = p.grid.length / 7;
-  const monthMarks = [];
-  for (let c = 0; c < columns; c++) {
-    const first = p.grid[c * 7];
-    const prev = c > 0 ? p.grid[(c - 1) * 7] : null;
-    if (!prev || first.date.getMonth() !== prev.date.getMonth()) {
-      monthMarks.push({ column: c, label: monthLabel(first.date) });
-    }
-  }
+  // Five weeks. Ten fitted, but seventy bars across a phone are hairlines — legible as a
+  // texture, useless as "did I train on Thursday". The full 52 weeks are still computed
+  // and still drive days-trained and the longest streak below; this is the window, not
+  // the record.
+  const recentDays = useMemo(() => p.grid.slice(-35), [p.grid]);
 
   return (
     <div className="flex-1 flex flex-col items-center p-6 overflow-y-auto w-full custom-scrollbar pb-36">
@@ -102,41 +89,34 @@ export default function ProgressScreen({
                 </span>
               }
             >
-              {/* A full year rather than half of one: practice days are retained for 400
-                  days, so a 26-week window was discarding half the record a writer had
-                  already earned. Fifty-two columns cannot fit a phone at a legible cell
-                  size, so the grid scrolls and starts at the right-hand edge — the
-                  recent weeks are what someone opens this to see. */}
-              <div ref={gridScrollRef} className="overflow-x-auto custom-scrollbar -mx-1 px-1">
-                <div className="min-w-[640px]">
-                  <div className="relative h-4 mb-1.5" aria-hidden="true">
-                    {monthMarks.map(m => (
-                      <span
-                        key={`${m.column}-${m.label}`}
-                        className="absolute top-0 text-[9px] font-black uppercase tracking-widest text-gray-700"
-                        style={{ left: `${(m.column / columns) * 100}%` }}
-                      >{m.label}</span>
-                    ))}
-                  </div>
+              {/* A 52-week square grid is a GitHub contribution graph, and everyone who
+                  has seen a repository recognises it — which makes a writing tool look
+                  like a side effect of how it was built. Same data, read as a level
+                  meter instead: one bar per day across the last five weeks, full height
+                  where work happened. It belongs to music rather than to source
+                  control. */}
+              <div
+                className="flex items-end gap-[3px] h-14"
+                role="img"
+                aria-label={`Practice over the last five weeks. ${p.daysTrained} ${p.daysTrained === 1 ? 'day' : 'days'} trained in total.`}
+              >
+                {recentDays.map(day => (
                   <div
-                    className="grid grid-rows-7 grid-flow-col gap-[3px]"
-                    style={{ gridAutoColumns: 'minmax(0, 1fr)' }}
-                    role="img"
-                    aria-label={`Practice consistency over the last 52 weeks. ${p.daysTrained} ${p.daysTrained === 1 ? 'day' : 'days'} trained in total.`}
-                  >
-                    {p.grid.map(day => (
-                      <div
-                        key={day.key}
-                        title={`${day.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}${day.practiced ? ' — trained' : ''}`}
-                        className={`aspect-square rounded-[2px] ${
-                          day.future ? 'bg-transparent'
-                            : day.practiced ? 'bg-orange-400/85'
-                            : 'bg-white/[0.06]'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
+                    key={day.key}
+                    title={`${day.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}${day.practiced ? ' — trained' : ''}`}
+                    className={`flex-1 rounded-sm ${
+                      day.future ? 'bg-white/[0.03] h-1.5'
+                        : day.practiced ? 'bg-orange-400/85 h-full'
+                        : 'bg-white/[0.08] h-2'
+                    }`}
+                  />
+                ))}
+              </div>
+              <div className="flex justify-between mt-2 mb-1">
+                <span className="text-[9px] font-black uppercase tracking-widest text-gray-700">
+                  {recentDays[0]?.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                </span>
+                <span className="text-[9px] font-black uppercase tracking-widest text-gray-700">Today</span>
               </div>
               <div className="flex gap-3 mt-5 pt-4 border-t border-white/5">
                 <div className="flex-1">
@@ -187,18 +167,8 @@ export default function ProgressScreen({
             >
               <p className="text-white font-black text-2xl tabular-nums mb-1">
                 {fmtNum(p.vocabulary.written)}
-                <span className="text-gray-600 text-base"> / {fmtNum(p.vocabulary.bankSize)}</span>
               </p>
-              <p className="text-gray-500 text-xs mb-4">Words you have actually written a bar on.</p>
-              {/* The bank is ~3,900 words, so early progress rounds to 0% and the bar would
-                  read as "you have done nothing" after real work. Any progress at all gets
-                  a visible sliver. */}
-              <div className="h-2 w-full bg-white/[0.06] rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-white/80 rounded-full transition-all"
-                  style={{ width: p.vocabulary.written > 0 ? `max(1.5%, ${p.vocabulary.percent}%)` : '0%' }}
-                />
-              </div>
+              <p className="text-gray-500 text-xs">Words you have actually written a bar on.</p>
             </Section>
 
             <Section title="Personal Bests">

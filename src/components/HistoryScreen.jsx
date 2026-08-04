@@ -108,8 +108,19 @@ export default function HistoryScreen({
                   <p className="text-white font-black text-lg">{fmtDur(s.duration)} <span className="text-gray-600 text-sm font-bold">session</span></p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] text-gray-600 font-black uppercase tracking-widest">{s.source === 'vault' ? `Vault Drill · ${s.wordsSeen} words` : s.source === 'recovered' ? `Recovered · ${flattenNotes(s.notes).length} bars` : `Lvl ${s.tier} · ${s.wordCount}w`}</p>
-                  <p className="text-gray-400 text-sm font-bold">{s.pace}</p>
+                  {(() => {
+                    const bars = flattenNotes(s.notes).filter(([, , t]) => t?.trim()).length;
+                    return (
+                      <>
+                        <p className="text-[10px] text-gray-600 font-black uppercase tracking-widest">
+                          {s.source === 'recovered' ? 'Recovered' : s.source === 'vault' ? 'Saved words' : 'Session'}
+                        </p>
+                        <p className="text-gray-400 text-sm font-bold">
+                          {bars} {bars === 1 ? 'bar' : 'bars'}
+                        </p>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
               {s.notes && Object.keys(s.notes).length > 0 && (

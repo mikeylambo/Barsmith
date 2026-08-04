@@ -46,9 +46,8 @@ export default function ActiveScreen({
       {/* Info label */}
       <div className="absolute left-6 right-6 flex justify-between items-center z-10" style={{ top: 'calc(1.5rem + env(safe-area-inset-top, 0px))' }}>
         <span className="text-[10px] font-black uppercase tracking-widest opacity-35">
-          {appState==='vault-drill' ? `Vault Drill · ${vaultDrillIndex+1}/${vaultDrillQueue.length}`
-            : bpmMode ? `${bpm} BPM · Lvl ${selectedTier} · Bar ${barCount}`
-            : wordCount===1 ? `Level ${selectedTier}` : `Scheme · Lvl ${selectedTier} · ${wordCount}w`}
+          {appState === 'vault-drill' ? `${vaultDrillIndex + 1}/${vaultDrillQueue.length}`
+            : bpmMode ? `Bar ${barCount}` : ''}
         </span>
         <div className="flex items-center gap-3">
           {sessionLimit > 0 && sessionIsActive && (

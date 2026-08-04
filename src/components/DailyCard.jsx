@@ -66,7 +66,11 @@ export default function DailyCard({ plan, completed, week, onStart, disabled }) 
       <p className="text-gray-500 text-xs leading-relaxed mb-4">{plan.focus}</p>
 
       <div className="flex items-center justify-between gap-4">
-        <p className="text-[10px] font-black uppercase tracking-widest text-gray-600 tabular-nums min-w-0 truncate">
+        {/* Wraps rather than truncates. A BPM session's summary is five facts wide —
+            "Level 2 · 1 word · 102 BPM · 2 bars/word · 10 min" — and on a phone the last
+            one fell off the end as "10…", which is the one that says how long this will
+            take. Nothing here is a sentence, so a second line costs nothing. */}
+        <p className="text-[10px] font-black uppercase tracking-widest text-gray-600 tabular-nums min-w-0 leading-relaxed">
           {describeSession(plan)}
         </p>
       </div>

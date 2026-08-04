@@ -13,10 +13,10 @@ const STEPS = [
   ['05','BPM Grid',    'Lock word changes to a real bar grid. Set BPM and bars-per-word — practice to the actual time signature, not a vague timer.'],
   ['06','Session Timer','Set a 5–20 minute block. Session ends automatically with a summary. Serious writers work in timed sprints — this is that.'],
   ['07','Rhyme Search','Type any word and get a full rhyme map bucketed by syllable count. Perfect, near, and phonetic matches. Tap to copy.'],
-  ['08','Your Words',  'Add personal vocabulary in the Vault — names, slang, places. They surface in your sessions. The tool becomes yours.'],
-  ['09','Vault Drill', "Your saved words become a custom session. Drill vocabulary you've claimed — words you know are yours."],
+  ['08','Your Words',  'Add your own vocabulary in the Vault — names, slang, places. They surface in your sessions. The tool becomes yours.'],
+  ['09','Practise Saved Words', 'Your starred words become their own session. Work only the vocabulary you have chosen to keep.'],
   ['10','Record',      'Capture yourself while you write. Review the footage, clip the best moments, study your own flow.'],
-  ['11','Your Work Stays Here', 'Your bars live on this device and are never sent anywhere. Rhymes, syllables and definitions are worked out here too, so the whole reference runs offline. Barsmith sends anonymous counts — that a session happened, roughly how long — to tell which parts earn their place. Full detail and an off switch in Vault → Privacy.'],
+  ['11','Your Work Stays Here', 'Your bars live on this device and are never sent anywhere. Rhymes, syllables and definitions are worked out here too, so the whole reference runs offline. Barsmith sends anonymous counts — that a session happened, roughly how long — to tell which parts earn their place. Full detail and an off switch in Settings.'],
 ];
 
 export default function InfoModal({ onClose }) {

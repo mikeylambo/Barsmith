@@ -130,7 +130,7 @@ roughly how many bars, whether it came from the daily card. No account, no cooki
 nothing that ties it to you. It's there so I can tell which parts of this earn their
 place instead of guessing.
 
-Turn it off any time: **Vault → Privacy**. Everything else works identically.
+Turn it off any time: **Settings → Privacy** (the ⚙ at the top of the home screen). Everything else works identically.
 
 One exception, so you know: tapping a word for its *synonyms* sends that single word to
 a public dictionary. Just the word, only when you tap.
