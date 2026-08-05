@@ -13,7 +13,7 @@ works.** It works. The question is whether you'd actually come back to it.
 
 It has to be **Safari** — not Chrome. Apple only lets Safari install web apps.
 
-1. Open **barsmith.vercel.app** in Safari
+1. Open **barsmith.app** in Safari
 2. Tap the **Share** button (the square with the arrow, at the bottom)
 3. Scroll down → **Add to Home Screen**
 4. Tap **Add**
