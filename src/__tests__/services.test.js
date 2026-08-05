@@ -79,6 +79,46 @@ describe('release services', () => {
     vi.advanceTimersByTime(500);
     expect(onBeat).not.toHaveBeenCalled();
   });
+
+  // The setting is only real if it reaches the gain node. Asserted on the value actually
+  // handed to the audio graph rather than on the property, because everything between the
+  // slider and the oscillator is where a volume control usually dies.
+  it('scales every click by the metronome volume, and silences at zero', () => {
+    vi.useFakeTimers();
+    const gains = [];
+    const ctx = {
+      state:'running', currentTime:0, destination:{}, resume(){},
+      createOscillator: () => ({ connect(){}, frequency:{setValueAtTime(){}}, start(){}, stop(){}, onended:null }),
+      createGain: () => ({ connect(){}, gain:{ setValueAtTime(v){ gains.push(v); }, exponentialRampToValueAtTime(){} } }),
+    };
+    const scheduler = new BeatScheduler(ctx, {});
+
+    scheduler.volume = 1;
+    scheduler.playTickAt(0, 1000, 0.65);
+    expect(gains).toEqual([0.65]);
+
+    // Mid-session change lands on the very next click, not the next session.
+    gains.length = 0;
+    scheduler.volume = 0.5;
+    scheduler.playTickAt(0, 1000, 0.65);
+    expect(gains).toEqual([0.325]);
+
+    gains.length = 0;
+    scheduler.volume = 0;
+    scheduler.playTickAt(0, 1000, 0.65);
+    expect(gains).toEqual([]);
+  });
+
+  it('defaults to full volume when nothing has set it', () => {
+    const gains = [];
+    const ctx = {
+      state:'running', currentTime:0, destination:{}, resume(){},
+      createOscillator: () => ({ connect(){}, frequency:{setValueAtTime(){}}, start(){}, stop(){}, onended:null }),
+      createGain: () => ({ connect(){}, gain:{ setValueAtTime(v){ gains.push(v); }, exponentialRampToValueAtTime(){} } }),
+    };
+    new BeatScheduler(ctx, {}).playTickAt(0, 1000, 0.28);
+    expect(gains).toEqual([0.28]);
+  });
 });
 
 describe('v1 real implementation tests', () => {

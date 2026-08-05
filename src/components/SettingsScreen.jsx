@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { loadAnalyticsOptOut, saveAnalyticsOptOut } from '../services/storage';
+import { previewTick, closePreviewTick } from '../services/audio-clock';
 
 // ─────────────────────────────────────────────
 // SETTINGS
@@ -17,6 +18,16 @@ import { loadAnalyticsOptOut, saveAnalyticsOptOut } from '../services/storage';
 
 export default function SettingsScreen({ resetToIdle, hapticsOn, setHapticsOn, metronomeVolume, setMetronomeVolume }) {
   const [analyticsOff, setAnalyticsOff] = useState(() => loadAnalyticsOptOut());
+
+  // Preview the click while dragging, throttled so a drag doesn't machine-gun. The
+  // context is torn down on leaving the screen rather than left open.
+  const lastPreviewRef = useRef(0);
+  useEffect(() => closePreviewTick, []);
+  const onVolumeChange = (v) => {
+    setMetronomeVolume(v);
+    const now = Date.now();
+    if (now - lastPreviewRef.current > 120) { lastPreviewRef.current = now; previewTick(v); }
+  };
 
   const Row = ({ label, hint, value, onClick, pressed }) => (
     <button
@@ -61,13 +72,13 @@ export default function SettingsScreen({ resetToIdle, hapticsOn, setHapticsOn, m
               </span>
             </div>
             <p className="text-[10px] text-gray-600 mb-3 leading-relaxed">
-              The click, and the count-in before a tempo session. Silent still keeps the
-              bar grid — words change on the beat either way.
+              The click, and the count-in before a tempo session. Drag to hear it at that
+              level. Silent still keeps the bar grid — words change on the beat either way.
             </p>
             <input
               type="range" min="0" max="1" step="0.05"
               value={metronomeVolume}
-              onChange={(e) => setMetronomeVolume(parseFloat(e.target.value))}
+              onChange={(e) => onVolumeChange(parseFloat(e.target.value))}
               aria-label="Metronome volume"
               className="w-full appearance-none bg-transparent focus:outline-none"
             />

@@ -55,7 +55,7 @@ export default function BarCardModal({ bar, word, onClose }) {
     if (!blobRef.current) return;
     const result = await shareImage(blobRef.current, filename);
     if (result === 'downloaded') setOutcome('Saved to your device.');
-    else if (result === 'failed') setOutcome('Could not share — try Save Image.');
+    else if (result === 'failed') setOutcome('Could not share the card. Your bar is still saved.');
     else setOutcome(''); // shared or cancelled: the OS already gave feedback
   };
 
@@ -122,16 +122,17 @@ export default function BarCardModal({ bar, word, onClose }) {
                   Share
                 </button>
               )}
-              <button
-                onClick={handleSave}
-                className={`w-full py-4 rounded-2xl text-sm font-black uppercase tracking-widest transition-all ${
-                  shareSupported
-                    ? 'bg-white/5 border border-white/10 text-white hover:bg-white/10'
-                    : 'bg-white text-black hover:bg-gray-200'
-                }`}
-              >
-                Save Image
-              </button>
+              {/* Only where Share cannot carry a file. On iOS the share sheet already
+                  offers Save Image and Save to Files, so a second in-app button did the
+                  same job worse — a download into a folder the writer then has to find. */}
+              {!shareSupported && (
+                <button
+                  onClick={handleSave}
+                  className="w-full py-4 rounded-2xl bg-white text-black text-sm font-black uppercase tracking-widest hover:bg-gray-200 transition-all"
+                >
+                  Save Image
+                </button>
+              )}
               {outcome && (
                 <p className="text-center text-gray-500 text-[11px] font-bold" role="status">{outcome}</p>
               )}

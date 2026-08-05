@@ -24,7 +24,7 @@ export default function VaultScreen({
         </div>
         {vault.length > 0 && (
           <button disabled={startBlocked} onClick={startVaultDrill} className={`w-full mb-5 py-4 rounded-2xl border text-sm font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${startBlocked ? 'bg-yellow-500/5 border-yellow-500/20 text-yellow-400 cursor-not-allowed' : 'bg-white/4 border-white/8 text-white hover:bg-white/8 active:scale-95'}`}>
-            <span className="text-yellow-400">▶</span> {startBlocked ? 'Resolve Recovered Bars First' : `Practise ${vault.length} Saved Words`}
+            <span className="text-yellow-400">▶</span> {startBlocked ? 'Resolve Recovered Bars First' : `Practice ${vault.length} Saved Words`}
           </button>
         )}
 

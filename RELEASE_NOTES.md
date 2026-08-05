@@ -1,3 +1,66 @@
+# Barsmith 5.14.0 — the slider that wasn't the volume
+
+Three things, one of which was not the bug it looked like.
+
+## "Metronome volume not working at all"
+
+The volume setting itself turned out to be fine. I checked it three ways before touching
+anything — driving the hook directly, driving the whole app in a fake DOM, and driving the
+**real production bundle in a real browser with a spy on the audio graph** — and in every
+case the gain reaching the oscillator scaled exactly as it should: `0.45` at full, `0.225`
+at half, nothing at all at Silent, in both timer mode and BPM mode.
+
+So the interesting question was what someone was actually adjusting. Here is what the
+Timing block looked like:
+
+```
+[ METRO ]  ———————•———————  3.5s
+```
+
+A button labelled **Metro**, and immediately to its right, an unlabelled slider. Every
+other slider in the app has a word in front of it — `BPM`, `Every`. That one didn't. It is
+the *word-change pace*, but sitting where it sat, it reads as the metronome's slider, and
+the only slider a metronome has is volume. Dragging it changes how often words appear and
+does nothing whatsoever to the click.
+
+That is not a misreading — that's the row being wrong. Split into two labelled rows, so
+the only thing next to Metro is Metro:
+
+```
+EVERY    ———————•———————  3.5s
+CLICK                    [ METRO ]
+```
+
+And because a volume control you cannot hear is a volume control you cannot trust,
+**dragging the Settings slider now plays a click at that level.** Drag it, hear it. No
+inference required.
+
+The volume path is now pinned by tests on both code paths — the BPM look-ahead scheduler
+and the timer-mode interval are genuinely different code, and a setting that only reaches
+one of them is the ordinary way this feature breaks. Both assert the number handed to the
+gain node, not the property that was set.
+
+## Save Image is gone, where the share sheet exists
+
+iOS already offers *Save Image* and *Save to Files* from the share sheet. A second in-app
+button did the same job worse: a download into a folder you then have to go find. It now
+appears **only** on browsers whose share cannot carry a file, which is exactly the case it
+was written for. Verified both ways — share-capable shows Share alone, share-incapable
+shows Save Image alone.
+
+## Practice
+
+British spelling, American app. Fixed.
+
+## Verification
+
+- Automated tests: `173 passed` (3 new — the two volume paths and the default)
+- Device checklist: `7/7` automated items pass
+- Real-browser check against the production bundle: pace row, preview click, and both
+  bar-card button states
+
+---
+
 # Barsmith 5.13.0 — recordings you can actually watch
 
 Four things from a real iPhone, three of them about media.

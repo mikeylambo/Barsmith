@@ -12,6 +12,36 @@ const SCHEDULE_AHEAD_S = 0.1; // how far ahead we schedule, in seconds
 const POLL_MS = 25;           // how often we check the clock
 const COUNT_IN_BEATS = 4;     // silent-ish lead-in before the real session starts
 
+// A slider you cannot hear is a slider you cannot trust — the only way to know a volume
+// setting took is to hear it at that volume. Fires one click at the level being dragged
+// to, reusing a single context so dragging doesn't open dozens of them.
+let previewCtx = null;
+
+export function previewTick(volume) {
+  if (!(volume > 0)) return;
+  const AC = typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext);
+  if (!AC) return;
+  try {
+    if (!previewCtx) previewCtx = new AC();
+    if (previewCtx.state === 'suspended') previewCtx.resume();
+    const now = previewCtx.currentTime;
+    const osc = previewCtx.createOscillator();
+    const gain = previewCtx.createGain();
+    osc.connect(gain);
+    gain.connect(previewCtx.destination);
+    osc.frequency.setValueAtTime(1000, now);
+    gain.gain.setValueAtTime(0.65 * volume, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+    osc.start(now);
+    osc.stop(now + 0.08);
+  } catch {}
+}
+
+export function closePreviewTick() {
+  try { previewCtx?.close(); } catch {}
+  previewCtx = null;
+}
+
 export class BeatScheduler {
   /**
    * @param {AudioContext} audioCtx

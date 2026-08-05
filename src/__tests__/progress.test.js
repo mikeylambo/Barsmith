@@ -146,7 +146,7 @@ describe('consistencyGrid', () => {
     expect(grid.length % 7).toBe(0);
   });
 
-  it('marks practised days and leaves the rest empty', () => {
+  it('marks practiced days and leaves the rest empty', () => {
     const grid = consistencyGrid(days('2026-07-29'), { today });
     const marked = grid.filter(d => d.practiced);
     expect(marked).toHaveLength(1);
