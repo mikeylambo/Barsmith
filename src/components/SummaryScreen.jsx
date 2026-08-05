@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DictionaryModal from './DictionaryModal.jsx';
 import BarCardModal from './BarCardModal.jsx';
 import { sessionToText, sessionBarsOnly, hasBars } from '../services/export-text';
@@ -6,10 +6,22 @@ import { downloadText, dateStamp } from '../services/download';
 
 export default function SummaryScreen({
   latestSession, sessionDuration, totalWordsSeen, bpmMode, bpm, intervalMs,
-  recordingAvailable, downloadRecording, frozenWords, vault, toggleVault,
+  recordingAvailable, recordingBlob, downloadRecording, frozenWords, vault, toggleVault,
   fetchDictData, dictData, isLoadingDict, fmtDur, flattenNotes, copyNoteText, copiedNoteKey,
 }) {
   const [activeWord, setActiveWord] = useState(null);
+  const [saveState, setSaveState] = useState('');
+
+  // Watch it back before deciding whether to keep it. Without this the only way to see a
+  // take was to export it, which on a phone means leaving the app — so nobody checked
+  // whether the framing or the audio were any good until after the session was over.
+  const [recordingUrl, setRecordingUrl] = useState(null);
+  useEffect(() => {
+    if (!recordingBlob) { setRecordingUrl(null); return; }
+    const url = URL.createObjectURL(recordingBlob);
+    setRecordingUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [recordingBlob]);
   // { bar, word } for the card being previewed, or null.
   const [cardBar, setCardBar] = useState(null);
   const hasNotes = latestSession?.notes && Object.keys(latestSession.notes).length > 0;
@@ -46,9 +58,28 @@ export default function SummaryScreen({
         </div>
 
         {recordingAvailable && (
-          <button onClick={downloadRecording} className="w-full mb-5 py-4 rounded-2xl bg-red-500/8 border border-red-500/25 text-red-400 text-sm font-black uppercase tracking-widest hover:bg-red-500/15 transition-all flex items-center justify-center gap-2">
-            ⬇ Download Recording
-          </button>
+          <div className="mb-5">
+            {recordingUrl && (
+              <video
+                src={recordingUrl}
+                controls
+                playsInline
+                className="w-full rounded-2xl border border-white/8 bg-black mb-3"
+              />
+            )}
+            <button
+              onClick={async () => {
+                // No await before the call inside downloadRecording — it hands straight
+                // to the share sheet, and Safari drops the gesture otherwise.
+                const result = await downloadRecording();
+                setSaveState(result === 'shared' ? 'saved' : result === 'cancelled' ? '' : result === 'downloaded' ? 'downloaded' : 'failed');
+                setTimeout(() => setSaveState(''), 2500);
+              }}
+              className="w-full py-4 rounded-2xl bg-red-500/8 border border-red-500/25 text-red-400 text-sm font-black uppercase tracking-widest hover:bg-red-500/15 transition-all flex items-center justify-center gap-2"
+            >
+              {saveState === 'saved' ? '✓ Saved' : saveState === 'downloaded' ? '✓ Downloaded' : saveState === 'failed' ? 'Could not save' : 'Save Recording'}
+            </button>
+          </div>
         )}
 
         {/* Take the work with you. This sits above the Bar Pad because at the end of a

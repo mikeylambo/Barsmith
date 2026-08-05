@@ -114,6 +114,9 @@ Generic feedback doesn't help much. These do:
   phone; the dictionary definition is the one thing that still needs a signal.
 - **No beats yet.** BPM mode works and you can load your own instrumental, but nothing
   ships with it. That's coming.
+- **Recordings save through the share sheet**, not straight to the camera roll — tap
+  *Save Recording*, then *Save Video*. That is the only route Apple gives a web app to
+  Photos. You can watch the take back inside the app before deciding.
 - **No notifications, no reminders.** Deliberate for now — I want to know if you come
   back *without* being nudged.
 - **No sync between devices.** Backup file only.

@@ -2,8 +2,38 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { getNextWords } from '../services/wordbank.js';
 import { computeStreak, importAllData } from '../services/storage.js';
+import { shareImage, shareFile } from '../services/share.js';
 import { fetchDictData, _cacheGet, _cacheSet, _cacheClear, _cacheSize, _setCacheMax } from '../services/dictionary.js';
 import { BeatScheduler } from '../services/audio-clock.js';
+
+describe('the share sheet gets files and nothing else', () => {
+  // iOS decides which actions to promote from what the payload contains. Files alone
+  // reads as "share this image" and puts Save Image near the front; adding a text
+  // caption makes it a generic share and promotes Save to Files instead. Barsmith was
+  // attaching the bar's own words, which is why saving a card opened the file browser
+  // first. Found on a real phone, so it is pinned here.
+  const payloads = [];
+  beforeEach(() => {
+    payloads.length = 0;
+    vi.stubGlobal('navigator', {
+      canShare: () => true,
+      share: (p) => { payloads.push(Object.keys(p).sort().join(',')); return Promise.resolve(); },
+    });
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('shares an image with no caption', async () => {
+    expect(await shareImage(new Blob(['x'], { type: 'image/png' }), 'card.png')).toBe('shared');
+    expect(payloads).toEqual(['files']);
+  });
+
+  it('shares a recording the same way, so it can reach the camera roll', async () => {
+    // A download link puts video in Files on iOS. The share sheet is the only route to
+    // Photos, which is where a writer expects to find a take they just filmed.
+    expect(await shareFile(new Blob(['x'], { type: 'video/mp4' }), 'take.mp4', 'video/mp4')).toBe('shared');
+    expect(payloads).toEqual(['files']);
+  });
+});
 
 describe('release services', () => {
   beforeEach(() => { localStorage.clear(); });
@@ -48,6 +78,46 @@ describe('release services', () => {
     scheduler.stop();
     vi.advanceTimersByTime(500);
     expect(onBeat).not.toHaveBeenCalled();
+  });
+
+  // The setting is only real if it reaches the gain node. Asserted on the value actually
+  // handed to the audio graph rather than on the property, because everything between the
+  // slider and the oscillator is where a volume control usually dies.
+  it('scales every click by the metronome volume, and silences at zero', () => {
+    vi.useFakeTimers();
+    const gains = [];
+    const ctx = {
+      state:'running', currentTime:0, destination:{}, resume(){},
+      createOscillator: () => ({ connect(){}, frequency:{setValueAtTime(){}}, start(){}, stop(){}, onended:null }),
+      createGain: () => ({ connect(){}, gain:{ setValueAtTime(v){ gains.push(v); }, exponentialRampToValueAtTime(){} } }),
+    };
+    const scheduler = new BeatScheduler(ctx, {});
+
+    scheduler.volume = 1;
+    scheduler.playTickAt(0, 1000, 0.65);
+    expect(gains).toEqual([0.65]);
+
+    // Mid-session change lands on the very next click, not the next session.
+    gains.length = 0;
+    scheduler.volume = 0.5;
+    scheduler.playTickAt(0, 1000, 0.65);
+    expect(gains).toEqual([0.325]);
+
+    gains.length = 0;
+    scheduler.volume = 0;
+    scheduler.playTickAt(0, 1000, 0.65);
+    expect(gains).toEqual([]);
+  });
+
+  it('defaults to full volume when nothing has set it', () => {
+    const gains = [];
+    const ctx = {
+      state:'running', currentTime:0, destination:{}, resume(){},
+      createOscillator: () => ({ connect(){}, frequency:{setValueAtTime(){}}, start(){}, stop(){}, onended:null }),
+      createGain: () => ({ connect(){}, gain:{ setValueAtTime(v){ gains.push(v); }, exponentialRampToValueAtTime(){} } }),
+    };
+    new BeatScheduler(ctx, {}).playTickAt(0, 1000, 0.28);
+    expect(gains).toEqual([0.28]);
   });
 });
 

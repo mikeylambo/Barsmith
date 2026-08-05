@@ -158,10 +158,20 @@ export default function IdleScreen({
             </div>
           </div>
           {!bpmMode ? (
-            <div className="flex items-center gap-3 bg-[#0a0a0a] border border-white/5 rounded-xl p-3 px-4">
-              <button onClick={() => { if(!beatAudioSrc) setIsMetronomeOn(p=>!p); }} aria-pressed={isMetronomeOn} className={`px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider transition-all ${isMetronomeOn?'bg-white text-black':'text-gray-600 hover:text-white'} ${beatAudioSrc?'opacity-20 cursor-not-allowed':''}`} disabled={!!beatAudioSrc}>Metro</button>
-              <div className="flex-1"><input type="range" min="1" max="10" step="0.5" value={intervalMs/1000} onChange={e=>setIntervalMs(parseFloat(e.target.value)*1000)} aria-label="Word change interval in seconds" className="w-full appearance-none bg-transparent focus:outline-none" /></div>
-              <span className="text-xs font-bold text-white w-8 text-right">{(intervalMs/1000).toFixed(1)}s</span>
+            /* The pace slider used to sit immediately right of the Metro button with no
+               label of its own, which reads as the metronome's slider — i.e. its volume.
+               Split into two labelled rows, matching the BPM branch below, so the only
+               thing next to Metro is Metro. Volume lives in Settings. */
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 bg-[#0a0a0a] border border-white/5 rounded-xl p-3 px-4">
+                <span className="text-gray-600 text-xs font-black uppercase tracking-widest shrink-0">Every</span>
+                <div className="flex-1"><input type="range" min="1" max="10" step="0.5" value={intervalMs/1000} onChange={e=>setIntervalMs(parseFloat(e.target.value)*1000)} aria-label="Word change interval in seconds" className="w-full appearance-none bg-transparent focus:outline-none" /></div>
+                <span className="text-xs font-bold text-white w-8 text-right">{(intervalMs/1000).toFixed(1)}s</span>
+              </div>
+              <div className="flex items-center justify-between gap-3 bg-[#0a0a0a] border border-white/5 rounded-xl p-3 px-4">
+                <span className="text-gray-600 text-xs font-black uppercase tracking-widest shrink-0">Click</span>
+                <button onClick={() => { if(!beatAudioSrc) setIsMetronomeOn(p=>!p); }} aria-pressed={isMetronomeOn} className={`px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider transition-all ${isMetronomeOn?'bg-white text-black':'text-gray-600 hover:text-white'} ${beatAudioSrc?'opacity-20 cursor-not-allowed':''}`} disabled={!!beatAudioSrc}>Metro</button>
+              </div>
             </div>
           ) : (
             <div className="space-y-3">

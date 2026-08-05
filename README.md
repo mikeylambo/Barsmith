@@ -45,6 +45,12 @@ Two things in there are load-bearing and easy to break:
   size at which nothing wraps before it settles for merely fitting the frame — a bar
   whose lines each wrap in two reads as prose and loses the rhythm that made it worth
   sharing. Where wrapping is unavoidable, continuation lines are indented.
+- **The share payload is files and nothing else.** iOS decides which actions to promote
+  from what the payload contains: files alone reads as "share this image" and puts *Save
+  Image* near the front, while adding a `text` caption makes it a generic share and
+  promotes *Save to Files* instead. Barsmith attached the bar's own words as a caption,
+  which is why saving a card began by opening the file browser. Found on a real phone,
+  now pinned by a test.
 - **iOS only honours `navigator.share()` inside a live user gesture.** Any `await`
   before the call — encoding the canvas, loading the font — drops the activation and the
   sheet silently never opens. So the card is rendered when the modal opens, and the

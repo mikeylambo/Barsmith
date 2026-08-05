@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { loadAnalyticsOptOut, saveAnalyticsOptOut } from '../services/storage';
+import { previewTick, closePreviewTick } from '../services/audio-clock';
 
 // ─────────────────────────────────────────────
 // SETTINGS
@@ -15,8 +16,18 @@ import { loadAnalyticsOptOut, saveAnalyticsOptOut } from '../services/storage';
 // own contents.
 // ─────────────────────────────────────────────
 
-export default function SettingsScreen({ resetToIdle, hapticsOn, setHapticsOn }) {
+export default function SettingsScreen({ resetToIdle, hapticsOn, setHapticsOn, metronomeVolume, setMetronomeVolume }) {
   const [analyticsOff, setAnalyticsOff] = useState(() => loadAnalyticsOptOut());
+
+  // Preview the click while dragging, throttled so a drag doesn't machine-gun. The
+  // context is torn down on leaving the screen rather than left open.
+  const lastPreviewRef = useRef(0);
+  useEffect(() => closePreviewTick, []);
+  const onVolumeChange = (v) => {
+    setMetronomeVolume(v);
+    const now = Date.now();
+    if (now - lastPreviewRef.current > 120) { lastPreviewRef.current = now; previewTick(v); }
+  };
 
   const Row = ({ label, hint, value, onClick, pressed }) => (
     <button
@@ -48,6 +59,30 @@ export default function SettingsScreen({ resetToIdle, hapticsOn, setHapticsOn })
             pressed={hapticsOn}
             onClick={() => setHapticsOn(!hapticsOn)}
           />
+
+          {/* Off is a real option here, not an edge case. Running a tempo session over
+              your own instrumental means you already have the count — the click is then
+              something to turn down rather than a feature. Silencing it leaves the bar
+              grid itself running, so words still change on the beat. */}
+          <div className="w-full py-4 px-5 rounded-2xl border border-white/5 bg-[#0f0f0f]">
+            <div className="flex items-center justify-between gap-4 mb-1">
+              <span className="text-sm font-bold text-gray-200">Metronome</span>
+              <span className="text-xs font-black uppercase tracking-widest text-gray-400 shrink-0 tabular-nums">
+                {metronomeVolume <= 0 ? 'Silent' : `${Math.round(metronomeVolume * 100)}%`}
+              </span>
+            </div>
+            <p className="text-[10px] text-gray-600 mb-3 leading-relaxed">
+              The click, and the count-in before a tempo session. Drag to hear it at that
+              level. Silent still keeps the bar grid — words change on the beat either way.
+            </p>
+            <input
+              type="range" min="0" max="1" step="0.05"
+              value={metronomeVolume}
+              onChange={(e) => onVolumeChange(parseFloat(e.target.value))}
+              aria-label="Metronome volume"
+              className="w-full appearance-none bg-transparent focus:outline-none"
+            />
+          </div>
         </div>
 
         {/* Privacy gets the room to be read rather than a line in a list. It is the one

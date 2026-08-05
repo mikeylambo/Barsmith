@@ -4,7 +4,7 @@ import { useFocusTrap } from '../hooks/useFocusTrap';
 // The How To is the only place Barsmith gets to explain itself, and the first draft used
 // the room badly: eleven steps, several of them describing a control rather than a
 // reason to touch it, and a couple written for someone who already knew what the app was
-// ("practise to the actual time signature, not a vague timer" answers an objection
+// ("practice to the actual time signature, not a vague timer" answers an objection
 // nobody has yet).
 //
 // Rewritten around what a writer needs in the order they need it. Two rules held

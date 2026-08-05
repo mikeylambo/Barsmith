@@ -202,4 +202,43 @@ describe('v1 real implementation tests (React rendering)', () => {
     // reaching the UI as a message rather than failing silently.
     expect(result.current.cameraError).toBe('Camera permission denied.');
   });
+
+  // The timer-mode metronome is a different code path from the BPM scheduler (a plain
+  // setInterval rather than the look-ahead clock), so the volume setting has to be
+  // proven on both. Asserted on the gain value that reaches the audio graph.
+  it('the free-run metronome obeys the volume setting', () => {
+    const gains = [];
+    class SpyAudioContext extends FakeAudioContext {
+      createGain(){ return { connect(){}, gain:{ setValueAtTime(v){ gains.push(v); }, exponentialRampToValueAtTime(){} } }; }
+    }
+    Object.defineProperty(window, 'AudioContext', { value: SpyAudioContext, configurable: true });
+
+    const base = {
+      selectedTier: 1, wordCount: 1, intervalMs: 2000, isMetronomeOn: true,
+      bpmMode: false, bpm: 90, barsPerWord: 2, customWords: [], sessionLimit: 0,
+      beatAudioSrc: null, audioPlayerRef: { current: null }, vault: [],
+      recoveredDraft: null, onSessionComplete: vi.fn(),
+    };
+    const { result, rerender } = renderHook(
+      (p) => useSessionEngine(p),
+      { initialProps: { ...base, metronomeVolume: 1 } },
+    );
+
+    vi.useFakeTimers();
+    act(() => { result.current.startSession(); });
+    expect(gains).toEqual([0.45]);   // the click fired on start
+
+    // Changing the setting mid-session lands on the very next click — the engine reads
+    // it from a ref rather than waiting for the session loop to rebuild its interval.
+    gains.length = 0;
+    rerender({ ...base, metronomeVolume: 0.5 });
+    act(() => { vi.advanceTimersByTime(500); });
+    expect(gains).toEqual([0.225]);
+
+    gains.length = 0;
+    rerender({ ...base, metronomeVolume: 0 });
+    act(() => { vi.advanceTimersByTime(1500); });
+    expect(gains).toEqual([]);
+    vi.useRealTimers();
+  });
 });
