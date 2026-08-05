@@ -6,6 +6,7 @@ export default function VaultScreen({
   fetchDictData, dictData, isLoadingDict,
   customWords, setCustomWords, customWordInput, setCustomWordInput,
   handleExportData, importFileRef, handleImportFile, importMsg,
+  rescue, handleUndoRestore, handleDismissRescue,
 }) {
   const [activeWord, setActiveWord] = useState(null);
 
@@ -73,6 +74,31 @@ export default function VaultScreen({
           {importMsg && <p className="text-[10px] text-gray-500 mt-3 uppercase tracking-widest font-bold">{importMsg}</p>}
           <p className="text-[10px] text-gray-700 mt-3">Saves your saved words, history, own words, and streak to a file you control.</p>
         </div>
+
+        {/* Undo — only after a restore has actually replaced something. Deliberately loud:
+            a writer who has just realised they restored the wrong file is looking for a
+            way out, and it needs to be the thing they see. */}
+        {rescue && (
+          <div className="bg-yellow-500/8 border border-yellow-500/25 rounded-2xl p-5 mb-5">
+            <p className="text-[10px] text-yellow-400/80 font-black uppercase tracking-widest mb-2">Undo available</p>
+            <p className="text-sm text-gray-300 leading-relaxed mb-1">
+              Before the last restore, this device had{' '}
+              <span className="text-white font-bold">{rescue.sessions} session{rescue.sessions === 1 ? '' : 's'}</span>
+              {typeof rescue.bars === 'number' && <> and <span className="text-white font-bold">{rescue.bars} bar{rescue.bars === 1 ? '' : 's'}</span></>}.
+            </p>
+            <p className="text-[10px] text-gray-600 mb-4">
+              Kept in case that restore was the wrong file. Nothing else can bring it back.
+            </p>
+            <div className="flex gap-2">
+              <button onClick={handleUndoRestore} className="flex-1 py-3 rounded-xl bg-yellow-400 text-black text-xs font-black uppercase tracking-widest hover:bg-yellow-300 transition-all active:scale-95">
+                Undo Restore
+              </button>
+              <button onClick={handleDismissRescue} className="px-4 py-3 rounded-xl bg-white/5 border border-white/8 text-xs font-black uppercase tracking-widest text-gray-500 hover:text-white transition-all active:scale-95">
+                Discard
+              </button>
+            </div>
+          </div>
+        )}
 
 
         {vault.length === 0 && (
