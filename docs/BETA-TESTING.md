@@ -138,12 +138,18 @@ Turn it off any time: **Settings → Privacy** (the ⚙ at the top of the home s
 One exception, so you know: tapping a word for its *synonyms* sends that single word to
 a public dictionary. Just the word, only when you tap.
 
+The full version, if you want the specifics: **barsmith.app/privacy**. It names every
+event the app can send, one by one.
+
 ---
 
 ## 7. Reporting
 
-<!-- Replace this with however you want to be reached — DM, email, a form, a group chat. -->
-**Send it to: _[your channel here]_**
+Reply to me wherever I sent you this — that's the easiest thing, and I'd rather you fire
+off a one-line message than compose something.
+
+If you'd rather write it properly, or you're reporting something broken and want to attach
+a screenshot: **hello@barsmith.app**
 
 Screenshots help. So does the raw version: *"I opened it Tuesday, wrote four bars, and
 haven't been back."* No need to be polite about it — I'd rather fix the real thing than
