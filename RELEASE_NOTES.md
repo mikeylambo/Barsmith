@@ -1,3 +1,44 @@
+# Barsmith 5.16.0 — one word reference, reachable from everywhere
+
+The question was whether a word frozen in a past session should be tappable in History.
+Following it up found the larger version of the same gap: **Rhyme Search had no
+definitions either.**
+
+So the definitions — 6,561 words, already built, already bundled, already precached —
+were reachable by exactly one route: locking a word mid-session. Which is the single
+moment a writer is least able to stop and read, because they are in the middle of writing
+a bar. Paid-for capability, effectively unreachable.
+
+## What changed
+
+**Rhyme Search now shows meaning.** Up to two senses, POS-tagged, above the rhyme groups.
+`scorch` reads *noun: a surface burn · verb: make very hot and dry*, and then the perfect
+rhymes. Entirely on-device, so it works in airplane mode like everything else in that
+panel.
+
+**Frozen words in History are buttons.** Tap one and the same panel opens on that word.
+It searches on mount and leaves the keyboard shut — arriving with the word already in
+hand, the useful thing is the answer, not a focused empty box. Cold-opening Rhyme Search
+from the home screen still focuses the input as before.
+
+The result is one word-reference surface reached three ways: mid-session (where it also
+carries the notepad), from Rhyme Search, and from a word you froze weeks ago.
+
+The definitions payload is fetched independently of the rhyme index rather than awaited
+alongside it. Rhymes are what the panel is for; the meaning block appears when it appears
+and its absence never delays them.
+
+## Verification
+
+- `179 passed` (6 new: both senses render, search-on-mount, cold open unchanged,
+  out-of-bank words still get rhymes, the History chip opens the panel, closing returns)
+- Real browser against the production bundle with the actual 800KB/730KB payloads:
+  `scorch` returns both senses plus porch/torch/blowtorch, `orange` returns its citrus
+  definition, the keyboard stays shut from History and opens on a cold launch
+- Device checklist `7/7`
+
+---
+
 # Barsmith 5.15.0 — a privacy policy, and the second page that exposed two bugs
 
 ## The policy

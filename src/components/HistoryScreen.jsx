@@ -1,11 +1,13 @@
 import { useState, useMemo } from 'react';
 import BarCardModal from './BarCardModal.jsx';
+import RhymeSearch from './RhymeSearch.jsx';
 import { sessionBarsOnly, hasBars } from '../services/export-text';
 
 export default function HistoryScreen({
   resetToIdle, sessionHistory, setSessionHistory, fmtDate, fmtDur,
   flattenNotes, copyNoteText, copiedNoteKey,
   historyAtCap, historyCount, handleExportData, handleExportBars,
+  vault = [], toggleVault,
 }) {
   // An archive that can hold 100 sessions of bars is only an archive if you can find
   // things in it. Matching runs over bar text, the word each bar was written on, and
@@ -37,6 +39,9 @@ export default function HistoryScreen({
   const anyBars = sessionHistory.some(hasBars);
   // { bar, word } for the card being previewed, or null.
   const [cardBar, setCardBar] = useState(null);
+  // A frozen word being looked up again, or null. Reviewing old sessions is where "what
+  // was that word?" actually gets asked — mid-session you are writing, not reading.
+  const [lookupWord, setLookupWord] = useState(null);
 
   return (
     <div className="flex-1 flex flex-col items-center p-6 overflow-y-auto w-full custom-scrollbar pb-36">
@@ -158,10 +163,17 @@ export default function HistoryScreen({
               )}
               {s.frozenWords?.length > 0 && (
                 <div className="border-t border-white/5 pt-3">
-                  <p className="text-[10px] text-gray-700 font-black uppercase tracking-widest mb-2">Frozen</p>
+                  <p className="text-[10px] text-gray-700 font-black uppercase tracking-widest mb-2">Frozen · tap to look up</p>
                   <div className="flex flex-wrap gap-1.5">
                     {s.frozenWords.map(w=>(
-                      <span key={w} className="bg-white/4 border border-white/5 px-2.5 py-1 rounded-full text-xs font-black text-gray-400 uppercase">{w}</span>
+                      <button
+                        key={w}
+                        onClick={() => setLookupWord(w)}
+                        aria-label={`Look up ${w} — meaning and rhymes`}
+                        className="bg-white/4 border border-white/5 px-2.5 py-1 rounded-full text-xs font-black text-gray-400 uppercase hover:bg-white/10 hover:text-white active:scale-95 transition-all"
+                      >
+                        {w}
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -171,6 +183,14 @@ export default function HistoryScreen({
         </div>
       </div>
       {cardBar && <BarCardModal bar={cardBar.bar} word={cardBar.word} onClose={()=>setCardBar(null)} />}
+      {lookupWord && (
+        <RhymeSearch
+          initialQuery={lookupWord}
+          onClose={() => setLookupWord(null)}
+          vault={vault}
+          toggleVault={toggleVault}
+        />
+      )}
     </div>
   );
 }

@@ -466,6 +466,7 @@ function App() {
           fmtDate={fmtDate} fmtDur={fmtDur} flattenNotes={flattenNotes} copyNoteText={copyNoteText} copiedNoteKey={copiedNoteKey}
           historyAtCap={sessionHistory.length >= 95} historyCount={sessionHistory.length}
           handleExportData={handleExportData} handleExportBars={handleExportBars}
+          vault={vault} toggleVault={toggleVault}
         />
       )}
 
