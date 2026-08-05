@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { haptic } from '../services/haptic';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { loadRhymeIndex, findRhymes } from '../services/rhyme';
+import { loadDefinitions, lookupDefinition } from '../services/definitions';
 import { EVENTS, track } from '../services/analytics';
 
 // ─────────────────────────────────────────────
@@ -24,9 +25,10 @@ const GROUPS = [
   ['homophones', 'Homophones', 'text-gray-400'],
 ];
 export default
-  function RhymeSearch({ onClose, vault = [], toggleVault }) {
-    const [query, setQuery]       = useState('');
+  function RhymeSearch({ onClose, vault = [], toggleVault, initialQuery = '' }) {
+    const [query, setQuery]       = useState(initialQuery);
     const [results, setResults]   = useState(null);
+    const [senses, setSenses]     = useState(null);
     const [loading, setLoading]   = useState(false);
     const [copied, setCopied]     = useState('');
     const [ready, setReady]       = useState(false);
@@ -36,7 +38,15 @@ export default
     const panelRef                = useRef(null);
     useFocusTrap(panelRef);
 
-    useEffect(() => { inputRef.current?.focus(); return () => { requestIdRef.current += 1; }; }, []);
+    // Opened with a word already in hand (a frozen word tapped in History), the useful
+    // thing is the answer, not a focused empty box — so search straight away and leave
+    // the keyboard shut. Opened cold, focus the input as before.
+    useEffect(() => {
+      if (initialQuery) search(initialQuery);
+      else inputRef.current?.focus();
+      return () => { requestIdRef.current += 1; };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // RC4 FIX 7: Escape closes the panel
     useEffect(() => {
@@ -59,7 +69,13 @@ export default
       const w = word.trim().toLowerCase();
       if (!w) return;
       const myId = ++requestIdRef.current;
-      setLoading(true); setResults(null);
+      setLoading(true); setResults(null); setSenses(null);
+      // The definitions payload is separate from the rhyme index and is not worth waiting
+      // on — rhymes are what the panel is for. It lands whenever it lands, and until then
+      // the meaning block simply is not there.
+      loadDefinitions()
+        .then(() => { if (requestIdRef.current === myId) setSenses(lookupDefinition(w)); })
+        .catch(() => {});
       try {
         await loadRhymeIndex();
         if (requestIdRef.current !== myId) return;
@@ -138,7 +154,7 @@ export default
               className="w-full bg-[#111] border border-white/10 rounded-2xl px-5 py-3.5 text-white font-bold text-base placeholder-gray-600 focus:border-white/30 transition-colors"
             />
             {query && (
-              <button onClick={() => { setQuery(''); setResults(null); inputRef.current?.focus(); }} aria-label="Clear search" className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white text-lg">✕</button>
+              <button onClick={() => { setQuery(''); setResults(null); setSenses(null); inputRef.current?.focus(); }} aria-label="Clear search" className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white text-lg">✕</button>
             )}
           </div>
           <button
@@ -182,6 +198,19 @@ export default
                   {results.syllables} syl
                 </p>
               </div>
+              {/* Meaning, when the word is in the banks. The definitions already ship in
+                  the bundle and were reachable only by locking a word mid-session — which
+                  is the one moment a writer is least able to stop and read. */}
+              {senses?.length > 0 && (
+                <div className="mt-3 mb-5 bg-[#0f0f0f] border border-white/5 rounded-2xl p-4">
+                  {senses.map((s, i) => (
+                    <p key={i} className={`text-sm text-gray-300 leading-relaxed ${i ? 'mt-2.5' : ''}`}>
+                      {s.pos && <span className="text-[10px] text-gray-600 font-black uppercase tracking-widest mr-2">{s.pos}</span>}
+                      {s.text}
+                    </p>
+                  ))}
+                </div>
+              )}
               <p className="text-[10px] text-gray-600 mb-6 uppercase tracking-widest font-bold">Tap to copy · ☆ to save</p>
               {GROUPS.map(([key, label, color]) => (
                 <RhymeGroup key={key} label={label} color={color} words={results[key]} />
