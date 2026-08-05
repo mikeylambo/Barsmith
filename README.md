@@ -368,7 +368,9 @@ be polite and it is the one the whole retention thesis turns on. And it lists th
 rough edges up front, so nobody spends their goodwill reporting a gap that is already on
 the list.
 
-Fill in the reporting channel before sending it — there is a marked placeholder.
+Feedback comes back two ways: a reply wherever the guide was sent from, or
+`hello@barsmith.app`. The reply route is listed first on purpose — a one-line message
+actually gets sent, where "compose an email" gets postponed and then skipped.
 
 ## Final real-device checks
 
