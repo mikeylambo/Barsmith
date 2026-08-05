@@ -13,6 +13,7 @@ import {
   exportAllData, importAllData,
   loadDraft, clearDraft,
   firstOpenDay,
+  snapshotForRescue, loadRescue, clearRescue, currentDataSummary,
 } from './services/storage';
 import { seedTotals, addSessionToTotals } from './services/progress';
 import { dailySession, isCompletedToday, markCompleted, programmeWeek } from './services/daily';
@@ -268,6 +269,10 @@ function App() {
   // ── Data export / import (backup & restore) ──
   const importFileRef = useRef(null);
   const [importMsg, setImportMsg] = useState('');
+  // A pending pre-restore snapshot, if the last restore left one. Read once at mount so
+  // the undo survives the app being closed and reopened — which is exactly when someone
+  // notices their Wednesday is missing.
+  const [rescue, setRescue] = useState(() => loadRescue());
   const handleExportData = () => {
     downloadText(`barsmith-backup-${dateStamp()}.json`, exportAllData(), 'application/json');
     track(EVENTS.EXPORT, { kind: 'backup' });
@@ -292,44 +297,85 @@ function App() {
       // counts have to agree with themselves — "Restore 1 sessions" reads as a bug in
       // the very dialog asking to be trusted with everything they have written.
       const count = (n, word) => `${n ?? 0} ${word}${(n ?? 0) === 1 ? '' : 's'}`;
-      const summary = parsed
-        ? `Restore ${count(parsed.history?.length, 'session')}, ${count(parsed.vault?.length, 'vault word')}, and ${count(parsed.customWords?.length, 'personal word')}? Existing local data will be replaced.`
-        : 'Restore this backup? Existing local data will be replaced.';
+      const now = currentDataSummary();
+      // The dangerous restore is not a corrupt file, it is an OLD one — and the writer
+      // cannot tell by looking at the filename. Showing what they have NOW next to what
+      // is in the file is the single thing most likely to stop the mistake, because
+      // "12 sessions → 3 sessions" is legible in a way "data will be replaced" is not.
+      const incoming = parsed
+        ? `\n\nOn this device now: ${count(now.sessions, 'session')}, ${count(now.vault, 'saved word')}.\nIn this backup: ${count(parsed.history?.length, 'session')}, ${count(parsed.vault?.length, 'saved word')}, ${count(parsed.customWords?.length, 'personal word')}.`
+        : '';
+      const losing = parsed && (parsed.history?.length ?? 0) < now.sessions;
+      const summary =
+        (losing ? 'This backup has FEWER sessions than this device. Restoring will replace what is here.' : 'Restore this backup? Existing local data will be replaced.')
+        + incoming
+        + '\n\nA copy of what is on this device now is kept, so you can undo this from Saved Words.';
       if (!confirm(summary)) { e.target.value = ''; return; }
 
-      const result = importAllData(reader.result);
-      if (result.ok) {
-        const restoredHistory = loadHistory();
-        setVault(loadVault());
-        setSessionHistory(restoredHistory);
-        setCustomWords(loadCustomWords());
-        setPracticeDays(loadPracticeDays());
-        // A backup written before training totals existed carries none, so rebuild from
-        // the restored history. Forced, because whatever counters are in storage describe
-        // the data this restore just replaced.
-        if (!result.hadTotals) saveTotals(seedTotals(restoredHistory, null, { force: true }));
-        setTotals(loadTotals());
-        // Reapply restored preferences to live state — previously these were written to
-        // storage but the running app kept its old in-memory values until reload.
-        const restoredPrefs = loadPrefs();
-        setSelectedTier(normalizeTier(restoredPrefs.tier));
-        setIntervalMs(restoredPrefs.interval || 3500);
-        setBpm(restoredPrefs.bpm || 90);
-        setBpmMode(restoredPrefs.bpmMode || false);
-        setBarsPerWord(restoredPrefs.barsPerWord || 2);
-        setWordCount(restoredPrefs.wordCount || 1);
-        setHapticsOn(restoredPrefs.hapticsOn !== false);
-        setSessionLimit(loadSessionLimit());
-        setImportMsg('Backup restored.');
-        haptic(20);
-      } else {
-        setImportMsg(result.error || 'Import failed — invalid file.');
+      // Snapshot BEFORE the overwrite. If storage refuses it, say so plainly rather than
+      // proceeding on a promise of an undo that would not exist.
+      if (!snapshotForRescue() &&
+          !confirm('Could not save an undo copy — this device is out of storage. Restore anyway? What is here now cannot be recovered.')) {
+        e.target.value = '';
+        return;
       }
+
+      const result = applyBackup(reader.result, 'Backup restored.');
+      if (result.ok) setRescue(loadRescue());
       setTimeout(() => setImportMsg(''), 2500);
     };
     reader.readAsText(f);
     e.target.value = '';
   };
+
+  // Shared by restore and undo, because an undo that reapplies state differently from a
+  // restore is an undo that leaves the app in a third state neither of them describes.
+  function applyBackup(json, successMsg) {
+    const result = importAllData(json);
+    if (result.ok) {
+      const restoredHistory = loadHistory();
+      setVault(loadVault());
+      setSessionHistory(restoredHistory);
+      setCustomWords(loadCustomWords());
+      setPracticeDays(loadPracticeDays());
+      // A backup written before training totals existed carries none, so rebuild from
+      // the restored history. Forced, because whatever counters are in storage describe
+      // the data this restore just replaced.
+      if (!result.hadTotals) saveTotals(seedTotals(restoredHistory, null, { force: true }));
+      setTotals(loadTotals());
+      // Reapply restored preferences to live state — previously these were written to
+      // storage but the running app kept its old in-memory values until reload.
+      const restoredPrefs = loadPrefs();
+      setSelectedTier(normalizeTier(restoredPrefs.tier));
+      setIntervalMs(restoredPrefs.interval || 3500);
+      setBpm(restoredPrefs.bpm || 90);
+      setBpmMode(restoredPrefs.bpmMode || false);
+      setBarsPerWord(restoredPrefs.barsPerWord || 2);
+      setWordCount(restoredPrefs.wordCount || 1);
+      setHapticsOn(restoredPrefs.hapticsOn !== false);
+      setSessionLimit(loadSessionLimit());
+      setImportMsg(successMsg);
+      haptic(20);
+    } else {
+      setImportMsg(result.error || 'Import failed — invalid file.');
+    }
+    return result;
+  }
+
+  const handleUndoRestore = () => {
+    const snap = loadRescue();
+    if (!snap?.data) return;
+    if (!confirm(`Put back what was on this device before the restore — ${snap.sessions} session${snap.sessions === 1 ? '' : 's'}? The backup you just restored will be replaced.`)) return;
+    // Cleared regardless of outcome: on success it has served its purpose, and on failure
+    // it is unreadable, so leaving it would only offer an undo that cannot work.
+    const result = applyBackup(snap.data, 'Restored what was here before.');
+    clearRescue();
+    setRescue(null);
+    if (!result.ok) setImportMsg('Could not read the undo copy.');
+    setTimeout(() => setImportMsg(''), 2500);
+  };
+
+  const handleDismissRescue = () => { clearRescue(); setRescue(null); };
 
   const sortedVault = useMemo(() => [...vault].sort((a,b) =>
     vaultSortMode==='A-Z'    ? a.word.localeCompare(b.word) :
@@ -457,6 +503,7 @@ function App() {
           toggleVault={toggleVault} fetchDictData={engine.fetchDictData} dictData={engine.dictData} isLoadingDict={engine.isLoadingDict}
           customWords={customWords} setCustomWords={setCustomWords} customWordInput={customWordInput} setCustomWordInput={setCustomWordInput}
           handleExportData={handleExportData} importFileRef={importFileRef} handleImportFile={handleImportFile} importMsg={importMsg}
+          rescue={rescue} handleUndoRestore={handleUndoRestore} handleDismissRescue={handleDismissRescue}
         />
       )}
 

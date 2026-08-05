@@ -19,6 +19,7 @@ export const STORAGE_KEYS = {
   draft:        'barsmithDraft',
   analyticsOff: 'barsmithAnalyticsOff',  // opt-out flag — see services/analytics.js
   firstOpen:    'barsmithFirstOpen',     // install date, for cohort bucketing only
+  rescue:       'barsmithRescue',        // pre-restore snapshot — see snapshotForRescue
 };
 
 function safeGet(key, fallback) {
@@ -196,6 +197,45 @@ export function exportAllData() {
     // lifetime record of anyone past that mark.
     totals: loadTotals(),
   }, null, 2);
+}
+
+// ── Rescue snapshot ──
+//
+// Restore replaces everything, and the dangerous case is not a corrupt file — it is a
+// perfectly valid one that is simply OLD. Back up Monday, write Wednesday, restore
+// Monday's file to "get your words back", and Wednesday is gone with a confirm dialog as
+// the only thing that stood in the way.
+//
+// So the current state is written to its own key immediately before a restore overwrites
+// it, and stays there until the writer either undoes the restore or dismisses it. Kept in
+// localStorage rather than pushed out as a download because on a phone a download means a
+// share sheet and a trip to Files — friction at the exact moment someone is already
+// anxious about their work.
+
+/** Snapshot everything as it stands right now. Returns false if storage refused it. */
+export function snapshotForRescue() {
+  const history = loadHistory();
+  return safeSet(STORAGE_KEYS.rescue, {
+    savedAt: new Date().toISOString(),
+    sessions: history.length,
+    bars: history.reduce((n, s) => n + Object.values(s.notes || {})
+      .reduce((m, e) => m + Object.values(e && typeof e === 'object' ? e : {}).filter(t => t?.trim()).length, 0), 0),
+    data: exportAllData(),
+  });
+}
+
+/** The pending snapshot, or null. `data` is a backup string importAllData accepts. */
+export const loadRescue = () => safeGet(STORAGE_KEYS.rescue, null);
+export const clearRescue = () => { try { localStorage.removeItem(STORAGE_KEYS.rescue); } catch {} };
+
+/** Counts for the data currently in storage, for a restore dialog that shows the delta. */
+export function currentDataSummary() {
+  const history = loadHistory();
+  return {
+    sessions: history.length,
+    vault: loadVault().length,
+    customWords: loadCustomWords().length,
+  };
 }
 
 export function importAllData(jsonString) {

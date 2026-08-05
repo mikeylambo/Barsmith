@@ -1,3 +1,55 @@
+# Barsmith 5.17.0 — a restore you can take back
+
+The one path in the app that could destroy a writer's work, hardened before anybody is
+invited in.
+
+## The failure was never a corrupt file
+
+It was a perfectly valid one that happened to be **old**. Back up Monday, write Wednesday,
+restore Monday's file to "get your words back" — and Wednesday is gone, with a confirm
+dialog reading *"Existing local data will be replaced"* as the only thing that stood in the
+way. Nothing in that sentence tells you that you are about to lose a day, and the filename
+certainly doesn't.
+
+## Two fixes, and the first one matters more
+
+**The dialog shows the delta.** Not a warning, a comparison:
+
+```
+This backup has FEWER sessions than this device. Restoring will replace what is here.
+
+On this device now: 2 sessions, 0 saved words.
+In this backup: 1 session, 0 saved words, 0 personal words.
+```
+
+`2 sessions → 1 session` is legible in a way "data will be replaced" is not. This is the
+change most likely to stop the mistake happening at all, which beats any amount of
+recovery afterwards.
+
+**And if it happens anyway, it is reversible.** The current state is snapshotted
+immediately before the overwrite, and *Saved Words* then offers **Undo Restore**, labelled
+with what was there — "this device had 2 sessions and 2 bars". Kept in localStorage rather
+than pushed out as a download, because on a phone a download means a share sheet and a trip
+to Files, which is friction at the exact moment somebody is already anxious about their
+writing. It survives closing the app, which is usually when the loss gets noticed.
+
+If storage refuses the snapshot, the restore says so and asks again rather than proceeding
+on the promise of an undo that would not exist.
+
+Restore and undo now run through one code path. An undo that reapplied live state
+differently from a restore would leave the app in a third state neither of them describes.
+
+## Verification
+
+- `186 passed` (7 new, including the Monday/Wednesday scenario end to end at the
+  storage layer, and the quota-refusal branch)
+- Driven in a real browser through the actual mistake: two sessions, restore a
+  one-session backup, undo, Wednesday's bar comes back — and the undo is still offered
+  after a full reload
+- Device checklist `7/7`
+
+---
+
 # Barsmith 5.16.0 — one word reference, reachable from everywhere
 
 The question was whether a word frozen in a past session should be tappable in History.

@@ -43,6 +43,11 @@ So once you've written something you'd be annoyed to lose:
 
 Do this once a week. Takes five seconds. I'd rather nag you now than apologise later.
 
+**If you restore the wrong file, you can take it back.** Restoring replaces everything, so
+the dialog now shows you what's on your phone next to what's in the file — and a copy of
+what was there is kept either way. *Saved Words → Undo Restore*. It survives closing the
+app, which is usually when you notice.
+
 You can also get bars out as plain text any time — *Export .txt* on the Summary screen
 after a session, or *Export All Bars* from History.
 
