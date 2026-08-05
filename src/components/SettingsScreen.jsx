@@ -117,6 +117,17 @@ export default function SettingsScreen({ resetToIdle, hapticsOn, setHapticsOn, m
             One exception, so you know: tapping a word for its <em>synonyms</em> sends
             that single word to a public dictionary. Just the word, only when you tap.
           </p>
+          {/* The full policy is a page rather than more text here: the App Store requires a
+              hosted one, and a writer who wants the specifics deserves the specifics
+              without this screen becoming a document. */}
+          <a
+            href="/privacy.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block mt-4 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-white underline underline-offset-4 transition-colors"
+          >
+            Full privacy policy →
+          </a>
         </div>
 
         <p className="text-[10px] text-gray-700 text-center leading-relaxed">

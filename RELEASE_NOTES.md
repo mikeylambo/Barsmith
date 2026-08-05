@@ -1,3 +1,50 @@
+# Barsmith 5.15.0 — a privacy policy, and the second page that exposed two bugs
+
+## The policy
+
+`/privacy.html`, linked from Settings. App Store Connect requires a hosted privacy policy
+URL before you can submit anything, so this had to exist regardless — but it was worth
+writing properly rather than pasting a generator's output, because the app's actual answer
+is unusually good and a generic template would have undersold it.
+
+It lists **every event the app can send, by name**, states that properties are bucketed
+ranges rather than exact figures, and explains that content cannot reach the wire by
+construction rather than by care. The one exception — tapping a word for synonyms sends
+that single word to a public dictionary — is named in its own section rather than buried.
+
+The contact line is a marked placeholder. **It must be filled in before submission.**
+
+## Adding a second page broke two things that had been fine by accident
+
+**The service worker cached every navigation under `/`.** Harmless for as long as the app
+was the only page on the origin — and the moment a second one existed, visiting the
+privacy policy would have overwritten the cached app shell with it, so an *offline launch
+from the home screen would have opened a legal document instead of Barsmith.* Now only the
+shell itself may be stored under `/`, and an offline navigation falls back to the shell,
+which is the one page guaranteed to work without a connection.
+
+**There were two copies of the service worker.** `public/sw.js` looked like the real one —
+it was the obvious file to edit, and Vite copied it into `dist/` on every build. Then
+`scripts/inject-sw-precache.js` overwrote it a moment later with its own inlined template.
+Editing `public/sw.js` had no effect on the shipped worker whatsoever, which is exactly how
+the fix above appeared to be applied while the built output still had the bug. The decoy
+is deleted; the generator is now the only source.
+
+## `/privacy` vs `/privacy.html`
+
+Worth recording because it nearly shipped wrong. Served as a directory index, the page
+answered on `/privacy/` but fell through to the SPA on `/privacy` — the exact URL you would
+hand to Apple. It is now a flat file at `/privacy.html`, which every static host resolves
+identically, with a Vercel redirect from `/privacy` for the tidier link.
+
+## Verification
+
+- `173 passed`; device checklist `7/7`, including the offline precache contract
+- Confirmed in a real browser that after visiting the policy, the cached shell is still the
+  app — the assertion that would have failed before the fix
+
+---
+
 # Barsmith 5.14.0 — the slider that wasn't the volume
 
 Three things, one of which was not the bug it looked like.
