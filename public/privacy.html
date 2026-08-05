@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Privacy Policy — Barsmith</title>
+<meta name="description" content="What Barsmith stores, what it sends, and how to turn the sending off." />
+<meta name="robots" content="index, follow" />
+<link rel="icon" href="/icon-192.png" />
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 3rem 1.25rem 5rem;
+    background: #050505;
+    color: #d4d4d8;
+    font: 16px/1.7 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 42rem; margin: 0 auto; }
+  a { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
+  h1 {
+    font-size: clamp(2rem, 7vw, 2.75rem); line-height: 1.05; margin: 0 0 .5rem;
+    font-weight: 900; letter-spacing: -.03em; text-transform: uppercase; color: #fff;
+  }
+  h2 {
+    font-size: 1.05rem; margin: 2.75rem 0 .75rem; font-weight: 800;
+    letter-spacing: -.01em; color: #fff;
+  }
+  h3 { font-size: .95rem; margin: 1.75rem 0 .5rem; font-weight: 700; color: #e4e4e7; }
+  p, li { margin: 0 0 1rem; }
+  ul { padding-left: 1.15rem; margin: 0 0 1rem; }
+  li { margin-bottom: .5rem; }
+  strong { color: #fff; font-weight: 700; }
+  code {
+    font: 500 .82em/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+    background: rgba(255,255,255,.07); padding: .18em .45em; border-radius: 5px;
+    color: #fafafa; white-space: nowrap;
+  }
+  .meta {
+    font-size: .7rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: .18em; color: #52525b; margin: 0 0 2.5rem;
+  }
+  .lede {
+    background: #0f0f0f; border: 1px solid rgba(255,255,255,.07);
+    border-radius: 1rem; padding: 1.5rem; margin: 0 0 1rem;
+  }
+  .lede p:last-child { margin-bottom: 0; }
+  .lede p:first-child { font-size: 1.05rem; color: #fff; font-weight: 600; }
+  hr { border: 0; border-top: 1px solid rgba(255,255,255,.07); margin: 3rem 0; }
+  footer { font-size: .8rem; color: #52525b; margin-top: 3rem; }
+  footer a { color: #a1a1aa; }
+  table { width: 100%; border-collapse: collapse; margin: 0 0 1rem; font-size: .875rem; }
+  th, td { text-align: left; padding: .55rem .75rem .55rem 0; vertical-align: top;
+           border-bottom: 1px solid rgba(255,255,255,.06); }
+  th { color: #a1a1aa; font-weight: 700; font-size: .7rem;
+       text-transform: uppercase; letter-spacing: .1em; }
+  td:first-child { white-space: nowrap; padding-right: 1.25rem; }
+  .scroll { overflow-x: auto; }
+</style>
+</head>
+<body>
+<main>
+
+  <h1>Privacy Policy</h1>
+  <p class="meta">Barsmith · Effective 5 August 2026</p>
+
+  <div class="lede">
+    <p>Barsmith has no account, no login, and no server that holds your writing.</p>
+    <p>
+      Every bar you write, every word you save, and your whole session history live in your
+      browser's storage on your own device. They are never uploaded, never backed up to a
+      cloud, and never seen by anyone — including me.
+    </p>
+    <p>
+      The app sends anonymous usage counts so I can tell which features earn their place.
+      Those counts never contain anything you typed, and you can switch them off in
+      <strong>Settings → Privacy</strong>.
+    </p>
+  </div>
+
+  <p>
+    That is the whole policy in three sentences. The rest of this page is the detail behind
+    it, because a promise about privacy is worth exactly as much as its specifics.
+  </p>
+
+  <hr />
+
+  <h2>1. What stays on your device</h2>
+
+  <p>
+    All of this is stored using your browser's <code>localStorage</code> on the device you
+    are using. It is not transmitted anywhere:
+  </p>
+
+  <ul>
+    <li><strong>Your bars</strong> — everything written in the Bar Pad, including drafts recovered after a crash</li>
+    <li><strong>Saved words</strong> and any personal vocabulary you add</li>
+    <li><strong>Session history</strong> — the words you were given, how long you wrote, what you wrote</li>
+    <li><strong>Lifetime totals, practice days and streaks</strong></li>
+    <li><strong>Your settings</strong> — level, scheme, tempo, haptics, metronome volume, and your analytics choice</li>
+  </ul>
+
+  <p>
+    There is no copy of any of it anywhere else. That is the point of the design, and it has
+    a consequence worth stating plainly: <strong>if you delete the app, clear your browser's
+    site data, or lose the device, that writing is gone.</strong> I cannot recover it,
+    because I never had it. Use <em>Saved Words → Export Backup</em> to keep a copy you
+    control.
+  </p>
+
+  <h2>2. What is sent, and what it contains</h2>
+
+  <p>
+    Barsmith records anonymous, aggregated usage events through
+    <a href="https://vercel.com/docs/analytics/privacy-policy" rel="noopener">Vercel Web
+    Analytics</a>. It sets <strong>no cookies</strong>, assigns you <strong>no
+    identifier</strong>, and does not follow you to any other site.
+  </p>
+
+  <p>These are all of the events the app is capable of sending. There are no others:</p>
+
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Event</th><th>Sent when</th></tr></thead>
+      <tbody>
+        <tr><td><code>app_open</code></td><td>The app is opened</td></tr>
+        <tr><td><code>session_start</code></td><td>A writing session begins</td></tr>
+        <tr><td><code>session_end</code></td><td>A writing session finishes</td></tr>
+        <tr><td><code>daily_complete</code></td><td>The daily prescribed session is completed</td></tr>
+        <tr><td><code>progress_open</code></td><td>The Progress screen is opened</td></tr>
+        <tr><td><code>rhyme_search</code></td><td>A rhyme search is run — <strong>never the word searched for</strong></td></tr>
+        <tr><td><code>word_lock</code></td><td>A word is tapped mid-session — <strong>never which word</strong></td></tr>
+        <tr><td><code>bar_share</code></td><td>A bar card is shared</td></tr>
+        <tr><td><code>export</code></td><td>An export or backup is produced</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>The properties attached to them are bucketed ranges, never exact figures</h3>
+
+  <p>
+    A session reports <code>6-15</code> bars rather than <code>12</code>, and
+    <code>5-10</code> minutes rather than <code>7</code>. An exact count paired with a
+    timestamp begins to look like a fingerprint, and nothing here needs that resolution.
+    The same applies to session counts, day counts and streak lengths.
+  </p>
+
+  <h3>Content cannot get in, by construction</h3>
+
+  <p>
+    This is not a policy promise resting on care — it is enforced in the code. Event
+    properties are filtered against a pattern permitting only short lowercase labels and
+    small numbers, and anything failing that test is dropped rather than sent. There is no
+    path through which a bar, a saved word, a search term or a filename could travel, even
+    by mistake.
+  </p>
+
+  <h3>Do Not Track is honoured</h3>
+
+  <p>
+    If your browser sends a Do Not Track signal, nothing is sent, whatever the in-app
+    setting says.
+  </p>
+
+  <h2>3. The one exception: word lookups</h2>
+
+  <p>
+    Rhymes, syllable counts, stress patterns and the built-in word definitions all run
+    entirely on your device — the dictionaries ship inside the app, which is why they keep
+    working in airplane mode.
+  </p>
+
+  <p>
+    <strong>Tapping a word for its extended definition and synonyms is the exception.</strong>
+    That sends the single word — and nothing else — to two public dictionary services:
+  </p>
+
+  <ul>
+    <li><code>api.dictionaryapi.dev</code> — definitions</li>
+    <li><code>api.datamuse.com</code> — synonyms, antonyms and related words</li>
+  </ul>
+
+  <p>
+    It happens only at the moment you tap, only for that one word, and it carries no
+    identifier of any kind. Those services have their own privacy practices, which I do not
+    control. If you never tap a word for synonyms, nothing is ever sent to either.
+  </p>
+
+  <h2>4. Camera, microphone and audio</h2>
+
+  <p>
+    Barsmith can record you rapping. If you use it, your device will ask for camera and
+    microphone permission first, and you can refuse — the rest of the app works normally
+    either way.
+  </p>
+
+  <p>
+    <strong>Recordings are never uploaded.</strong> The video is produced and held in your
+    device's memory, played back in the app if you want to review it, and discarded when
+    the session ends unless you choose to save it. Saving hands the file to your operating
+    system's own share sheet, at which point where it goes is entirely your choice. No
+    recording is transmitted to me or to anyone else at any stage.
+  </p>
+
+  <p>
+    The same is true of any instrumental you load: the audio file is read locally and never
+    leaves the device.
+  </p>
+
+  <h2>5. What Barsmith never does</h2>
+
+  <ul>
+    <li>No accounts, no email addresses, no phone numbers, no names</li>
+    <li>No advertising, no ad networks, no third-party trackers, no social media pixels</li>
+    <li>No selling or sharing of data — there is nothing personal to sell</li>
+    <li>No cookies</li>
+    <li>No location data</li>
+    <li>No contacts, photos, or files beyond one instrumental you explicitly choose to load</li>
+    <li>No cross-site or cross-app tracking, and no data broker relationships</li>
+  </ul>
+
+  <h2>6. Your controls</h2>
+
+  <ul>
+    <li>
+      <strong>Turn analytics off</strong> — <em>Settings → Privacy</em>. It takes effect on
+      the very next event, not after a restart. Every other part of the app behaves
+      identically.
+    </li>
+    <li>
+      <strong>Export everything</strong> — <em>Saved Words → Export Backup</em> produces a
+      JSON file containing all your writing, which you keep.
+    </li>
+    <li>
+      <strong>Delete everything</strong> — clearing the site data in your browser settings,
+      or deleting the app from your home screen, removes all of it permanently and
+      immediately. There is no server-side deletion request to make, because there is no
+      server-side copy.
+    </li>
+  </ul>
+
+  <h2>7. Legal basis and your rights</h2>
+
+  <p>
+    Where the UK GDPR, EU GDPR or similar law applies, the anonymous usage counts are
+    processed on the basis of <strong>legitimate interest</strong> in understanding whether
+    the app's features work, and you may object at any time using the in-app switch. No
+    personal data as those laws define it is collected, so there is in practice nothing to
+    request access to, correct, or port — everything Barsmith holds about you is already on
+    your own device and exportable in one tap.
+  </p>
+
+  <p>
+    Under the CCPA and similar US state laws: Barsmith does not sell or share personal
+    information, and has never done so.
+  </p>
+
+  <h2>8. Children</h2>
+
+  <p>
+    Barsmith is not directed at children under 13, and does not knowingly collect anything
+    from them. Since it collects no personal information from anyone, there is nothing
+    held about a child user to delete — but if you have a concern, get in touch.
+  </p>
+
+  <h2>9. Changes to this policy</h2>
+
+  <p>
+    If what the app sends ever changes, this page changes with it and the effective date at
+    the top is updated. A change that broadened what leaves your device would be announced
+    in the app itself, not quietly published here.
+  </p>
+
+  <h2>10. Contact</h2>
+
+  <!--
+    REQUIRED BEFORE APP STORE SUBMISSION.
+    App Store Connect requires a working contact route on the privacy policy, and a
+    separate Support URL. Replace the line below with a real address you monitor.
+  -->
+  <p>
+    Questions about any of this, or about your data: <strong>[your contact email here]</strong>
+  </p>
+
+  <footer>
+    <p><a href="/">← Back to Barsmith</a></p>
+  </footer>
+
+</main>
+</body>
+</html>

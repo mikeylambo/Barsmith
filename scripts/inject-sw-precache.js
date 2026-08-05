@@ -2,7 +2,12 @@
 /**
  * inject-sw-precache.js  (runs after `vite build`)
  *
- * Problem solved: the handwritten service worker (public/sw.js) precaches only
+ * This file is the ONLY source of the shipped service worker. There used to be a second
+ * copy at public/sw.js, which Vite dutifully copied to dist/ for this script to overwrite
+ * a moment later — so it looked authoritative, was the obvious file to edit, and had no
+ * effect on anything. It has been deleted. Edit the template below.
+ *
+ * Problem solved: a handwritten service worker precaches only
  * the four static shell URLs. Vite emits hashed JS/CSS bundles like
  * /assets/index-Bx3kQ9aR.js whose filenames change on every build. Because the
  * SW never sees those URLs at install time, an offline first-load finds the HTML
@@ -101,14 +106,23 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return; // never intercept dictionary/rhyme API calls
 
   if (request.mode === 'navigate') {
+    // Only the app shell may be stored under '/'. This used to cache EVERY navigation
+    // response there, which was harmless while the app was the only page on the origin
+    // and quietly poisoned the offline boot as soon as a second one existed (the privacy
+    // policy) — an offline launch would have served a legal page instead of the app.
+    const isAppShell = url.pathname === '/' || url.pathname === '/index.html';
     event.respondWith(
       fetch(request)
         .then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE_VERSION).then((cache) => cache.put('/', copy)).catch(() => {});
+          if (isAppShell && res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE_VERSION).then((cache) => cache.put('/', copy)).catch(() => {});
+          }
           return res;
         })
-        .catch(() => caches.match('/'))
+        // Offline: serve that page if it happens to be cached, otherwise the app shell,
+        // which is the one page guaranteed to work without a connection.
+        .catch(() => caches.match(request).then((hit) => hit || caches.match('/')))
     );
     return;
   }
