@@ -6,6 +6,8 @@ import { haptic } from '../services/haptic';
 import { shareFile } from '../services/share';
 import { dateStamp } from '../services/download';
 import { saveDraft, clearDraft, recordPracticeDay } from '../services/storage';
+import { keepScreenAwake, allowScreenSleep } from '../services/screen';
+import { useForPlayback, useForRecording } from '../services/audio-session';
 
 /**
  * Owns the entire writing-session lifecycle:
@@ -65,7 +67,6 @@ export function useSessionEngine({
   // timer rather than after a re-render.
   const drawnRef = useRef(new Set());
   const fetchAbortRef = useRef(null);
-  const wakeLockRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const recordedChunksRef = useRef([]);
   const recordedMimeRef = useRef('video/webm');
@@ -194,8 +195,11 @@ export function useSessionEngine({
     osc.start(); osc.stop(ctx.currentTime + dur);
   };
 
-  const requestWakeLock = async () => { try { if ('wakeLock' in navigator) wakeLockRef.current = await navigator.wakeLock.request('screen'); } catch {} };
-  const releaseWakeLock = () => { wakeLockRef.current?.release().then(() => { wakeLockRef.current = null; }); };
+  // Both delegate to services/screen.js, which keeps the web and native routes behind one
+  // call — WKWebView has no navigator.wakeLock, so a wrapped build would otherwise sleep
+  // mid-session exactly where the PWA stays awake.
+  const requestWakeLock = () => { keepScreenAwake(); };
+  const releaseWakeLock = () => { allowScreenSleep(); };
 
   // ── Word engine ──
   const getNextWords = (count) => {
@@ -318,6 +322,11 @@ export function useSessionEngine({
     setCameraError('');
     let stream;
     try {
+      // Before getUserMedia, not after: on iOS the `playback` category the app otherwise
+      // runs under grants no recording input, so asking for the camera without switching
+      // first fails. `defaultToSpeaker` inside keeps the metronome out of the earpiece,
+      // which is where playAndRecord sends output by default. No-op on the web.
+      await useForRecording();
       // Front camera only, and not as a simplification — a rear-facing recording points
       // the screen away from the writer, so the prompt words they are meant to be
       // rapping over are behind the phone. The one thing worth filming here is the
@@ -358,6 +367,9 @@ export function useSessionEngine({
     } catch (e) {
       stream?.getTracks().forEach(t => t.stop());
       cameraStreamRef.current = null;
+      // Hand the session back to playback — the recording never started, and leaving it in
+      // playAndRecord would route the metronome to the earpiece for the rest of it.
+      useForPlayback();
       setCameraError(e.name === 'NotAllowedError' ? 'Camera permission denied.' : 'Camera unavailable.');
     }
   };
@@ -366,6 +378,8 @@ export function useSessionEngine({
     cameraStreamRef.current?.getTracks().forEach(t => t.stop());
     cameraStreamRef.current = null;
     if (_cameraPreviewRef.current) _cameraPreviewRef.current.srcObject = null;
+    // Back to playback so the click returns to the speaker and survives the ringer switch.
+    useForPlayback();
   };
   /**
    * Hand the recording to the OS share sheet, or download it where that is unavailable.
@@ -385,6 +399,10 @@ export function useSessionEngine({
   const startSession = () => {
     isEndingRef.current = false;
     isResumingFromDictRef.current = false;
+    // Declare the audio behaviour before the first click. Without this the metronome is
+    // silenced by the ringer switch — and someone who silenced their phone to concentrate
+    // asked for no notifications, not for a silent metronome. No-op on the web.
+    useForPlayback();
     if (audioCtxRef.current?.state === 'suspended') audioCtxRef.current.resume();
     if (beatAudioSrc && audioPlayerRef.current) { audioPlayerRef.current.currentTime = 0; audioPlayerRef.current.play().catch(() => {}); }
     requestWakeLock();
@@ -448,6 +466,10 @@ export function useSessionEngine({
     if (!vault.length) return;
     isEndingRef.current = false;
     isResumingFromDictRef.current = false;
+    // Declare the audio behaviour before the first click. Without this the metronome is
+    // silenced by the ringer switch — and someone who silenced their phone to concentrate
+    // asked for no notifications, not for a silent metronome. No-op on the web.
+    useForPlayback();
     if (audioCtxRef.current?.state === 'suspended') audioCtxRef.current.resume();
     if (beatAudioSrc && audioPlayerRef.current) { audioPlayerRef.current.currentTime = 0; audioPlayerRef.current.play().catch(() => {}); }
     requestWakeLock();

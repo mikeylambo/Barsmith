@@ -1,7 +1,7 @@
 {
   "name": "barsmith",
   "private": true,
-  "version": "5.18.0",
+  "version": "5.19.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -16,9 +16,12 @@
     "sync:ios": "npm run build && npx cap sync ios"
   },
   "dependencies": {
+    "@capacitor-community/keep-awake": "^8.0.1",
+    "@capacitor/core": "^8.5.0",
     "@capacitor/filesystem": "^8.1.2",
     "@capacitor/haptics": "^8.0.2",
     "@capacitor/share": "^8.0.1",
+    "@capawesome/capacitor-audio-session": "^0.1.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
