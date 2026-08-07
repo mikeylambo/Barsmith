@@ -1,4 +1,66 @@
 <<<<<<< HEAD
+# Barsmith 5.19.0 — the screen stays on, the click stays audible
+
+The two native gaps a writer would have hit within one session.
+
+## The screen went to sleep mid-bar
+
+A writing session is a screen you look at and rarely touch — that is the whole shape of it,
+hands busy, eyes on the word. `navigator.wakeLock` covers this on the web, but **WKWebView
+does not implement it**, so the wrapped build would have slept exactly where the PWA stays
+awake. `services/screen.js` now holds both routes behind one call.
+
+## The metronome would have been silenced by the ringer switch
+
+Someone who silenced their phone to concentrate asked for no notifications. They did not
+ask for a silent metronome — the Settings slider is where the click gets turned down.
+
+The interesting part is that **neither iOS audio category fits the whole app**, and they
+fail in opposite directions:
+
+- `playback` survives the ringer switch, but grants no recording input — asking for the
+  camera under it kills the session.
+- `playAndRecord` allows the camera, but routes output to the **receiver**, the earpiece
+  you hold to your head. A click that quietly relocates there mid-session reads as the
+  metronome having stopped.
+
+So `services/audio-session.js` owns a switch rather than a setting: `playback` at session
+start, `playAndRecord` with `defaultToSpeaker` for the duration of a recording, back to
+`playback` when it stops *or fails*. That last path matters — a denied camera permission
+would otherwise leave the session in `playAndRecord` with the click in the earpiece for the
+rest of it.
+
+## Two guards that were not guarding
+
+**A scope-only match let two plugins escape.** `@capacitor-community/keep-awake` and
+`@capawesome/capacitor-audio-session` are not under the `@capacitor/` scope, so the chunk
+matcher missed them: four extra chunks of native-only code precached and shipped to every
+browser, with every name-based assertion still passing.
+
+**Then the guard meant to catch that shared the same pattern.** Narrowing the regex
+narrowed the detector along with it, so the check went blind in precisely the case it
+existed for. A check that cannot fail when the thing it guards fails is not a check.
+
+Both are now structural rather than enumerated: `vite.config.js` asks whether a module's
+*package name mentions Capacitor*, so no scope can be forgotten and adding a plugin needs no
+config change. The guard reads Rollup's module graph and **fails the build**, rather than
+inspecting artifacts — an artifact-level content check written first turned out to be
+worthless, because the main bundle legitimately contains `KeepAwake` as a property name
+from its own dynamic import.
+
+Verified by running a real build with chunking disabled and the guard left in: it fails, and
+names all eleven offending chunks.
+
+## Verification
+
+- `201 passed` (8 new: both wake-lock routes, the no-support browser, and five on the audio
+  session including the no-op-on-web case and the no-redundant-switch case)
+- Device checklist `7/7`
+- Entry bundle 330,034 B before any of this → 333,707 B. **+3.7KB for four native seams**,
+  identical `index.html`, identical 11-URL precache.
+
+---
+
 # Barsmith 5.18.0 — the native shell, without touching the web app
 
 Capacitor scaffolding and the first three native seams. The constraint the whole change is

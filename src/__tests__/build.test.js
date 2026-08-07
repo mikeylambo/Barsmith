@@ -60,6 +60,12 @@ describe('build output', () => {
     expect(wronglyPrecached, `native-only chunks must not be precached: ${wronglyPrecached.join(', ')}`).toHaveLength(0);
   });
 
+  // Note: the real enforcement is at build time. vite.config.js fails the build outright
+  // if any Capacitor module lands outside the native chunk, reading Rollup's module graph
+  // rather than guessing from artifacts — an earlier content-based check here was useless,
+  // because the main bundle legitimately contains `KeepAwake` as a property name from its
+  // own dynamic import. What remains above is the artifact-level half of that guarantee.
+
   it('dist/sw.js precaches every icon the manifest declares', async () => {
     const distPath = join(process.cwd(), 'dist');
     expect(existsSync(distPath), 'dist/ not found — run `npm run verify` instead of `npm test`').toBe(true);

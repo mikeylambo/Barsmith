@@ -19,6 +19,19 @@ vi.mock('@capacitor/filesystem', () => ({
   Directory: { Cache: 'CACHE' },
 }));
 
+const awake = [];
+vi.mock('@capacitor-community/keep-awake', () => ({
+  KeepAwake: {
+    keepAwake: () => { awake.push('keep'); return Promise.resolve(); },
+    allowSleep: () => { awake.push('sleep'); return Promise.resolve(); },
+  },
+}));
+
+const sessions = [];
+vi.mock('@capawesome/capacitor-audio-session', () => ({
+  AudioSession: { configure: (o) => { sessions.push(o); return Promise.resolve(); } },
+}));
+
 const impacts = [];
 vi.mock('@capacitor/haptics', () => ({
   Haptics: { impact: (o) => { impacts.push(o.style); } },
@@ -28,8 +41,14 @@ vi.mock('@capacitor/haptics', () => ({
 import { isNative, platform } from '../services/platform.js';
 import { shareFile, canShareImages, canShareType } from '../services/share.js';
 import { haptic } from '../services/haptic.js';
+import { keepScreenAwake, allowScreenSleep, _resetScreenLock } from '../services/screen.js';
+import { useForPlayback, useForRecording, _resetAudioSession } from '../services/audio-session.js';
 
-beforeEach(() => { native = false; shared.length = 0; impacts.length = 0; });
+beforeEach(() => {
+  native = false;
+  shared.length = 0; impacts.length = 0; awake.length = 0; sessions.length = 0;
+  _resetScreenLock(); _resetAudioSession();
+});
 afterEach(() => vi.unstubAllGlobals());
 
 describe('the platform seam defaults to web', () => {
@@ -97,5 +116,70 @@ describe('haptics', () => {
     haptic(25);                          // downbeat — the heavier of the two
     haptic(10);                          // offbeat tick
     expect(impacts).toEqual(['MEDIUM', 'LIGHT']);
+  });
+});
+
+describe('screen wake', () => {
+  it('uses navigator.wakeLock on the web', async () => {
+    const released = [];
+    vi.stubGlobal('navigator', { wakeLock: { request: () => Promise.resolve({ release: () => { released.push(1); return Promise.resolve(); } }) } });
+    await keepScreenAwake();
+    await allowScreenSleep();
+    expect(released).toEqual([1]);
+    expect(awake).toEqual([]);
+  });
+
+  it('uses the plugin natively — WKWebView has no navigator.wakeLock at all', async () => {
+    native = true;
+    vi.stubGlobal('navigator', {});
+    await keepScreenAwake();
+    await allowScreenSleep();
+    expect(awake).toEqual(['keep', 'sleep']);
+  });
+
+  it('a browser with no wake lock support does not throw', async () => {
+    vi.stubGlobal('navigator', {});
+    await expect(keepScreenAwake()).resolves.toBeUndefined();
+    await expect(allowScreenSleep()).resolves.toBeUndefined();
+  });
+});
+
+describe('audio session', () => {
+  it('does nothing at all on the web', async () => {
+    await useForPlayback();
+    await useForRecording();
+    expect(sessions).toEqual([]);
+  });
+
+  it('plays through the ringer switch by default', async () => {
+    native = true;
+    await useForPlayback();
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0].category).toBe('playback');
+  });
+
+  it('switches to playAndRecord for the camera, keeping output on the speaker', async () => {
+    native = true;
+    await useForPlayback();
+    await useForRecording();
+    expect(sessions[1].category).toBe('playAndRecord');
+    // Without this the click relocates to the earpiece mid-session, which reads to a
+    // writer as the metronome having stopped.
+    expect(sessions[1].options.defaultToSpeaker).toBe(true);
+  });
+
+  it('does not re-configure when already in that category', async () => {
+    native = true;
+    await useForPlayback();
+    await useForPlayback();
+    await useForPlayback();
+    expect(sessions).toHaveLength(1);
+  });
+
+  it('returns to playback after recording, so the click leaves the earpiece', async () => {
+    native = true;
+    await useForRecording();
+    await useForPlayback();
+    expect(sessions.map(s => s.category)).toEqual(['playAndRecord', 'playback']);
   });
 });

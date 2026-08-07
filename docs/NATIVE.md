@@ -18,9 +18,16 @@ Nothing native may change what happens for them. So:
 - Every Capacitor *plugin* is imported lazily, inside a native guard.
 - The plugins are collected into one `capacitor-native-*.js` chunk (`vite.config.js`),
   which is excluded from the service worker precache and stripped from the modulepreload
-  graph. Both exclusions are asserted in `src/__tests__/build.test.js`.
+  graph.
+- **The build fails** if any Capacitor module lands outside that chunk. `vite.config.js`
+  reads Rollup's module graph rather than guessing from artifacts, and identifies Capacitor
+  packages structurally — by whether the package name mentions Capacitor — rather than by
+  an enumerated list of scopes. Two earlier versions were caught by this: a scope-only
+  match let `@capacitor-community/keep-awake` and `@capawesome/capacitor-audio-session`
+  escape into the precache, and the first guard shared that same pattern, so narrowing it
+  disabled the guard in exactly the case it existed to catch.
 
-Cost to the web build, measured against `main` before any of this: **+2.8KB** in the entry
+Cost to the web build, measured against `main` before any of this: **+3.7KB** in the entry
 bundle — the guard code itself — with an identical `index.html` and an identical precache
 set.
 
@@ -32,6 +39,8 @@ set.
 | `canShareType()` | probes `navigator.canShare` | always `true` |
 | Haptics | `navigator.vibrate` — **a no-op on iOS, always has been** | Taptic Engine |
 | Service worker | registered | not registered |
+| Screen wake | `navigator.wakeLock` | `@capacitor-community/keep-awake` |
+| Audio session | whatever Safari decides | `playback`, or `playAndRecord` while recording |
 
 The share swap matters because Web Share inside a WKWebView is version-dependent and its
 file support is the fragile part; on Android's WebView it does not exist at all. The
@@ -69,12 +78,23 @@ as restatements of the permission:
 Both claims are true — see `useSessionEngine.js`, where the recording is held in memory and
 only leaves via the share sheet the writer opens themselves.
 
+## The audio session, and why it switches
+
+Neither iOS category fits the whole app, and they fail in opposite directions:
+
+- `playback` survives the ringer switch, so the metronome is audible on silent — but it
+  grants no recording input, so asking for the camera under it kills the session.
+- `playAndRecord` allows the camera and mic, but routes output to the **receiver** (the
+  earpiece), not the speaker. A click that quietly relocates to the earpiece mid-session
+  reads as "the metronome stopped working".
+
+So `services/audio-session.js` owns the switch: `playback` at session start, `playAndRecord`
+with `defaultToSpeaker` for the duration of a recording, back to `playback` when it stops or
+fails. Someone who silenced their phone to concentrate asked for no notifications, not for a
+silent metronome — the Settings slider is where the click gets turned down.
+
 ## Still to do
 
-- **Wake lock.** `navigator.wakeLock` is not in WKWebView, so the screen sleeps mid-session.
-  Needs a keep-awake plugin behind the same `isNative()` guard.
-- **Audio session.** The metronome will be silenced by the ringer switch unless the
-  `AVAudioSession` category is set to playback.
 - **Storage durability.** `localStorage` in a Capacitor WebView is not subject to Safari's
   7-day eviction, so it is already *more* durable than the PWA — but it is still the store
   holding every bar anyone writes, and moving to Preferences or SQLite is the honest
