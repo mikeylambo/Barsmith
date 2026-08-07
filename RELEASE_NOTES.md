@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Barsmith 5.18.0 — the native shell, without touching the web app
 
 Capacitor scaffolding and the first three native seams. The constraint the whole change is
@@ -63,6 +64,8 @@ straight to Photos.
 
 ---
 
+=======
+>>>>>>> origin/main
 # Barsmith 5.17.0 — a restore you can take back
 
 The one path in the app that could destroy a writer's work, hardened before anybody is
