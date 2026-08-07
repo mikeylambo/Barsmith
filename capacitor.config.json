@@ -1,0 +1,22 @@
+{
+  "appId": "app.barsmith.barsmith",
+  "appName": "Barsmith",
+  "webDir": "dist",
+  "ios": {
+    "contentInset": "always",
+    "backgroundColor": "#050505"
+  },
+  "android": {
+    "backgroundColor": "#050505"
+  },
+  "server": {
+    "androidScheme": "https",
+    "iosScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": true,
+      "backgroundColor": "#050505"
+    }
+  }
+}

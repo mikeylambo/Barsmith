@@ -1,3 +1,68 @@
+# Barsmith 5.18.0 — the native shell, without touching the web app
+
+Capacitor scaffolding and the first three native seams. The constraint the whole change is
+built around:
+
+> **The web build must behave exactly as it did before Capacitor existed.**
+
+People already have Barsmith installed from `barsmith.app` with their writing in
+`localStorage`. Nothing here may change what happens for them.
+
+## Measured, not asserted
+
+Built `main` in a clean worktree and compared:
+
+| | before | after |
+|---|---|---|
+| entry bundle | 330,034 B | 332,868 B |
+| `index.html` asset refs | 2 | 2 |
+| precached URLs | 11 | 11 |
+
+The +2.8KB is the guard code itself. No Capacitor library code is in the entry bundle, and
+the offline contract is byte-for-byte the same shape. `193 passed`, checklist `7/7`.
+
+## Two things went wrong on the way, both caught by the existing guards
+
+**`@capacitor/core` imported statically cost real weight.** ~4KB gzipped in the main bundle
+and six extra chunks dragged into the precache — for code no browser executes. Removed
+entirely: `services/platform.js` now reads the `Capacitor` global the native shell injects
+into the WebView, importing nothing. If that global is ever absent the answer is "web", and
+every native path falls back to browser behaviour that already works.
+
+**Naming the plugin chunk made Vite preload it.** Collecting the plugins under
+`capacitor-native-*` so the service worker could skip them turned it into a *shared* chunk,
+so Vite emitted a `<link rel="modulepreload">` for it in `index.html` — every browser
+eagerly downloading 21KB of native-only code, and `index.html` referencing an asset the
+worker deliberately does not cache. **The device checklist failed on exactly this**, item 2,
+"all assets referenced by index.html present: false". Fixed with
+`build.modulePreload.resolveDependencies`, and both exclusions are now asserted in
+`build.test.js` — including a guard on the guard, so renaming the chunk fails loudly rather
+than silently widening the exception to nothing.
+
+## What the shell changes
+
+| | Web | Native |
+|---|---|---|
+| Share | `navigator.share` | `@capacitor/share` + `@capacitor/filesystem` |
+| `canShareType()` | probes `navigator.canShare` | always `true` |
+| Haptics | `navigator.vibrate` | Taptic Engine |
+| Service worker | registered | not registered |
+
+Web Share inside a WKWebView is version-dependent and file support is the fragile part; on
+Android's WebView it does not exist at all. The `canShareType` override matters more than
+it looks — that answer drives the UI, so without it a wrapped build would **hide its
+working share sheet and offer a download into a sandbox nobody can open.**
+
+Haptics is the one place wrapping adds a feature instead of preserving one. Safari has
+never supported `navigator.vibrate`, so the Haptics toggle in Settings has been promising
+something the web could not deliver on the only platform anyone is testing on.
+
+See `docs/NATIVE.md` for the Xcode steps, the required Info.plist strings, and what is
+still outstanding — wake lock, audio session category, storage durability, and saving
+straight to Photos.
+
+---
+
 # Barsmith 5.17.0 — a restore you can take back
 
 The one path in the app that could destroy a writer's work, hardened before anybody is

@@ -1,7 +1,7 @@
 {
   "name": "barsmith",
   "private": true,
-  "version": "5.17.0",
+  "version": "5.18.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,13 +12,18 @@
     "test": "vitest run",
     "verify": "npm run build && vitest run",
     "audit-wordbank": "node scripts/audit-wordbank.js",
-    "device-checklist": "node scripts/device-checklist.mjs"
+    "device-checklist": "node scripts/device-checklist.mjs",
+    "sync:ios": "npm run build && npx cap sync ios"
   },
   "dependencies": {
+    "@capacitor/filesystem": "^8.1.2",
+    "@capacitor/haptics": "^8.0.2",
+    "@capacitor/share": "^8.0.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.5.0",
     "@testing-library/react": "^14.3.1",
     "@vitejs/plugin-react": "^5.1.4",
     "autoprefixer": "^10.4.19",

@@ -17,6 +17,53 @@
 // ─────────────────────────────────────────────
 
 import { downloadBlob } from './download';
+import { isNative } from './platform';
+
+/**
+ * Share through the native sheet. Returns an outcome, or null if the native route was
+ * unavailable so the caller can fall through to the web path.
+ *
+ * The plugins are imported here rather than at module scope so nothing Capacitor-specific
+ * enters the web bundle — see services/platform.js for why that rule exists.
+ *
+ * The file has to exist on disk before the sheet can offer it, so it is written to the
+ * app's cache directory first. That is also why the iOS gesture rule stops applying here:
+ * a native sheet is not gated on user activation the way navigator.share is.
+ */
+async function shareViaNative(blob, filename, type) {
+  try {
+    const [{ Share }, { Filesystem, Directory }] = await Promise.all([
+      import('@capacitor/share'),
+      import('@capacitor/filesystem'),
+    ]);
+    const data = await blobToBase64(blob);
+    const { uri } = await Filesystem.writeFile({ path: filename, data, directory: Directory.Cache });
+    // Files only, for the same reason as the web path: a text caption changes which
+    // actions iOS promotes, pushing Save to Files above Save Image.
+    await Share.share({ files: [uri] });
+    return 'shared';
+  } catch (err) {
+    const msg = String(err?.message || err);
+    // The plugin reports a dismissed sheet as a cancel rather than an error type, so
+    // match on it explicitly — a dismissal must not trigger a surprise download.
+    if (/cancel/i.test(msg) || err?.name === 'AbortError') return 'cancelled';
+    return null;
+  }
+}
+
+/** Filesystem.writeFile takes base64, not a Blob. */
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(reader.error);
+    reader.onload = () => {
+      const result = String(reader.result || '');
+      const comma = result.indexOf(',');
+      resolve(comma >= 0 ? result.slice(comma + 1) : result);
+    };
+    reader.readAsDataURL(blob);
+  });
+}
 
 /**
  * True when this browser can put an image file into the OS share sheet.
@@ -29,6 +76,11 @@ export function canShareImages() {
 
 /** True when this browser can put a file of this type into the OS share sheet. */
 export function canShareType(mime, name) {
+  // The native shell always can, and this answer drives the UI: BarCardModal shows Share
+  // only when it is true, and offers a download instead when it is false. WKWebView may
+  // not expose navigator.canShare at all, so without this a wrapped build would hide its
+  // working share sheet and offer a download into a sandbox nobody can reach.
+  if (isNative()) return true;
   if (typeof navigator === 'undefined' || !navigator.canShare || !navigator.share) return false;
   try {
     // A one-byte probe file: canShare inspects type and count, not contents.
@@ -66,6 +118,18 @@ export async function shareImage(blob, filename) {
  */
 export async function shareFile(blob, filename, fallbackMime = 'application/octet-stream') {
   const type = blob.type || fallbackMime;
+
+  // Native shell first. Web Share inside a WKWebView is version-dependent and its file
+  // support is the fragile part; on Android's WebView it does not exist at all. The
+  // Capacitor plugin talks to the real share sheet, so a wrapped build gets the behaviour
+  // a browser tab only sometimes gets. Browsers never reach this branch.
+  if (isNative()) {
+    const outcome = await shareViaNative(blob, filename, type);
+    if (outcome) return outcome;
+    // A native failure falls through to the web path rather than dead-ending, so the
+    // writer still gets their file even if the plugin is unavailable.
+  }
+
   if (canShareType(type, filename)) {
     try {
       const file = new File([blob], filename, { type });
