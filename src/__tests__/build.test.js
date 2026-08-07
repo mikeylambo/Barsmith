@@ -37,9 +37,27 @@ describe('build output', () => {
 
     const swContent = await readFile(join(distPath, 'sw.js'), 'utf8');
 
-    const missing = assetFiles.filter(f => !swContent.includes(`/assets/${f}`));
+    // The single exception, and it stays a single exception on purpose: the Capacitor
+    // plugin chunk is only imported inside the native shell, where no service worker runs.
+    // Precaching it would make every browser download plugin code it can never execute,
+    // and a failed fetch would abort the install and cost the app its offline support.
+    // Everything else is still checked unfiltered — that unfiltered check is what caught
+    // the self-hosted font and the brand lockup escaping earlier versions of this test.
+    const NATIVE_ONLY = /^capacitor-native/;
+    const webAssets = assetFiles.filter(f => !NATIVE_ONLY.test(f));
 
+    // Guard the guard: if the chunk is ever renamed, this notices rather than silently
+    // widening the exception to nothing.
+    expect(
+      assetFiles.some(f => NATIVE_ONLY.test(f)),
+      'no capacitor-native chunk found — was it renamed? Update vite.config.js, scripts/inject-sw-precache.js and this test together.',
+    ).toBe(true);
+
+    const missing = webAssets.filter(f => !swContent.includes(`/assets/${f}`));
     expect(missing, `sw.js is missing precache entries for: ${missing.join(', ')}`).toHaveLength(0);
+
+    const wronglyPrecached = assetFiles.filter(f => NATIVE_ONLY.test(f) && swContent.includes(`/assets/${f}`));
+    expect(wronglyPrecached, `native-only chunks must not be precached: ${wronglyPrecached.join(', ')}`).toHaveLength(0);
   });
 
   it('dist/sw.js precaches every icon the manifest declares', async () => {

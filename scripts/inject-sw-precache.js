@@ -36,6 +36,12 @@ async function main() {
     // Anything Vite emits into assets/ is by definition something the build references.
     assetFiles = entries
       .filter(f => ['.js', '.css', '.woff2', '.woff', '.png', '.svg', '.webp', '.txt'].includes(extname(f)))
+      // Except the Capacitor plugin bundle. It is only ever imported inside the native
+      // shell, where the service worker does not run at all — precaching it would make
+      // every browser download plugin code it can never execute, and a failed fetch of it
+      // would abort the whole install and leave the app with no offline support.
+      // The chunk name is pinned in vite.config.js so this stays a name match, not a guess.
+      .filter(f => !f.startsWith('capacitor-native'))
       .map(f => `/assets/${f}`);
   } catch {
     console.warn('[inject-sw-precache] dist/assets not found — skipping asset injection');
