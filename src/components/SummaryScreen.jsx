@@ -16,15 +16,14 @@ export default function SummaryScreen({
   const [saveState, setSaveState] = useState('');
   const [showRecap, setShowRecap] = useState(false);
 
-  // The recap draws the session's stats beside its strongest line. "Strongest" is the
-  // longest bar written — a cheap heuristic, but a bar someone kept working is usually the
-  // one they are proudest of, and it is always better than the first-typed placeholder.
-  const writtenBars = flattenNotes(latestSession?.notes).filter(([, , t]) => t?.trim());
+  // The recap draws the session's stats beside a bar the WRITER chooses to feature. Barsmith
+  // does not judge which line is best — length has almost nothing to do with whether a bar
+  // lands, and a six-word punchline can bury a twenty-five-word one. The modal offers the
+  // session's bars (and "no featured bar") and renders the writer's pick.
+  const writtenBars = flattenNotes(latestSession?.notes)
+    .filter(([, , t]) => t?.trim())
+    .map(([word, , text]) => ({ word, text }));
   const barsCount = writtenBars.length;
-  const highlight = writtenBars.reduce(
-    (best, cur) => (cur[2].trim().length > (best?.[2].trim().length || 0) ? cur : best),
-    null,
-  );
   const recapStats = { bars: barsCount, time: fmtDur(sessionDuration), words: totalWordsSeen };
   const goalOutcome = goalIsActive(goal)
     ? goalStatus(goal, { bars: barsCount, seconds: sessionDuration })
@@ -190,8 +189,7 @@ export default function SummaryScreen({
       {showRecap && (
         <RecapCardModal
           stats={recapStats}
-          bar={highlight?.[2]}
-          word={highlight?.[0]}
+          bars={writtenBars}
           date={latestSession?.date ? new Date(latestSession.date) : new Date()}
           onClose={() => setShowRecap(false)}
         />

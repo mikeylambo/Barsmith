@@ -72,6 +72,23 @@ export function goalStatus(goal, { bars = 0, seconds = 0 } = {}) {
   };
 }
 
+/**
+ * Drop a time goal that cannot be reached inside an active session timer.
+ *
+ * A "drill for 10 minutes" goal under a 5-minute timer is impossible — the session ends
+ * before the target could be crossed. Rather than ship an unreachable goal, clear it; the
+ * writer re-picks from what the timer allows. A bars goal is never constrained by the
+ * clock, and a limit of 0 (no timer) constrains nothing.
+ *
+ * @param {{type,amount}} goal
+ * @param {number} sessionLimitMinutes  0 means no timer.
+ */
+export function clampGoalToTimer(goal, sessionLimitMinutes) {
+  if (!goalIsActive(goal) || goal.type !== GOAL_TIME) return goal;
+  if (!sessionLimitMinutes || sessionLimitMinutes <= 0) return goal;
+  return goal.amount > sessionLimitMinutes ? { ...EMPTY_GOAL } : goal;
+}
+
 /** A one-line description for the idle-screen selector, or null when off. */
 export function describeGoal(goal) {
   if (!goalIsActive(goal)) return null;

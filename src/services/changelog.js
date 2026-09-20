@@ -24,7 +24,7 @@ export const CHANGELOG = [
     title: 'Goals, recaps, and a faster way in',
     items: [
       'Set a session goal — a number of bars or minutes — and get a clear mark the moment you hit it.',
-      'Share a session recap: your stats and your best bar, drawn as one image built for posting.',
+      'Share a session recap: your stats and a bar you choose, drawn as one image built for posting.',
       'Long-press the app icon to jump straight into today’s session, a freeform one, or the rhyme finder.',
       'A short walkthrough on first launch, and this “what’s new” note after every update.',
     ],
@@ -61,17 +61,15 @@ export function entriesSince(lastSeen) {
 }
 
 /**
- * Should the changelog open on this launch?
+ * Should the changelog open, given a STORED last-seen version?
  *
- * The rule is "once per version bump, never on a fresh baseline":
- *
- *  - `lastSeen == null` — the changelog has never run on this device. That is either a
- *    brand-new install or an upgrade from before this feature existed, and in neither
- *    case is there a real "bump" to announce. The caller records the current version
- *    silently as the baseline, and the very next release is the first one shown. This
- *    also keeps the changelog from ever fighting the first-run walkthrough.
  *  - `lastSeen < current` — a genuine update happened since the writer last looked. Show it.
  *  - `lastSeen >= current` — already current. Nothing to show.
+ *  - `lastSeen == null` — false: there is no stored version to diff against. This function
+ *    deliberately does not decide the null case, because the answer depends on context the
+ *    caller holds: a brand-new install baselines silently (and sees the walkthrough
+ *    instead), while an existing writer upgrading to the first changelog-capable build is
+ *    introduced to it. App.jsx tells the two apart with hasSeenInfo.
  *
  * @param {string|null} lastSeen
  * @param {string} [current]

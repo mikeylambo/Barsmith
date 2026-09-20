@@ -18,7 +18,7 @@ import {
 } from './services/storage';
 import { seedTotals, addSessionToTotals } from './services/progress';
 import { dailySession, isCompletedToday, markCompleted, programmeWeek } from './services/daily';
-import { normalizeGoal } from './services/goal';
+import { normalizeGoal, clampGoalToTimer, EMPTY_GOAL } from './services/goal';
 import { CURRENT_VERSION, CHANGELOG, shouldShowChangelog, entriesSince } from './services/changelog';
 import { parseLaunchAction, LAUNCH_ACTIONS } from './services/launch';
 import { downloadText, dateStamp } from './services/download';
@@ -74,9 +74,15 @@ function App() {
   const [bpmMode, setBpmMode] = useState(_prefs.bpmMode || false);
   const [barsPerWord, setBarsPerWord] = useState(_prefs.barsPerWord || 2);
   const [sessionLimit, setSessionLimit] = useState(() => loadSessionLimit());
-  // Optional per-session goal (bars or minutes). A target to hit, distinct from the timer
-  // above which ends the session — see services/goal.js.
+  // The idle-screen goal PREFERENCE (bars or minutes), persisted across sessions.
   const [goal, setGoal] = useState(() => normalizeGoal(_prefs.goalType, _prefs.goalAmount));
+  // The goal a running session is actually held to — resolved at start so a goal is truly
+  // per-session: a freeform session takes the preference (validated against its timer), while
+  // the Daily prescription and Vault Drill do not inherit it (each is its own objective).
+  const [activeGoal, setActiveGoal] = useState(EMPTY_GOAL);
+  // Lowering the timer below a time goal would make that goal unreachable; clamp it so the
+  // idle screen can never show an impossible bars/timer/goal combination.
+  const updateSessionLimit = (m) => { setSessionLimit(m); setGoal(g => clampGoalToTimer(g, m)); };
   // 0 silences the click without turning the grid off, which is what a writer running a
   // tempo session over their own beat actually wants.
   const [metronomeVolume, setMetronomeVolume] = useState(
@@ -198,14 +204,19 @@ function App() {
     // changelog for this launch.
     if (launchActionRef.current) { setPendingLaunch(launchActionRef.current); return; }
 
-    // Returning writer: surface what changed since they last looked, once per bump.
+    // Returning writer: surface what changed since they last looked.
     const lastSeen = loadChangelogSeen();
-    if (shouldShowChangelog(lastSeen)) {
+    if (lastSeen == null) {
+      // An existing writer on the first changelog-capable build. There is no stored version
+      // to diff against, but they DID just upgrade — so introduce the changelog with this
+      // release rather than baselining it silently and hiding it until the NEXT one, which
+      // would defeat the whole point of making shipped work visible. (A brand-new install
+      // never reaches here — the first-run branch above returns for it.)
+      setChangelogEntries(CHANGELOG);
+      setShowChangelog(true);
+    } else if (shouldShowChangelog(lastSeen)) {
       setChangelogEntries(entriesSince(lastSeen));
       setShowChangelog(true);
-    } else if (lastSeen == null) {
-      // Upgraded from before the changelog existed: set the baseline silently, no note.
-      saveChangelogSeen(CURRENT_VERSION);
     }
   };
   useEffect(() => {
@@ -456,9 +467,13 @@ function App() {
     // to make: does a writer who takes the prescription come back more than one who sets
     // their own dials?
     track(EVENTS.SESSION_START, { source: 'freeform', tier: selectedTier, words: wordCount });
+    // A freeform session is held to the writer's chosen goal, validated against its timer.
+    setActiveGoal(clampGoalToTimer(goal, sessionLimit));
     engine.startSession();
   };
-  const startVaultDrill = () => { if (!recoveredDraft) engine.startVaultDrill(); };
+  // Vault Drill is its own objective — run the saved words — so it does not inherit the
+  // freeform goal.
+  const startVaultDrill = () => { if (!recoveredDraft) { setActiveGoal(EMPTY_GOAL); engine.startVaultDrill(); } };
 
   // Starting the prescription writes seven pieces of settings state. React batches
   // those, so calling engine.startSession() in the same handler would start the session
@@ -468,6 +483,9 @@ function App() {
   const startDaily = () => {
     if (recoveredDraft) return;
     const p = todaysPlan;
+    // Today's prescription IS the objective — it does not inherit the freeform goal, which
+    // could otherwise be an impossible target against the prescribed duration.
+    setActiveGoal(EMPTY_GOAL);
     setSelectedTier(p.tier);
     setWordCount(p.wordCount);
     setIntervalMs(p.intervalMs);
@@ -528,7 +546,7 @@ function App() {
           bpm={bpm} setBpm={setBpm} barsPerWord={barsPerWord} setBarsPerWord={setBarsPerWord}
           selectedTier={selectedTier} setSelectedTier={setSelectedTier}
           wordCount={wordCount} setWordCount={setWordCount}
-          sessionLimit={sessionLimit} setSessionLimit={setSessionLimit}
+          sessionLimit={sessionLimit} setSessionLimit={updateSessionLimit}
           goal={goal} setGoal={setGoal}
         />
       )}
@@ -546,7 +564,7 @@ function App() {
           resumeFromDict={engine.resumeFromDict} sessionNotes={engine.sessionNotes} handleSaveNote={engine.handleSaveNote}
           cameraPreviewRef={engine.cameraPreviewRef} stopRecording={engine.stopRecording}
           registerActiveNoteFlush={engine.registerActiveNoteFlush}
-          goal={goal} sessionStartTime={engine.sessionStartTime}
+          goal={activeGoal} sessionStartTime={engine.sessionStartTime}
         />
       )}
 
@@ -558,7 +576,7 @@ function App() {
           frozenWords={engine.frozenWords} vault={vault} toggleVault={toggleVault}
           fetchDictData={engine.fetchDictData} dictData={engine.dictData} isLoadingDict={engine.isLoadingDict}
           fmtDur={fmtDur} flattenNotes={flattenNotes} copyNoteText={copyNoteText} copiedNoteKey={copiedNoteKey}
-          goal={goal}
+          goal={activeGoal}
         />
       )}
 

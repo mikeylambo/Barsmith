@@ -6,23 +6,31 @@ import { downloadBlob } from '../services/download';
 
 // ─────────────────────────────────────────────
 // RECAP CARD MODAL
-// Preview and share a session recap as an image.
+// Choose a bar to feature, then preview and share the session recap as an image.
 //
-// Same shape as the bar card modal, and for the same reason: the image is rendered the
-// moment the modal opens, before the writer taps anything, so that when Share becomes
-// tappable the blob already exists. iOS Safari only honours navigator.share() inside a
-// live user gesture, and awaiting a canvas encode first would drop the activation and
-// silently open nothing. See services/share.js.
+// The writer picks which line to feature — Barsmith does not decide it. So this opens on a
+// chooser rather than a finished card: the session's bars, plus "no featured bar" for a
+// stats-only recap. Only once a choice is made is the card rendered, and — as with the bar
+// card — the render completes before Share is tappable, because iOS Safari only honours
+// navigator.share() inside a live user gesture and awaiting a canvas encode first would
+// drop the activation. See services/share.js.
 // ─────────────────────────────────────────────
 
-export default function RecapCardModal({ stats, bar, word, date, onClose }) {
+const oneLinePreview = (text) => {
+  const first = String(text || '').split('\n').find(l => l.trim()) || '';
+  return first.length > 46 ? `${first.slice(0, 46).trimEnd()}…` : first;
+};
+
+export default function RecapCardModal({ stats, bars = [], date, onClose }) {
   const modalRef = useRef(null);
   useFocusTrap(modalRef);
 
-  const [state, setState] = useState('rendering'); // rendering | ready | error
+  const [step, setStep] = useState('choose');      // choose | rendering | ready | error
+  const [selected, setSelected] = useState(bars.length ? 0 : -1); // bar index, or -1 for none
   const [previewUrl, setPreviewUrl] = useState(null);
-  const blobRef = useRef(null);
   const [outcome, setOutcome] = useState('');
+  const blobRef = useRef(null);
+  const urlRef = useRef(null);
 
   useEffect(() => {
     const handler = (e) => { if (e.key === 'Escape') onClose(); };
@@ -30,25 +38,26 @@ export default function RecapCardModal({ stats, bar, word, date, onClose }) {
     return () => window.removeEventListener('keydown', handler);
   }, [onClose]);
 
-  useEffect(() => {
-    let cancelled = false;
-    let url = null;
-    renderRecapCard({ stats, bar, word, date })
-      .then((blob) => {
-        if (cancelled) return;
-        blobRef.current = blob;
-        url = URL.createObjectURL(blob);
-        setPreviewUrl(url);
-        setState('ready');
-      })
-      .catch(() => { if (!cancelled) setState('error'); });
-    return () => {
-      cancelled = true;
-      if (url) URL.revokeObjectURL(url);
-    };
-  }, [stats, bar, word, date]);
+  // Revoke the last preview URL when the modal closes.
+  useEffect(() => () => { if (urlRef.current) URL.revokeObjectURL(urlRef.current); }, []);
 
+  const chosen = selected >= 0 ? bars[selected] : null;
   const filename = recapCardFilename(date);
+
+  const createRecap = () => {
+    setStep('rendering');
+    setOutcome('');
+    renderRecapCard({ stats, bar: chosen?.text, word: chosen?.word, date })
+      .then((blob) => {
+        blobRef.current = blob;
+        if (urlRef.current) URL.revokeObjectURL(urlRef.current);
+        const url = URL.createObjectURL(blob);
+        urlRef.current = url;
+        setPreviewUrl(url);
+        setStep('ready');
+      })
+      .catch(() => setStep('error'));
+  };
 
   const handleShare = async () => {
     if (!blobRef.current) return;
@@ -95,45 +104,87 @@ export default function RecapCardModal({ stats, bar, word, date, onClose }) {
           >✕</button>
         </div>
 
-        <div className="p-6">
-          {/* Fixed aspect box so the modal does not resize when the render lands. */}
-          <div className="w-full aspect-square rounded-2xl overflow-hidden border border-white/10 bg-[#050505] flex items-center justify-center">
-            {state === 'rendering' && (
-              <p className="text-gray-700 text-[10px] font-black uppercase tracking-widest">Rendering…</p>
-            )}
-            {state === 'error' && (
-              <p className="text-gray-600 text-xs text-center px-6 leading-relaxed">
-                Could not draw the recap. Your session is still saved — everything is in History.
-              </p>
-            )}
-            {state === 'ready' && previewUrl && (
-              <img src={previewUrl} alt="Session recap card with your stats and a highlighted bar" className="w-full h-full object-contain" />
-            )}
+        {step === 'choose' ? (
+          <div className="p-6">
+            <p className="text-gray-500 text-xs font-black uppercase tracking-widest mb-3">Choose a bar to feature</p>
+            <div role="radiogroup" aria-label="Bar to feature" className="flex flex-col gap-2 max-h-[42vh] overflow-y-auto custom-scrollbar">
+              {bars.map((b, i) => (
+                <button
+                  key={i}
+                  role="radio"
+                  aria-checked={selected === i}
+                  onClick={() => setSelected(i)}
+                  className={`text-left px-4 py-3 rounded-xl border transition-all ${selected === i ? 'bg-white/10 border-white/30' : 'bg-[#0a0a0a] border-white/5 hover:bg-[#151515]'}`}
+                >
+                  <span className="block text-[9px] font-black uppercase tracking-widest text-gray-600 mb-0.5">{b.word}</span>
+                  <span className="block text-sm text-gray-200 truncate">{oneLinePreview(b.text)}</span>
+                </button>
+              ))}
+              <button
+                role="radio"
+                aria-checked={selected === -1}
+                onClick={() => setSelected(-1)}
+                className={`text-left px-4 py-3 rounded-xl border transition-all ${selected === -1 ? 'bg-white/10 border-white/30' : 'bg-[#0a0a0a] border-white/5 hover:bg-[#151515]'}`}
+              >
+                <span className="block text-sm font-bold text-gray-400">No featured bar — stats only</span>
+              </button>
+            </div>
+            <button
+              onClick={createRecap}
+              className="w-full mt-5 py-4 rounded-2xl bg-white text-black text-sm font-black uppercase tracking-widest hover:bg-gray-200 transition-all active:scale-[0.98]"
+            >
+              Create Recap
+            </button>
           </div>
-
-          {state === 'ready' && (
-            <div className="mt-5 flex flex-col gap-3">
-              {shareSupported ? (
-                <button
-                  onClick={handleShare}
-                  className="w-full py-4 rounded-2xl bg-white text-black text-sm font-black uppercase tracking-widest hover:bg-gray-200 transition-all"
-                >
-                  Share
-                </button>
-              ) : (
-                <button
-                  onClick={handleSave}
-                  className="w-full py-4 rounded-2xl bg-white text-black text-sm font-black uppercase tracking-widest hover:bg-gray-200 transition-all"
-                >
-                  Save Image
-                </button>
+        ) : (
+          <div className="p-6">
+            {/* Fixed aspect box so the modal does not resize when the render lands. */}
+            <div className="w-full aspect-square rounded-2xl overflow-hidden border border-white/10 bg-[#050505] flex items-center justify-center">
+              {step === 'rendering' && (
+                <p className="text-gray-700 text-[10px] font-black uppercase tracking-widest">Rendering…</p>
               )}
-              {outcome && (
-                <p className="text-center text-gray-500 text-[11px] font-bold" role="status">{outcome}</p>
+              {step === 'error' && (
+                <p className="text-gray-600 text-xs text-center px-6 leading-relaxed">
+                  Could not draw the recap. Your session is still saved — everything is in History.
+                </p>
+              )}
+              {step === 'ready' && previewUrl && (
+                <img src={previewUrl} alt="Session recap card with your stats and your chosen bar" className="w-full h-full object-contain" />
               )}
             </div>
-          )}
-        </div>
+
+            {step === 'ready' && (
+              <div className="mt-5 flex flex-col gap-3">
+                {shareSupported ? (
+                  <button
+                    onClick={handleShare}
+                    className="w-full py-4 rounded-2xl bg-white text-black text-sm font-black uppercase tracking-widest hover:bg-gray-200 transition-all"
+                  >
+                    Share
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleSave}
+                    className="w-full py-4 rounded-2xl bg-white text-black text-sm font-black uppercase tracking-widest hover:bg-gray-200 transition-all"
+                  >
+                    Save Image
+                  </button>
+                )}
+                {bars.length > 0 && (
+                  <button
+                    onClick={() => setStep('choose')}
+                    className="text-[10px] font-black uppercase tracking-widest text-gray-600 hover:text-white transition-colors"
+                  >
+                    ← Choose a different bar
+                  </button>
+                )}
+                {outcome && (
+                  <p className="text-center text-gray-500 text-[11px] font-bold" role="status">{outcome}</p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -8,6 +8,7 @@
 
 import { describe, it, expect } from 'vitest';
 import pkg from '../../package.json';
+import lock from '../../package-lock.json';
 import {
   CHANGELOG, CURRENT_VERSION, compareVersions, entriesSince, shouldShowChangelog,
 } from '../services/changelog.js';
@@ -20,6 +21,13 @@ describe('version as single source of truth', () => {
   // The one that stops silent drift: the app's reported version and package.json must agree.
   it('matches package.json', () => {
     expect(CURRENT_VERSION).toBe(pkg.version);
+  });
+
+  // package-lock.json carries the version twice and is easy to forget on a bump — a real
+  // miss in the first cut of 5.20.0. Pin both entries to package.json.
+  it('matches package-lock.json (root and self entry)', () => {
+    expect(lock.version).toBe(pkg.version);
+    expect(lock.packages[''].version).toBe(pkg.version);
   });
 
   it('is ordered newest-first', () => {

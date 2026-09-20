@@ -27,7 +27,7 @@ const SLIDES = [
     // The core of the walkthrough: the split the app never explained.
     points: [
       ['Bar Pad', 'Tap a word mid-round to hold it, and write your bar right there — rhymes and a definition included — without losing the session.'],
-      ['Saved Words', 'Star a word to keep it. Saved words come back in future sessions, and you can run a whole session on nothing but them.'],
+      ['Saved Words', 'Star a word to keep it. You can look it up any time, or run a whole practice session using only your Saved Words.'],
       ['History', 'Every finished session is kept in full, so a bar is never lost to the round ending. Take it out as text or an image any time.'],
     ],
   },

@@ -18,15 +18,23 @@ live Bar Pad; a time goal gets its own once-a-second tick so a stamina target st
 advances while nothing else on screen moves. The confirmation is transient by design: the
 reward is the mark, not a modal that interrupts the flow.
 
+A goal is genuinely **per-session**, not a global setting bleeding into every future one. It
+is resolved the moment a session starts: a freeform session takes the writer's chosen goal,
+validated against its timer (a time goal can never exceed the session cap — the idle screen
+won't offer one that does, and lowering the timer clears a goal that no longer fits), while
+the Daily prescription and Vault Drill are each their own objective and do not inherit it.
+
 ## A recap worth posting
 
 Bars could already leave as a single-line card. A session could not — and a session is the
 thing with stats worth showing. `services/recap-card.js` draws the whole thing to one
-1080×1080 image: bars written, time held, words seen, and the session's strongest line
-(the longest bar — usually the one someone kept working) beneath them. It shares the bar
-card's background, brand footer, text-layout and glyph-tracking so the two can never drift
-apart, and it exports through the same gesture-safe, files-only share seam. A free growth
-loop: no account, no server, just an image that carries the wordmark.
+1080×1080 image: bars written, time held, words seen, and a bar the writer chooses to
+feature (or none, for a stats-only card) beneath them. **Barsmith does not judge which line
+is best** — length says almost nothing about whether a bar lands, and a six-word punchline
+can bury a twenty-five-word one — so Share Recap opens on a chooser and renders the writer's
+pick. It shares the bar card's background, brand footer, text-layout and glyph-tracking so
+the two can never drift apart, and exports through the same gesture-safe, files-only share
+seam. A free growth loop: no account, no server, just an image that carries the wordmark.
 
 ## A walkthrough that answers the first question
 
@@ -51,23 +59,31 @@ The v5.x work — the service worker, the accessibility pass, the LRU dictionary
 front-camera picker, the restore-you-can-take-back — all shipped invisibly. A writer got a
 better app and never saw one of them land, so the polish read as nothing changing. A
 version-gated note now surfaces it after an update: once per bump, dismissible, gone until
-the next version ships. The rule that matters is "never on a fresh baseline" — a first-ever
-run has no *before* to announce, so it records the current version silently and the note
-starts firing from the next release, never stacking on top of the walkthrough. The current
-build is the top entry of `services/changelog.js`, and a test pins it to `package.json` so
-the two can never drift.
+the next version ships. The distinction that makes it useful is between a fresh install and
+an upgrade. A brand-new install has no *before* to announce, so it baselines silently and
+sees the walkthrough instead. An existing writer upgrading to this build — the whole reason
+the feature exists — is introduced to it now, rather than having 5.20 baselined away and
+hidden until 5.21; `App.jsx` tells the two apart with the same first-run flag the
+walkthrough uses. The current build is the top entry of `services/changelog.js`, pinned to
+`package.json` — and now `package-lock.json` — by test so nothing can drift.
 
-## One fix on the way in
+## Two fixes on the way in
 
 `RELEASE_NOTES.md` had shipped with unresolved Git conflict markers
 (`<<<<<<< HEAD` … `>>>>>>> origin/main`) committed into it since the 5.18/5.19 merge. Both
 sides were real release notes; they are now simply both present, markers gone.
 
+`package-lock.json` still read `5.19.0` after the version bump. Corrected to `5.20.0`, and
+the lockfile version is now pinned to `package.json` by the same test that guards the
+changelog, so the two cannot drift on the next bump either.
+
 ## Verification
 
-- `240 passed` (33 new: the goal crossing for bars and time, the changelog bump rule and
-  its package.json drift guard, launch-action parsing, and the recap filename)
-- `npm run build` green — capacitor chunk guard passes, entry bundle 333,707 B → 351,353 B
+- `248 passed` (47 more than 5.19.0's 201): the goal crossing for bars and time and its
+  timer-clamp, the changelog bump rule with both its `package.json` and `package-lock.json`
+  drift guards, the existing-user first-upgrade changelog path, launch-action parsing, a
+  deep-link integration test, and the recap filename.
+- `npm run build` green — capacitor chunk guard passes, entry bundle 333,707 B → ~353,500 B
   for six features, precache unchanged at 11 URLs (no new top-level assets).
 
 ---

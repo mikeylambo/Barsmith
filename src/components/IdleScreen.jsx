@@ -258,11 +258,20 @@ export default function IdleScreen({
             ))}
           </div>
           {goalType !== GOAL_OFF && (
-            <div className="flex gap-2">
-              {GOAL_PRESETS[goalType].map(n=>(
-                <button key={n} onClick={()=>setGoal({ type: goalType, amount: n })} aria-pressed={goal?.amount===n} aria-label={goalType===GOAL_BARS?`Write ${n} bars`:`Drill for ${n} minutes`} className={`flex-1 py-3 rounded-2xl font-black text-xs transition-all border ${goal?.amount===n?'bg-white border-white text-black shadow-[0_0_18px_rgba(255,255,255,0.18)]':'bg-[#0a0a0a] border-white/5 text-gray-600 hover:text-gray-300 hover:bg-[#151515]'}`}>{n}{goalType===GOAL_TIME?'m':''}</button>
-              ))}
-            </div>
+            <>
+              <div className="flex gap-2">
+                {GOAL_PRESETS[goalType].map(n=>{
+                  // A time goal can't outrun the session timer — the session would end first.
+                  const blocked = goalType===GOAL_TIME && sessionLimit>0 && n>sessionLimit;
+                  return (
+                    <button key={n} onClick={()=>{ if(!blocked) setGoal({ type: goalType, amount: n }); }} disabled={blocked} aria-pressed={goal?.amount===n} aria-label={goalType===GOAL_BARS?`Write ${n} bars`:`Drill for ${n} minutes`} className={`flex-1 py-3 rounded-2xl font-black text-xs transition-all border ${blocked?'bg-[#0a0a0a] border-white/5 text-gray-800 opacity-40 cursor-not-allowed':goal?.amount===n?'bg-white border-white text-black shadow-[0_0_18px_rgba(255,255,255,0.18)]':'bg-[#0a0a0a] border-white/5 text-gray-600 hover:text-gray-300 hover:bg-[#151515]'}`}>{n}{goalType===GOAL_TIME?'m':''}</button>
+                  );
+                })}
+              </div>
+              {goalType===GOAL_TIME && sessionLimit>0 && (
+                <p className="text-[10px] text-gray-700 mt-3 leading-relaxed">Capped by your {sessionLimit}-minute session timer.</p>
+              )}
+            </>
           )}
         </div>
       </div>

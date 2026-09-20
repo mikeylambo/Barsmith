@@ -7,7 +7,7 @@
 
 import { describe, it, expect } from 'vitest';
 import {
-  normalizeGoal, goalIsActive, goalStatus, describeGoal, goalMetLabel,
+  normalizeGoal, goalIsActive, goalStatus, describeGoal, goalMetLabel, clampGoalToTimer,
   GOAL_OFF, GOAL_BARS, GOAL_TIME,
 } from '../services/goal.js';
 
@@ -78,6 +78,26 @@ describe('goalStatus — off', () => {
     const s = goalStatus({ type: GOAL_OFF, amount: 0 }, { bars: 100, seconds: 100000 });
     expect(s.active).toBe(false);
     expect(s.met).toBe(false);
+  });
+});
+
+describe('clampGoalToTimer', () => {
+  it('clears a time goal that cannot fit inside the timer', () => {
+    // 10-minute goal under a 5-minute timer is impossible — the session ends first.
+    expect(clampGoalToTimer({ type: GOAL_TIME, amount: 10 }, 5)).toEqual({ type: GOAL_OFF, amount: 0 });
+  });
+  it('keeps a time goal that fits within the timer', () => {
+    expect(clampGoalToTimer({ type: GOAL_TIME, amount: 5 }, 5)).toEqual({ type: GOAL_TIME, amount: 5 });
+    expect(clampGoalToTimer({ type: GOAL_TIME, amount: 3 }, 5)).toEqual({ type: GOAL_TIME, amount: 3 });
+  });
+  it('never constrains a bars goal', () => {
+    expect(clampGoalToTimer({ type: GOAL_BARS, amount: 100 }, 5)).toEqual({ type: GOAL_BARS, amount: 100 });
+  });
+  it('leaves any goal untouched when there is no timer', () => {
+    expect(clampGoalToTimer({ type: GOAL_TIME, amount: 20 }, 0)).toEqual({ type: GOAL_TIME, amount: 20 });
+  });
+  it('passes an off goal straight through', () => {
+    expect(clampGoalToTimer({ type: GOAL_OFF, amount: 0 }, 5)).toEqual({ type: GOAL_OFF, amount: 0 });
   });
 });
 
