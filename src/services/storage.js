@@ -20,6 +20,7 @@ export const STORAGE_KEYS = {
   analyticsOff: 'barsmithAnalyticsOff',  // opt-out flag — see services/analytics.js
   firstOpen:    'barsmithFirstOpen',     // install date, for cohort bucketing only
   rescue:       'barsmithRescue',        // pre-restore snapshot — see snapshotForRescue
+  changelog:    'barsmithChangelogSeen', // last app version whose "what's new" was seen
 };
 
 function safeGet(key, fallback) {
@@ -100,6 +101,13 @@ export const clearDraft = () => { try { localStorage.removeItem(STORAGE_KEYS.dra
 
 export const hasSeenInfo = () => { try { return !!localStorage.getItem(STORAGE_KEYS.seen); } catch { return false; } };
 export const markSeenInfo = () => { try { localStorage.setItem(STORAGE_KEYS.seen, '1'); } catch {} };
+
+// ── Changelog "last seen version" ──
+// Null until the changelog runs once, which is the baseline: see shouldShowChangelog in
+// services/changelog.js for why a first-ever run announces nothing and only records the
+// current version, so the "what's new" note fires on the next bump, not this one.
+export const loadChangelogSeen = () => safeGet(STORAGE_KEYS.changelog, null);
+export const saveChangelogSeen = (version) => safeSet(STORAGE_KEYS.changelog, version);
 
 // ── Practice-day streak storage ──
 // Stored independently of sessionHistory (which is capped at 20 entries) so

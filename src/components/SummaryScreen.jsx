@@ -1,16 +1,33 @@
 import { useState, useEffect } from 'react';
 import DictionaryModal from './DictionaryModal.jsx';
 import BarCardModal from './BarCardModal.jsx';
+import RecapCardModal from './RecapCardModal.jsx';
 import { sessionToText, sessionBarsOnly, hasBars } from '../services/export-text';
 import { downloadText, dateStamp } from '../services/download';
+import { goalIsActive, goalStatus, describeGoal, GOAL_BARS } from '../services/goal';
 
 export default function SummaryScreen({
   latestSession, sessionDuration, totalWordsSeen, bpmMode, bpm, intervalMs,
   recordingAvailable, recordingBlob, downloadRecording, frozenWords, vault, toggleVault,
   fetchDictData, dictData, isLoadingDict, fmtDur, flattenNotes, copyNoteText, copiedNoteKey,
+  goal,
 }) {
   const [activeWord, setActiveWord] = useState(null);
   const [saveState, setSaveState] = useState('');
+  const [showRecap, setShowRecap] = useState(false);
+
+  // The recap draws the session's stats beside a bar the WRITER chooses to feature. Barsmith
+  // does not judge which line is best — length has almost nothing to do with whether a bar
+  // lands, and a six-word punchline can bury a twenty-five-word one. The modal offers the
+  // session's bars (and "no featured bar") and renders the writer's pick.
+  const writtenBars = flattenNotes(latestSession?.notes)
+    .filter(([, , t]) => t?.trim())
+    .map(([word, , text]) => ({ word, text }));
+  const barsCount = writtenBars.length;
+  const recapStats = { bars: barsCount, time: fmtDur(sessionDuration), words: totalWordsSeen };
+  const goalOutcome = goalIsActive(goal)
+    ? goalStatus(goal, { bars: barsCount, seconds: sessionDuration })
+    : null;
 
   // Watch it back before deciding whether to keep it. Without this the only way to see a
   // take was to export it, which on a phone means leaving the app — so nobody checked
@@ -56,6 +73,28 @@ export default function SummaryScreen({
             </div>
           ))}
         </div>
+
+        {/* Goal outcome — closes the loop the idle-screen goal opened. */}
+        {goalOutcome && (
+          <div className={`mb-5 flex items-center justify-center gap-2 py-3.5 rounded-2xl border text-[11px] font-black uppercase tracking-widest ${goalOutcome.met ? 'bg-green-500/10 border-green-500/30 text-green-400' : 'bg-white/5 border-white/10 text-gray-400'}`}>
+            <span>{goalOutcome.met ? '✓ Goal reached' : 'Goal missed'}</span>
+            <span className="opacity-60">· {describeGoal(goal)}</span>
+            {!goalOutcome.met && goalOutcome.type === GOAL_BARS && (
+              <span className="opacity-60 tabular-nums">({goalOutcome.current}/{goalOutcome.target})</span>
+            )}
+          </div>
+        )}
+
+        {/* Share Recap — the session's stats and best bar as one postable image. The
+            growth loop: no backend, just an image that carries the wordmark. */}
+        {barsCount > 0 && (
+          <button
+            onClick={() => setShowRecap(true)}
+            className="w-full py-4 rounded-2xl bg-white text-black text-sm font-black uppercase tracking-widest hover:bg-gray-200 transition-all mb-5"
+          >
+            Share Recap
+          </button>
+        )}
 
         {recordingAvailable && (
           <div className="mb-5">
@@ -147,6 +186,14 @@ export default function SummaryScreen({
       </div>
       {activeWord && <DictionaryModal word={activeWord} dictData={dictData} isLoading={isLoadingDict} onClose={()=>setActiveWord(null)} isVaultMode={true} />}
       {cardBar && <BarCardModal bar={cardBar.bar} word={cardBar.word} onClose={()=>setCardBar(null)} />}
+      {showRecap && (
+        <RecapCardModal
+          stats={recapStats}
+          bars={writtenBars}
+          date={latestSession?.date ? new Date(latestSession.date) : new Date()}
+          onClose={() => setShowRecap(false)}
+        />
+      )}
     </div>
   );
 }

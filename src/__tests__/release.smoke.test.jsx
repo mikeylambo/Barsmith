@@ -5,6 +5,7 @@ import { render, fireEvent, screen, act, cleanup, renderHook } from '@testing-li
 import App from '../App.jsx';
 import HistoryScreen from '../components/HistoryScreen.jsx';
 import { useSessionEngine } from '../hooks/useSessionEngine.js';
+import { CURRENT_VERSION } from '../services/changelog.js';
 
 class FakeAudioContext {
   constructor(){ this.state='running'; this.currentTime=0; this.destination={}; }
@@ -31,6 +32,8 @@ function installGlobals(){
 
 async function boot(){
   localStorage.setItem('barsmithHasSeenInfo','1');
+  // Already current on the changelog, so the "what's new" note stays out of the session flow.
+  localStorage.setItem('barsmithChangelogSeen', JSON.stringify(CURRENT_VERSION));
   const result=render(<App/>);
   await act(async()=>{ vi.advanceTimersByTime(2300); });
   return result;
@@ -39,7 +42,7 @@ async function boot(){
 function activeWord(){ return document.querySelector('h2.cursor-pointer'); }
 
 beforeEach(()=>{ cleanup(); localStorage.clear(); vi.useFakeTimers(); installGlobals(); });
-afterEach(()=>{ cleanup(); vi.useRealTimers(); vi.unstubAllGlobals(); });
+afterEach(()=>{ cleanup(); vi.useRealTimers(); vi.unstubAllGlobals(); window.history.replaceState({}, '', '/'); });
 
 describe('Barsmith release flow', ()=>{
   it('preserves separate bars for the same locked word through Summary and History', async()=>{
@@ -107,6 +110,27 @@ describe('Barsmith release flow', ()=>{
     await act(async()=>{ vi.advanceTimersByTime(500); });
     expect(screen.getByText('Complete')).toBeTruthy();
     expect(screen.getByText('last second bar')).toBeTruthy();
+  });
+
+  it('introduces the changelog to an existing writer upgrading to the first changelog build', async()=>{
+    // Existing user (has seen the intro) with no stored changelog version — the 5.19→5.20
+    // upgrade case. They must actually see 5.20's note, not have it silently baselined.
+    localStorage.setItem('barsmithHasSeenInfo','1');
+    render(<App/>);
+    await act(async()=>{ vi.advanceTimersByTime(2300); });
+    expect(screen.getByRole('dialog',{name:/what's new/i})).toBeTruthy();
+  });
+
+  it('a home-screen quick action lands straight in a session, skipping idle', async()=>{
+    // The manifest shortcut opens the app at /?do=session; the app must read that once,
+    // drop into an active session, and strip the URL so a reload never re-fires it.
+    window.history.replaceState({}, '', '/?do=session');
+    localStorage.setItem('barsmithHasSeenInfo','1');
+    render(<App/>);
+    await act(async()=>{ vi.advanceTimersByTime(2300); });
+    expect(screen.queryByRole('button',{name:'Start Session'})).toBeNull(); // not on idle
+    expect(activeWord()).toBeTruthy();                                       // already writing
+    expect(window.location.search).toBe('');                                // URL consumed
   });
 
   it('uses an absolute deadline and ends immediately after a background-style clock jump', async()=>{

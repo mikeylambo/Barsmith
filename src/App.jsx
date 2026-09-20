@@ -14,9 +14,13 @@ import {
   loadDraft, clearDraft,
   firstOpenDay,
   snapshotForRescue, loadRescue, clearRescue, currentDataSummary,
+  loadChangelogSeen, saveChangelogSeen,
 } from './services/storage';
 import { seedTotals, addSessionToTotals } from './services/progress';
 import { dailySession, isCompletedToday, markCompleted, programmeWeek } from './services/daily';
+import { normalizeGoal, clampGoalToTimer, EMPTY_GOAL } from './services/goal';
+import { CURRENT_VERSION, CHANGELOG, shouldShowChangelog, entriesSince } from './services/changelog';
+import { parseLaunchAction, LAUNCH_ACTIONS } from './services/launch';
 import { downloadText, dateStamp } from './services/download';
 // flattenNotes lives with the exporters so the on-screen Bar Pad and the text
 // export can never disagree about note shape.
@@ -28,6 +32,8 @@ import { useSessionEngine } from './hooks/useSessionEngine';
 
 import Splash from './components/Splash.jsx';
 import InfoModal from './components/InfoModal.jsx';
+import Onboarding from './components/Onboarding.jsx';
+import ChangelogModal from './components/ChangelogModal.jsx';
 import RhymeSearch from './components/RhymeSearch.jsx';
 import IdleScreen from './components/IdleScreen.jsx';
 import ActiveScreen from './components/ActiveScreen.jsx';
@@ -43,7 +49,14 @@ function App() {
 
   const [showSplash, setShowSplash] = useState(true);
   const [showInfo, setShowInfo] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showChangelog, setShowChangelog] = useState(false);
+  const [changelogEntries, setChangelogEntries] = useState([]);
   const [showRhymeSearch, setShowRhymeSearch] = useState(false);
+  // A home-screen quick action, parsed once at mount and run after the app is up — see
+  // services/launch.js. Deferred through state so it fires when the engine is ready.
+  const launchActionRef = useRef(null);
+  const [pendingLaunch, setPendingLaunch] = useState(null);
 
   // ── Idle-screen settings (persisted prefs) ──
   const [wordCount, setWordCount] = useState(_prefs.wordCount || 1);
@@ -61,6 +74,15 @@ function App() {
   const [bpmMode, setBpmMode] = useState(_prefs.bpmMode || false);
   const [barsPerWord, setBarsPerWord] = useState(_prefs.barsPerWord || 2);
   const [sessionLimit, setSessionLimit] = useState(() => loadSessionLimit());
+  // The idle-screen goal PREFERENCE (bars or minutes), persisted across sessions.
+  const [goal, setGoal] = useState(() => normalizeGoal(_prefs.goalType, _prefs.goalAmount));
+  // The goal a running session is actually held to — resolved at start so a goal is truly
+  // per-session: a freeform session takes the preference (validated against its timer), while
+  // the Daily prescription and Vault Drill do not inherit it (each is its own objective).
+  const [activeGoal, setActiveGoal] = useState(EMPTY_GOAL);
+  // Lowering the timer below a time goal would make that goal unreachable; clamp it so the
+  // idle screen can never show an impossible bars/timer/goal combination.
+  const updateSessionLimit = (m) => { setSessionLimit(m); setGoal(g => clampGoalToTimer(g, m)); };
   // 0 silences the click without turning the grid off, which is what a writer running a
   // tempo session over their own beat actually wants.
   const [metronomeVolume, setMetronomeVolume] = useState(
@@ -167,12 +189,50 @@ function App() {
     if (splashDismissedRef.current) return; // tap and timer can both fire
     splashDismissedRef.current = true;
     setShowSplash(false);
-    if (!hasSeenInfo()) { setShowInfo(true); markSeenInfo(); }
+
+    const firstRun = !hasSeenInfo();
+    if (firstRun) {
+      // A first-time writer gets the walkthrough, not a deep-linked session or a changelog.
+      // Record the changelog baseline now so "what's new" starts firing from the NEXT
+      // version rather than announcing this build on top of the walkthrough.
+      setShowOnboarding(true);
+      saveChangelogSeen(CURRENT_VERSION);
+      return;
+    }
+
+    // A home-screen quick action is an explicit destination; honour it and skip the
+    // changelog for this launch.
+    if (launchActionRef.current) { setPendingLaunch(launchActionRef.current); return; }
+
+    // Returning writer: surface what changed since they last looked.
+    const lastSeen = loadChangelogSeen();
+    if (lastSeen == null) {
+      // An existing writer on the first changelog-capable build. There is no stored version
+      // to diff against, but they DID just upgrade — so introduce the changelog with this
+      // release rather than baselining it silently and hiding it until the NEXT one, which
+      // would defeat the whole point of making shipped work visible. (A brand-new install
+      // never reaches here — the first-run branch above returns for it.)
+      setChangelogEntries(CHANGELOG);
+      setShowChangelog(true);
+    } else if (shouldShowChangelog(lastSeen)) {
+      setChangelogEntries(entriesSince(lastSeen));
+      setShowChangelog(true);
+    }
   };
   useEffect(() => {
+    // Read any quick-action intent before the splash timer fires, and strip it from the
+    // URL so a reload or a shared address never re-triggers the action.
+    launchActionRef.current = parseLaunchAction(typeof window !== 'undefined' ? window.location.search : '');
+    if (launchActionRef.current) {
+      try { window.history.replaceState(null, '', window.location.pathname); } catch {}
+    }
     const t = setTimeout(dismissSplash, 900);
     return () => clearTimeout(t);
   }, []);
+
+  const finishOnboarding = () => { setShowOnboarding(false); markSeenInfo(); };
+  const openChangelog = () => { setChangelogEntries(CHANGELOG); setShowChangelog(true); };
+  const dismissChangelog = () => { setShowChangelog(false); saveChangelogSeen(CURRENT_VERSION); };
 
   // ── Analytics ──
   // The retention features shipped with no way to tell whether they work. This is that
@@ -217,8 +277,8 @@ function App() {
   useEffect(() => { saveSessionLimit(sessionLimit); }, [sessionLimit]);
   useEffect(() => { saveCustomWords(customWords); }, [customWords]);
   useEffect(() => {
-    savePrefs({ tier: selectedTier, interval: intervalMs, bpm, bpmMode, barsPerWord, wordCount, hapticsOn, metronomeVolume });
-  }, [selectedTier, intervalMs, bpm, bpmMode, barsPerWord, wordCount, hapticsOn, metronomeVolume]);
+    savePrefs({ tier: selectedTier, interval: intervalMs, bpm, bpmMode, barsPerWord, wordCount, hapticsOn, metronomeVolume, goalType: goal.type, goalAmount: goal.amount });
+  }, [selectedTier, intervalMs, bpm, bpmMode, barsPerWord, wordCount, hapticsOn, metronomeVolume, goal]);
 
   // Beat-URL cleanup runs whenever the beat changes (load/remove), NOT on unmount — the
   // engine owns its own true-unmount cleanup separately (see useSessionEngine), since
@@ -407,9 +467,13 @@ function App() {
     // to make: does a writer who takes the prescription come back more than one who sets
     // their own dials?
     track(EVENTS.SESSION_START, { source: 'freeform', tier: selectedTier, words: wordCount });
+    // A freeform session is held to the writer's chosen goal, validated against its timer.
+    setActiveGoal(clampGoalToTimer(goal, sessionLimit));
     engine.startSession();
   };
-  const startVaultDrill = () => { if (!recoveredDraft) engine.startVaultDrill(); };
+  // Vault Drill is its own objective — run the saved words — so it does not inherit the
+  // freeform goal.
+  const startVaultDrill = () => { if (!recoveredDraft) { setActiveGoal(EMPTY_GOAL); engine.startVaultDrill(); } };
 
   // Starting the prescription writes seven pieces of settings state. React batches
   // those, so calling engine.startSession() in the same handler would start the session
@@ -419,6 +483,9 @@ function App() {
   const startDaily = () => {
     if (recoveredDraft) return;
     const p = todaysPlan;
+    // Today's prescription IS the objective — it does not inherit the freeform goal, which
+    // could otherwise be an impossible target against the prescribed duration.
+    setActiveGoal(EMPTY_GOAL);
     setSelectedTier(p.tier);
     setWordCount(p.wordCount);
     setIntervalMs(p.intervalMs);
@@ -439,6 +506,18 @@ function App() {
     engine.startSession();
   }, [pendingDailyStart]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Run a home-screen quick action once the app is up and the engine is ready.
+  useEffect(() => {
+    if (!pendingLaunch) return;
+    const action = pendingLaunch;
+    setPendingLaunch(null);
+    if (action === LAUNCH_ACTIONS.RHYMES) { setShowRhymeSearch(true); return; }
+    // A session cannot start over unresolved recovered writing — the banner handles that.
+    if (recoveredDraft) return;
+    if (action === LAUNCH_ACTIONS.DAILY) startDaily();
+    else if (action === LAUNCH_ACTIONS.SESSION) startSession();
+  }, [pendingLaunch]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const latestSession = sessionHistory[0];
 
   if (showSplash) return <Splash onDismiss={dismissSplash} />;
@@ -449,6 +528,8 @@ function App() {
 
       {showRhymeSearch && <RhymeSearch onClose={() => setShowRhymeSearch(false)} vault={vault} toggleVault={toggleVault} />}
       {showInfo && <InfoModal onClose={() => setShowInfo(false)} />}
+      {showOnboarding && <Onboarding onDone={finishOnboarding} />}
+      {showChangelog && <ChangelogModal entries={changelogEntries} onClose={dismissChangelog} />}
 
       {navState === 'idle' && (
         <IdleScreen
@@ -465,7 +546,8 @@ function App() {
           bpm={bpm} setBpm={setBpm} barsPerWord={barsPerWord} setBarsPerWord={setBarsPerWord}
           selectedTier={selectedTier} setSelectedTier={setSelectedTier}
           wordCount={wordCount} setWordCount={setWordCount}
-          sessionLimit={sessionLimit} setSessionLimit={setSessionLimit}
+          sessionLimit={sessionLimit} setSessionLimit={updateSessionLimit}
+          goal={goal} setGoal={setGoal}
         />
       )}
 
@@ -482,6 +564,7 @@ function App() {
           resumeFromDict={engine.resumeFromDict} sessionNotes={engine.sessionNotes} handleSaveNote={engine.handleSaveNote}
           cameraPreviewRef={engine.cameraPreviewRef} stopRecording={engine.stopRecording}
           registerActiveNoteFlush={engine.registerActiveNoteFlush}
+          goal={activeGoal} sessionStartTime={engine.sessionStartTime}
         />
       )}
 
@@ -493,6 +576,7 @@ function App() {
           frozenWords={engine.frozenWords} vault={vault} toggleVault={toggleVault}
           fetchDictData={engine.fetchDictData} dictData={engine.dictData} isLoadingDict={engine.isLoadingDict}
           fmtDur={fmtDur} flattenNotes={flattenNotes} copyNoteText={copyNoteText} copiedNoteKey={copiedNoteKey}
+          goal={activeGoal}
         />
       )}
 
@@ -528,6 +612,7 @@ function App() {
         <SettingsScreen
           resetToIdle={resetToIdle} hapticsOn={hapticsOn} setHapticsOn={setHapticsOn}
           metronomeVolume={metronomeVolume} setMetronomeVolume={setMetronomeVolume}
+          onShowChangelog={openChangelog} appVersion={CURRENT_VERSION}
         />
       )}
 

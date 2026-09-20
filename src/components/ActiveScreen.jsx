@@ -1,4 +1,8 @@
+import { useState, useEffect, useMemo } from 'react';
 import DictionaryModal from './DictionaryModal.jsx';
+import { flattenNotes } from '../services/export-text';
+import { goalStatus, goalMetLabel, GOAL_BARS, GOAL_TIME } from '../services/goal';
+import { haptic } from '../services/haptic';
 
 const getDynamicFontSize = (word, count) => {
   const len = Math.max(word.length || 1, 4);
@@ -16,7 +20,44 @@ export default function ActiveScreen({
   totalWordsSeen, activeWords, activeDictWord, pauseForDict,
   dictData, isLoadingDict, resumeFromDict, sessionNotes, handleSaveNote,
   cameraPreviewRef, stopRecording, registerActiveNoteFlush,
+  goal, sessionStartTime,
 }) {
+  // ── Session goal (see services/goal.js) ──
+  // Bars come from the live Bar Pad; time needs its own once-a-second tick so a stamina
+  // goal advances even while nothing else on screen changes. Both feed the same pure
+  // status so the "reached" moment fires exactly once, on the crossing.
+  const barsWritten = useMemo(
+    () => flattenNotes(sessionNotes).filter(([, , t]) => t?.trim()).length,
+    [sessionNotes],
+  );
+  const [nowTs, setNowTs] = useState(() => Date.now());
+  const timeGoal = goal?.type === GOAL_TIME;
+  useEffect(() => {
+    if (!timeGoal || !sessionIsActive) return;
+    const id = setInterval(() => setNowTs(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [timeGoal, sessionIsActive]);
+
+  const elapsedSeconds = sessionStartTime ? Math.max(0, Math.floor((nowTs - sessionStartTime) / 1000)) : 0;
+  const status = goalStatus(goal, { bars: barsWritten, seconds: elapsedSeconds });
+
+  // Fire once per session. This screen remounts on each new session, so the flag resets
+  // with it; a dictionary lock keeps it mounted, so resuming never re-triggers.
+  const [celebrated, setCelebrated] = useState(false);
+  const [showGoalBanner, setShowGoalBanner] = useState(false);
+  useEffect(() => {
+    if (!status.active || !status.met || celebrated) return;
+    setCelebrated(true);
+    setShowGoalBanner(true);
+    haptic(28);
+    const id = setTimeout(() => setShowGoalBanner(false), 4000);
+    return () => clearTimeout(id);
+  }, [status.active, status.met, celebrated]);
+
+  const goalChip = status.active && (status.type === GOAL_BARS
+    ? `${status.current}/${status.target}`
+    : `${fmtCountdown(status.current)}/${fmtCountdown(status.target)}`);
+
   return (
     <div className={`flex-1 flex flex-col justify-center items-center p-6 relative overflow-hidden ${isRecording?'rec-ring':''}`}>
       {/* flash layer on word change */}
@@ -50,6 +91,11 @@ export default function ActiveScreen({
             : bpmMode ? `Bar ${barCount}` : ''}
         </span>
         <div className="flex items-center gap-3">
+          {status.active && !isPausedForDict && (
+            <span className={`text-[10px] font-black uppercase tracking-widest tabular-nums ${status.met ? 'text-green-400' : 'opacity-40'}`}>
+              {status.met ? '✓ Goal' : `◎ ${goalChip}`}
+            </span>
+          )}
           {sessionLimit > 0 && sessionIsActive && (
             <span className={`text-[10px] font-black uppercase tracking-widest tabular-nums ${timeRemaining <= 60 ? 'text-red-400' : 'opacity-35'}`}>
               ⏱ {fmtCountdown(timeRemaining)}
@@ -58,6 +104,21 @@ export default function ActiveScreen({
           {isRecording && <button onClick={stopRecording} aria-label="Stop recording" className="pointer-events-auto text-red-400 text-[10px] font-black uppercase tracking-widest animate-pulse hover:text-red-300">● REC · Stop</button>}
         </div>
       </div>
+
+      {/* Goal reached — a clear, brief confirmation the moment the target is crossed.
+          Transient by design: the reward is the mark, not a modal that interrupts the flow. */}
+      {showGoalBanner && (
+        <div
+          role="status"
+          className="absolute left-1/2 -translate-x-1/2 z-30 pointer-events-none"
+          style={{ top: 'calc(4.5rem + env(safe-area-inset-top, 0px))' }}
+        >
+          <div className="flex items-center gap-2 bg-green-500/15 border border-green-500/40 text-green-300 px-5 py-3 rounded-full backdrop-blur-sm shadow-[0_0_30px_rgba(34,197,94,0.25)] animate-word-strike">
+            <span className="text-sm">✓</span>
+            <span className="text-[11px] font-black uppercase tracking-widest">Goal reached — {goalMetLabel(goal)}</span>
+          </div>
+        </div>
+      )}
 
       {/* Words */}
       <div className={`relative w-full h-full flex flex-wrap justify-center items-center px-4 z-10 ${activeWords.length>=3?'flex-col gap-8 landscape:grid landscape:grid-cols-2 landscape:gap-4':'flex-col gap-12 landscape:gap-8 md:gap-36'}`}>
