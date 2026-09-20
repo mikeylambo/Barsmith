@@ -16,7 +16,7 @@ import { previewTick, closePreviewTick } from '../services/audio-clock';
 // own contents.
 // ─────────────────────────────────────────────
 
-export default function SettingsScreen({ resetToIdle, hapticsOn, setHapticsOn, metronomeVolume, setMetronomeVolume }) {
+export default function SettingsScreen({ resetToIdle, hapticsOn, setHapticsOn, metronomeVolume, setMetronomeVolume, onShowChangelog, appVersion }) {
   const [analyticsOff, setAnalyticsOff] = useState(() => loadAnalyticsOptOut());
 
   // Preview the click while dragging, throttled so a drag doesn't machine-gun. The
@@ -133,6 +133,16 @@ export default function SettingsScreen({ resetToIdle, hapticsOn, setHapticsOn, m
         <p className="text-[10px] text-gray-700 text-center leading-relaxed">
           Your work lives on this device — back it up from Saved Words.
         </p>
+
+        <div className="mt-6 text-center">
+          <button
+            onClick={onShowChangelog}
+            className="text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-white underline underline-offset-4 transition-colors"
+          >
+            What&apos;s New
+          </button>
+          {appVersion && <p className="text-[10px] text-gray-700 mt-3 tabular-nums">Barsmith v{appVersion}</p>}
+        </div>
       </div>
     </div>
   );

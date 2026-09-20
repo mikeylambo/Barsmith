@@ -19,10 +19,10 @@ import lockupUrl from '../assets/brand-lockup.png';
 
 export const CARD_SIZE = 1080;
 
-const BG = '#050505';
-const WHITE = '#ffffff';
-const DIM = '#6b7280';       // tailwind gray-500 — prompt label and footer
-const PAD = 96;
+export const BG = '#050505';
+export const WHITE = '#ffffff';
+export const DIM = '#6b7280';       // tailwind gray-500 — prompt label and footer
+export const PAD = 96;
 
 // Candidate sizes, largest first. A one-line punchline should be huge; a written
 // four-bar block steps down until it fits rather than overflowing the frame.
@@ -149,7 +149,7 @@ export function layoutBarText(text, {
 }
 
 /** Canvas has no reliable letter-spacing across browsers, so step glyphs by hand. */
-function drawTracked(ctx, text, x, y, spacing) {
+export function drawTracked(ctx, text, x, y, spacing) {
   let cursor = x;
   for (const ch of text) {
     ctx.fillText(ch, cursor, y);
@@ -159,7 +159,7 @@ function drawTracked(ctx, text, x, y, spacing) {
 }
 
 let lockupPromise = null;
-function loadLockup() {
+export function loadLockup() {
   // Cached: the modal re-renders on every open, and decoding the PNG each time
   // adds visible latency to a screen the writer is waiting on.
   lockupPromise ||= new Promise((resolve, reject) => {
@@ -171,53 +171,34 @@ function loadLockup() {
   return lockupPromise;
 }
 
-/**
- * Draw the card and return it as a PNG blob.
- *
- * @param {object}  opts
- * @param {string}  opts.bar   The bar text, newlines preserved.
- * @param {string} [opts.word] The prompt word this bar was written on.
- */
-export async function renderBarCard({ bar, word }) {
-  // The variable font must be resident before any measureText call, or the layout
-  // is computed against a fallback face and every line break is wrong.
-  if (document.fonts) {
-    try {
-      await Promise.all([
-        document.fonts.load('900 78px Inter'),
-        document.fonts.load('800 26px Inter'),
-      ]);
-      await document.fonts.ready;
-    } catch { /* fall through to whatever face is available */ }
-  }
-
-  const canvas = document.createElement('canvas');
-  canvas.width = CARD_SIZE;
-  canvas.height = CARD_SIZE;
-  const ctx = canvas.getContext('2d');
-
+/** The near-black fill plus the low forge glow rising from the footer. Shared by both cards. */
+export function drawCardBackground(ctx) {
   ctx.fillStyle = BG;
   ctx.fillRect(0, 0, CARD_SIZE, CARD_SIZE);
-
   // Forge glow — heat rising off the anvil in the footer. Kept very low: a stronger
-  // gradient in the middle of the frame read as a smudge, and social platforms
-  // recompress uploads hard enough that a broad soft gradient can band into
-  // something that looks like an artifact rather than a choice.
+  // gradient in the middle of the frame read as a smudge, and social platforms recompress
+  // uploads hard enough that a broad soft gradient can band into something that looks like
+  // an artifact rather than a choice.
   const glow = ctx.createRadialGradient(170, CARD_SIZE - 150, 0, 170, CARD_SIZE - 150, 560);
   glow.addColorStop(0, 'rgba(255,140,48,0.075)');
   glow.addColorStop(0.4, 'rgba(255,120,30,0.022)');
   glow.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, CARD_SIZE, CARD_SIZE);
+}
 
-  const maxWidth = CARD_SIZE - PAD * 2;
+/** Height the anvil is drawn at in the footer. Callers reserve a band above it. */
+export const FOOTER_ANVIL_H = 84;
 
-  // ── Footer: anvil + wordmark ──
-  // This is the attribution that makes a shared card work as an introduction to the
-  // app, so it is sized to be legible after a platform downscales the image, not
-  // tucked away as a watermark.
+/**
+ * The attribution footer: anvil + BARSMITH wordmark, bottom-left. This is what makes a
+ * shared card work as an introduction to the app, so it is sized to survive a platform's
+ * downscale rather than tucked away as a watermark. Returns the footer's top edge so the
+ * caller knows where its own content band must end.
+ */
+export async function drawBrandFooter(ctx) {
   const footerY = CARD_SIZE - PAD;
-  const anvilH = 84;
+  const anvilH = FOOTER_ANVIL_H;
   const anvilW = Math.round((ANVIL.w / ANVIL.h) * anvilH);
   let wordmarkX = PAD;
   try {
@@ -231,6 +212,43 @@ export async function renderBarCard({ bar, word }) {
   ctx.fillStyle = WHITE;
   ctx.textBaseline = 'alphabetic';
   drawTracked(ctx, 'BARSMITH', wordmarkX, footerY - 24, 3);
+  return { footerY, anvilH };
+}
+
+/**
+ * Make sure the self-hosted Inter face is resident before any measureText call — a layout
+ * computed against a fallback face gets every line break wrong. No-op where the Font
+ * Loading API is unavailable; the render then uses whatever face is present.
+ */
+export async function ensureInterFonts(specs) {
+  if (!document.fonts) return;
+  try {
+    await Promise.all(specs.map(s => document.fonts.load(s)));
+    await document.fonts.ready;
+  } catch { /* fall through to whatever face is available */ }
+}
+
+/**
+ * Draw the card and return it as a PNG blob.
+ *
+ * @param {object}  opts
+ * @param {string}  opts.bar   The bar text, newlines preserved.
+ * @param {string} [opts.word] The prompt word this bar was written on.
+ */
+export async function renderBarCard({ bar, word }) {
+  await ensureInterFonts(['900 78px Inter', '800 26px Inter']);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = CARD_SIZE;
+  canvas.height = CARD_SIZE;
+  const ctx = canvas.getContext('2d');
+
+  drawCardBackground(ctx);
+
+  const maxWidth = CARD_SIZE - PAD * 2;
+
+  // ── Footer: anvil + wordmark ──
+  const { footerY, anvilH } = await drawBrandFooter(ctx);
 
   // ── Prompt label + bar, centred together as one group ──
   // Pinning the label to the top of the frame left it stranded, reading as a caption

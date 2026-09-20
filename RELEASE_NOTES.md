@@ -1,4 +1,77 @@
-<<<<<<< HEAD
+# Barsmith 5.20.0 — a target to hit, a session to show, and a faster way in
+
+Five features from the v2 brief, all built on data and infrastructure already on the
+device — no backend, no new data model, nothing that leaves the phone.
+
+## A goal, not just a cap
+
+The Session Timer already ended a session; it never rewarded one. A goal is the other
+lever: a target you aim AT — a number of bars, or a stretch of minutes — that fires a
+clear "you did it" the moment you cross it and then gets out of the way. Reaching it is a
+win, never a forced stop; the session runs for as long as the writer wants it to. The two
+stack, so "10 bars inside a 15-minute cap" is one setting on top of the other.
+
+The arithmetic is pure and lives in `services/goal.js`: progress comes in as
+`{bars, seconds}`, so the crossing — the one thing that must fire exactly once, and exactly
+on the line — is pinned by tests rather than by a running clock. Bars are counted from the
+live Bar Pad; a time goal gets its own once-a-second tick so a stamina target still
+advances while nothing else on screen moves. The confirmation is transient by design: the
+reward is the mark, not a modal that interrupts the flow.
+
+## A recap worth posting
+
+Bars could already leave as a single-line card. A session could not — and a session is the
+thing with stats worth showing. `services/recap-card.js` draws the whole thing to one
+1080×1080 image: bars written, time held, words seen, and the session's strongest line
+(the longest bar — usually the one someone kept working) beneath them. It shares the bar
+card's background, brand footer, text-layout and glyph-tracking so the two can never drift
+apart, and it exports through the same gesture-safe, files-only share seam. A free growth
+loop: no account, no server, just an image that carries the wordmark.
+
+## A walkthrough that answers the first question
+
+The one thing a first-time writer cannot infer from the screen is where their work goes —
+Barsmith keeps it in three distinct places (the Bar Pad you write in mid-round, the Saved
+Words you star to keep, the History that holds every finished session) and nothing ever
+explained that split. A dense eleven-step "How To" existed, but a reference is the wrong
+shape for a first launch: it answers questions nobody has yet. So now: three screens,
+skippable, shown exactly once. The detailed How To stays one tap away behind the ? button.
+
+## A faster way in
+
+Installed to the home screen, the icon now long-presses into three shortcuts — today's
+session, a freeform one, or the rhyme finder — via the manifest `shortcuts` field. The
+intent rides in as `/?do=…`, is read once at launch (`services/launch.js`), and is stripped
+from the URL immediately so a reload or a shared address never re-fires it. Only the three
+known intents are honoured; anything else falls through to the idle screen.
+
+## What's new, made visible
+
+The v5.x work — the service worker, the accessibility pass, the LRU dictionary cache, the
+front-camera picker, the restore-you-can-take-back — all shipped invisibly. A writer got a
+better app and never saw one of them land, so the polish read as nothing changing. A
+version-gated note now surfaces it after an update: once per bump, dismissible, gone until
+the next version ships. The rule that matters is "never on a fresh baseline" — a first-ever
+run has no *before* to announce, so it records the current version silently and the note
+starts firing from the next release, never stacking on top of the walkthrough. The current
+build is the top entry of `services/changelog.js`, and a test pins it to `package.json` so
+the two can never drift.
+
+## One fix on the way in
+
+`RELEASE_NOTES.md` had shipped with unresolved Git conflict markers
+(`<<<<<<< HEAD` … `>>>>>>> origin/main`) committed into it since the 5.18/5.19 merge. Both
+sides were real release notes; they are now simply both present, markers gone.
+
+## Verification
+
+- `240 passed` (33 new: the goal crossing for bars and time, the changelog bump rule and
+  its package.json drift guard, launch-action parsing, and the recap filename)
+- `npm run build` green — capacitor chunk guard passes, entry bundle 333,707 B → 351,353 B
+  for six features, precache unchanged at 11 URLs (no new top-level assets).
+
+---
+
 # Barsmith 5.19.0 — the screen stays on, the click stays audible
 
 The two native gaps a writer would have hit within one session.
@@ -126,8 +199,6 @@ straight to Photos.
 
 ---
 
-=======
->>>>>>> origin/main
 # Barsmith 5.17.0 — a restore you can take back
 
 The one path in the app that could destroy a writer's work, hardened before anybody is

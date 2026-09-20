@@ -16,5 +16,28 @@
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
     { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Today's Session",
+      "short_name": "Today",
+      "description": "Start today's prescribed session",
+      "url": "/?do=daily",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Freeform Session",
+      "short_name": "Session",
+      "description": "Start a session with your saved settings",
+      "url": "/?do=session",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Find Rhymes",
+      "short_name": "Rhymes",
+      "description": "Open the rhyme reference",
+      "url": "/?do=rhymes",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
   ]
 }

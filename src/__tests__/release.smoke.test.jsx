@@ -39,7 +39,7 @@ async function boot(){
 function activeWord(){ return document.querySelector('h2.cursor-pointer'); }
 
 beforeEach(()=>{ cleanup(); localStorage.clear(); vi.useFakeTimers(); installGlobals(); });
-afterEach(()=>{ cleanup(); vi.useRealTimers(); vi.unstubAllGlobals(); });
+afterEach(()=>{ cleanup(); vi.useRealTimers(); vi.unstubAllGlobals(); window.history.replaceState({}, '', '/'); });
 
 describe('Barsmith release flow', ()=>{
   it('preserves separate bars for the same locked word through Summary and History', async()=>{
@@ -107,6 +107,18 @@ describe('Barsmith release flow', ()=>{
     await act(async()=>{ vi.advanceTimersByTime(500); });
     expect(screen.getByText('Complete')).toBeTruthy();
     expect(screen.getByText('last second bar')).toBeTruthy();
+  });
+
+  it('a home-screen quick action lands straight in a session, skipping idle', async()=>{
+    // The manifest shortcut opens the app at /?do=session; the app must read that once,
+    // drop into an active session, and strip the URL so a reload never re-fires it.
+    window.history.replaceState({}, '', '/?do=session');
+    localStorage.setItem('barsmithHasSeenInfo','1');
+    render(<App/>);
+    await act(async()=>{ vi.advanceTimersByTime(2300); });
+    expect(screen.queryByRole('button',{name:'Start Session'})).toBeNull(); // not on idle
+    expect(activeWord()).toBeTruthy();                                       // already writing
+    expect(window.location.search).toBe('');                                // URL consumed
   });
 
   it('uses an absolute deadline and ends immediately after a background-style clock jump', async()=>{

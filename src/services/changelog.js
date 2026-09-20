@@ -1,0 +1,82 @@
+// ─────────────────────────────────────────────
+// CHANGELOG
+// What's new, and the rule for when to show it.
+//
+// The v5.x work — the service worker, the accessibility pass, the LRU dictionary
+// cache, the front-camera picker, the restore-you-can-take-back — all shipped
+// invisibly. A writer got real quality improvements and never saw one of them, so
+// the polish read as nothing changing. This surfaces it: a small "what's new" note
+// after an update, dismissible, gone until the next version ships.
+//
+// The entries are the single source of truth for the current version too — the top
+// entry's version IS this build's version, and a test pins it to package.json so the
+// two can never drift.
+// ─────────────────────────────────────────────
+
+/**
+ * Releases, newest first. Keep this in step with package.json — the top entry's
+ * `version` is what the app reports as its current build. Each entry is a short,
+ * writer-facing note, not the engineering detail that lives in RELEASE_NOTES.md.
+ */
+export const CHANGELOG = [
+  {
+    version: '5.20.0',
+    title: 'Goals, recaps, and a faster way in',
+    items: [
+      'Set a session goal — a number of bars or minutes — and get a clear mark the moment you hit it.',
+      'Share a session recap: your stats and your best bar, drawn as one image built for posting.',
+      'Long-press the app icon to jump straight into today’s session, a freeform one, or the rhyme finder.',
+      'A short walkthrough on first launch, and this “what’s new” note after every update.',
+    ],
+  },
+];
+
+/** The current build, taken from the newest entry so there is one source of truth. */
+export const CURRENT_VERSION = CHANGELOG[0]?.version || '0.0.0';
+
+/**
+ * Compare two dotted version strings numerically.
+ *
+ * Returns a negative number when a < b, positive when a > b, 0 when equal. Missing
+ * segments count as 0, so '5.20' and '5.20.0' compare equal. Non-numeric or absent
+ * input sorts as the lowest possible version, which is what makes a first-ever run
+ * (no version stored yet) read as "older than everything".
+ */
+export function compareVersions(a, b) {
+  const parse = (v) => String(v ?? '').split('.').map(n => parseInt(n, 10) || 0);
+  const pa = parse(a);
+  const pb = parse(b);
+  const len = Math.max(pa.length, pb.length);
+  for (let i = 0; i < len; i++) {
+    const d = (pa[i] || 0) - (pb[i] || 0);
+    if (d !== 0) return d < 0 ? -1 : 1;
+  }
+  return 0;
+}
+
+/** The entries newer than a given version — what a writer hasn't seen yet. */
+export function entriesSince(lastSeen) {
+  if (!lastSeen) return [];
+  return CHANGELOG.filter(e => compareVersions(e.version, lastSeen) > 0);
+}
+
+/**
+ * Should the changelog open on this launch?
+ *
+ * The rule is "once per version bump, never on a fresh baseline":
+ *
+ *  - `lastSeen == null` — the changelog has never run on this device. That is either a
+ *    brand-new install or an upgrade from before this feature existed, and in neither
+ *    case is there a real "bump" to announce. The caller records the current version
+ *    silently as the baseline, and the very next release is the first one shown. This
+ *    also keeps the changelog from ever fighting the first-run walkthrough.
+ *  - `lastSeen < current` — a genuine update happened since the writer last looked. Show it.
+ *  - `lastSeen >= current` — already current. Nothing to show.
+ *
+ * @param {string|null} lastSeen
+ * @param {string} [current]
+ */
+export function shouldShowChangelog(lastSeen, current = CURRENT_VERSION) {
+  if (!lastSeen) return false;
+  return compareVersions(current, lastSeen) > 0;
+}

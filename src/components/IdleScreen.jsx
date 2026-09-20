@@ -1,4 +1,5 @@
 import DailyCard from './DailyCard.jsx';
+import { GOAL_OFF, GOAL_BARS, GOAL_TIME, GOAL_PRESETS } from '../services/goal';
 
 // Short enough to read at a glance while choosing, and phrased as what the setting does
 // to the work rather than what it does to the data — "three or more syllables" is the
@@ -31,7 +32,17 @@ export default function IdleScreen({
   selectedTier, setSelectedTier,
   wordCount, setWordCount,
   sessionLimit, setSessionLimit,
+  goal, setGoal,
 }) {
+  // Switching the goal type keeps a still-valid amount, otherwise drops to a sensible
+  // default rather than carrying "16 bars" over to "16 minutes".
+  const setGoalType = (t) => {
+    if (t === GOAL_OFF) return setGoal({ type: GOAL_OFF, amount: 0 });
+    const presets = GOAL_PRESETS[t];
+    const keep = presets.includes(goal?.amount) ? goal.amount : presets[1];
+    setGoal({ type: t, amount: keep });
+  };
+  const goalType = goal?.type || GOAL_OFF;
   return (
     <div className="flex-1 flex flex-col items-center w-full px-6 py-10 md:py-14 max-w-4xl mx-auto pb-36">
       {/* Header */}
@@ -230,6 +241,29 @@ export default function IdleScreen({
               <button key={m} onClick={()=>setSessionLimit(m)} aria-pressed={sessionLimit===m} aria-label={m===0?'No session timer':`${m} minute session timer`} className={`flex-1 py-3 rounded-2xl font-black text-xs transition-all border ${sessionLimit===m?'bg-white border-white text-black shadow-[0_0_18px_rgba(255,255,255,0.18)]':'bg-[#0a0a0a] border-white/5 text-gray-600 hover:text-gray-300 hover:bg-[#151515]'}`}>{m===0?'Off':`${m}m`}</button>
             ))}
           </div>
+        </div>
+
+        {/* 6. Session Goal
+            The timer above ENDS a session; a goal is the opposite — a target to hit that
+            marks the moment you cross it and then leaves you to keep going. The two stack:
+            a writer can aim for 10 bars inside a 15-minute cap. */}
+        <div className="bg-[#0f0f0f] border border-white/5 p-5 rounded-3xl">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-[10px] text-gray-600 font-black uppercase tracking-widest">6. Session Goal</h2>
+            {goalType !== GOAL_OFF && <span className="text-[10px] text-white/30 font-black uppercase tracking-widest">Marks when you hit it</span>}
+          </div>
+          <div className="flex gap-2 mb-3">
+            {[[GOAL_OFF,'Off'],[GOAL_BARS,'Bars'],[GOAL_TIME,'Minutes']].map(([t,label])=>(
+              <button key={t} onClick={()=>setGoalType(t)} aria-pressed={goalType===t} aria-label={t===GOAL_OFF?'No session goal':t===GOAL_BARS?'Goal measured in bars written':'Goal measured in minutes'} className={`flex-1 py-3 rounded-2xl font-black text-xs uppercase tracking-wider transition-all border ${goalType===t?'bg-white border-white text-black shadow-[0_0_18px_rgba(255,255,255,0.18)]':'bg-[#0a0a0a] border-white/5 text-gray-600 hover:text-gray-300 hover:bg-[#151515]'}`}>{label}</button>
+            ))}
+          </div>
+          {goalType !== GOAL_OFF && (
+            <div className="flex gap-2">
+              {GOAL_PRESETS[goalType].map(n=>(
+                <button key={n} onClick={()=>setGoal({ type: goalType, amount: n })} aria-pressed={goal?.amount===n} aria-label={goalType===GOAL_BARS?`Write ${n} bars`:`Drill for ${n} minutes`} className={`flex-1 py-3 rounded-2xl font-black text-xs transition-all border ${goal?.amount===n?'bg-white border-white text-black shadow-[0_0_18px_rgba(255,255,255,0.18)]':'bg-[#0a0a0a] border-white/5 text-gray-600 hover:text-gray-300 hover:bg-[#151515]'}`}>{n}{goalType===GOAL_TIME?'m':''}</button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
