@@ -142,3 +142,6 @@ vite.config.ts.timestamp-*
 # platform toolchain. Regenerated from capacitor.config.json + dist/, so not carried here.
 /ios/
 /android/
+
+# Python wheels — build deps are installed with pip (see scripts/*.py headers), never committed
+*.whl

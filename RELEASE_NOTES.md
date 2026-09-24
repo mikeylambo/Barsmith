@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Barsmith 5.19.0 — the screen stays on, the click stays audible
 
 The two native gaps a writer would have hit within one session.
@@ -126,8 +125,6 @@ straight to Photos.
 
 ---
 
-=======
->>>>>>> origin/main
 # Barsmith 5.17.0 — a restore you can take back
 
 The one path in the app that could destroy a writer's work, hardened before anybody is
